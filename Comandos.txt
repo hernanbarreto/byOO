@@ -1,0 +1,13 @@
+errores de eslint: 
+	C:\xampp\htdocs\byoo\node_modules\.bin>eslint --fix ../../functions/index.js
+firebase: 
+	firebase login
+	firebase init
+	npm run build
+	firebase deploy
+	firebase deploy --only functions
+	firebase deploy --only hosting
+
+iniciar emulador de funciones:
+	firebase emulators:start --only functions
+	

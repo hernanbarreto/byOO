@@ -1,0 +1,56 @@
+.button__log {
+    margin-top: 10px !important;
+    width: 100% !important;
+    height: 50px !important;
+    text-transform: inherit !important;
+    border-radius: 10px !important;
+    color: black !important;
+}
+
+.button__log__continuar {
+    margin-top: 10px !important;
+    width: 100% !important;
+    height: 50px !important;
+    text-transform: inherit !important;
+    border-radius: 10px !important;
+    background-color: rgb(78, 50, 126, 0.8) !important;
+    color: white !important;
+}
+
+.button__log__loading {
+    margin-top: 10px !important;
+    width: 100% !important;
+    height: 50px !important;
+    text-transform: inherit !important;
+    border-radius: 10px !important;
+    background-color: rgb(200, 200, 200, 0.8) !important;
+    color: white !important;
+}
+
+.button__log__BW {
+    margin-top: 10px !important;
+    width: 100% !important;
+    height: 50px !important;
+    text-transform: inherit !important;
+    border-radius: 10px !important;
+    background-color: rgb(0, 0, 0, 1) !important;
+    color: white !important;
+}
+
+.pin__input{
+    width: 10%;
+    height: 3rem;
+    border-radius: 10px;
+    color: black !important;
+    font-weight: 500 !important;
+    font-size: 200%;
+    text-align: center !important;
+    border-color: lightgray !important;
+    border-style: solid !important;
+    margin-right: 2% !important;
+}
+
+.wait__class{
+    position: relative !important;
+
+}

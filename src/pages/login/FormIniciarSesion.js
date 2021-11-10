@@ -1,0 +1,235 @@
+import React, { useState, useEffect }from 'react';
+import InputPassword from './InputPassword';
+import Dialog from '@material-ui/core/Dialog';
+import MuiDialogTitle from '@material-ui/core/DialogTitle';
+import MuiDialogContent from '@material-ui/core/DialogContent';
+import './Login.css'
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
+import Typography from '@mui/material/Typography';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { getAuth, 
+         sendPasswordResetEmail, 
+         signInWithEmailAndPassword } from "firebase/auth";
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import { withStyles } from '@material-ui/core/styles';
+import { emitCustomEvent } from 'react-custom-events';
+import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
+import IconButton from '@mui/material/IconButton';
+import Link from '@mui/material/Link';
+import { Divider } from '@material-ui/core';
+import LoadingPage from './LoadingPage';
+
+function FormIniciarSesion(props) {
+    const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
+    const [loadingDialog, setLoadingDialog] = useState(false);
+
+    const[ openMsg, setOpenMsg] = useState(false);
+    const [severityInfo, setSeverityInfo] = useState('success');
+    const [msg, setMsg] = useState('');
+    const handleCloseMsg = (event, reason) => {
+        if (reason === 'clickaway') {
+          return;
+        }
+    
+        setOpenMsg(false);
+    };
+    
+    const styles = (theme) => ({});
+      
+    const DialogTitle = withStyles(styles)((props) => {
+        const { children, onClose } = props;
+        return (
+            <MuiDialogTitle disableTypography 
+                style={{
+                    display: 'flex',
+                    justifyContent: 'flex-start',
+                    alignItems: 'center',
+                }} 
+            >
+                <IconButton aria-label="close"  onClick={onClose}>
+                    <ArrowBackIosIcon />
+                </IconButton>
+                <Typography variant='subtitle2'
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '100%'
+                    }}                                            
+                >
+                    {children}
+                </Typography>
+                <IconButton 
+                    aria-label="close"  
+                    onClick={onClose}
+                    disabled={true}
+                    style={{
+                        color: 'white'
+                    }}
+                >
+                    <ArrowBackIosIcon />
+                </IconButton>
+            </MuiDialogTitle>
+        );
+    });
+
+    const handleCloseIniciarSesion = () => {
+        props.onGetReturn(true);
+        setLoadingDialog(false);
+    }
+
+    /*submit Iniciar sesion*/
+    const handleClickIniciarSesion = () => {      
+        setSubmitInputPasswordFormIniciarSesion(true);        
+    }
+    /*fin submit iniciar sesion*/ 
+    
+    const handleEnter = () => {
+        setSubmitInputPasswordFormIniciarSesion(true);        
+    }
+
+    const handleRecuperarPassword = () => {
+        props.onGetRecoveryPass(true);
+        setLoadingDialog(false);
+    }
+
+    /*variables del componente InputPassword del form inicias sesion*/
+    const styleInputPasswordFormIniciarSesion = { marginTop: "30px" };
+    const [valueInputPasswordFormIniciarSesion, setValueInputPasswordFormIniciarSesion] = useState('');
+    const [submitPasswordFormIniciarSesion, setSubmitInputPasswordFormIniciarSesion] = useState(false);
+    const [variableEstadoCargadoNewValuePasswordFormIniciarSesion, setVariableEstadoCargadoNewValuePasswordFormIniciarSesion] = useState(false);
+    const submitValuePasswordFormIniciarSesion = (value) => {
+        setSubmitInputPasswordFormIniciarSesion(value);
+    }
+    const getValuePasswordFormIniciarSesion = (password) => {
+        setValueInputPasswordFormIniciarSesion(password);
+        setVariableEstadoCargadoNewValuePasswordFormIniciarSesion(true);
+    }
+    /*fin variables de componente InputPassword del form iniciar sesion*/
+
+    /*atencion del valor ingresado del componente InputPassword del form iniciar sesion*/
+    useEffect(() => {
+        if (variableEstadoCargadoNewValuePasswordFormIniciarSesion){
+            if ((valueInputPasswordFormIniciarSesion !== '')) {
+                setLoadingDialog(true);
+                const auth = getAuth();
+                signInWithEmailAndPassword(auth, props.email, valueInputPasswordFormIniciarSesion)
+                    .then((userCredential) => {
+                        props.onGetClose(true);
+                        setLoadingDialog(false);
+                    })
+                    .catch((error) => {
+                        if (error.code === 'auth/wrong-password'){
+                            setLoadingDialog(false);
+                            setMsg('El password ingresado es incorrecto, no te preocupes volvé a intentarlo')
+                            setSeverityInfo('error')
+                            setOpenMsg(true);
+                        }
+                        if (error.code === 'auth/too-many-requests'){
+                            const auth = getAuth();
+                            sendPasswordResetEmail(auth, props.email)
+                              .then(() => {
+                                emitCustomEvent('showMsg', String('Demasiados intentos fallidos, te hemos enviado un enlace para restablecer tu contraseña a la dirección ') + String(props.email) + String('/') + String('info'));
+                                props.onGetClose(true);
+                                setLoadingDialog(false);
+                            })
+                              .catch((error) => {
+                                setLoadingDialog(false);
+                                setMsg(error.code.split('/')[1].replace(/-/g,' '));
+                                setSeverityInfo('error');
+                                setOpenMsg(true);                    
+                              });                                
+                        } 
+                        if (error.code === 'auth/invalid-email'){
+                            emitCustomEvent('showMsg', String('No existe una cuenta asociada a ') + String(props.email) + String('/') + String('error'));
+                            props.onGetClose(true);
+                            setLoadingDialog(false);
+                        }
+                    });
+            }
+            setVariableEstadoCargadoNewValuePasswordFormIniciarSesion(false);       
+        } 
+    },[valueInputPasswordFormIniciarSesion, variableEstadoCargadoNewValuePasswordFormIniciarSesion, props]);
+    /*fin atencion del valor ingresado del componente InputPassword del form Inicias sesion*/
+
+
+    return (
+        <div>
+            <Dialog 
+                fullScreen={mobilAccess}
+                open={props.open}
+                onClose = {handleCloseIniciarSesion}
+                aria-labelledby="customized-dialog-title" 
+                PaperProps = { { 
+                    style : {  borderRadius : 15  } 
+                } } 
+                keepMounted
+                disableEscapeKeyDown={true}
+            >
+            <LoadingPage 
+                open={loadingDialog}
+            />
+            <DialogTitle 
+                onClose={handleCloseIniciarSesion}
+            >
+                <strong>Iniciar sesión</strong>
+            </DialogTitle>
+            <MuiDialogContent dividers style={{align: 'center'}}>
+                <Typography 
+                    variant="caption"
+                    display="block"
+                    gutterBottom
+                    style={{
+                        width: '100%',
+                        marginTop: 10,
+                    }}
+                > 
+                Ingresá la contraseña asociada a tu cuenta {props.email}. Si no la recordás, podés hacer click en el enlace siguiente para recuperarla.                   
+                </Typography>
+                <InputPassword 
+                    style={styleInputPasswordFormIniciarSesion}
+                    onGetValuePassword={getValuePasswordFormIniciarSesion} 
+                    verify={submitPasswordFormIniciarSesion} 
+                    onSubmitValuePassword={submitValuePasswordFormIniciarSesion} 
+                    close={!props.open}
+                    onGetEnter={handleEnter}
+                />
+                <Divider style={{width: '100%', marginTop:'20px', marginBottom:'5px'}}/>
+                <Button 
+                    variant='outlined'
+                    className='button__log__continuar'
+                    onClick={handleClickIniciarSesion}
+                >
+                    Iniciá sesión
+                </Button>
+                <Box 
+                    sx={{
+                        width: '100%',
+                        height: '8rem',
+                    }} 
+                >
+                    <Link
+                        component="button"
+                        onClick={handleRecuperarPassword}
+                        sx={{
+                            textDecoration: "underline #000000",
+                            color: 'black !important',
+                            fontSize: '1rem',
+                            marginTop: '1rem !important',
+                        }} 
+                            >
+                        ¿Te olvidaste la contraseña?
+                    </Link>            
+                </Box>        
+            </MuiDialogContent>
+            <Snackbar open={openMsg} autoHideDuration={6000} onClose={handleCloseMsg} anchorOrigin={{ vertical: 'top', horizontal: 'center' }} sx={{width: '100%'}}>
+                <Alert onClose={handleCloseMsg} severity={severityInfo}>{msg}</Alert>
+            </Snackbar>
+            </Dialog>            
+        </div>
+    )
+}
+
+export default FormIniciarSesion
