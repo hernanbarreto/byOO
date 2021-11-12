@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Info from './pages/info/Info';
 import Header from './pages/header/Header';
 import Home from './pages/home/Home';
@@ -10,27 +10,40 @@ import Footer from './pages/footer/Footer';
 import { AuthProvider } from './services/firebase'; 
 import PrivateRoute from './pages/PrivateRoute';
 import NotFound from './pages/NotFound';
+import { useUserAgent } from '@oieduardorabelo/use-user-agent';
+import Axios from 'axios';
 
 function App() {
+  const details = useUserAgent();
+  const [userDetails, setUserDetails] = useState(null);
+
+  useEffect( () => {
+    if (details){
+      Axios.get('https://ipapi.co/json/').then((res) => {
+        setUserDetails([res.data, details]);
+      });
+    }
+  }, [details])
+
 
   return (
     <div className="App">
       <AuthProvider>
         <Info />
         <Router>
-          <Header />
+          <Header user={userDetails}/>
           <Switch>
             <Route exact path='/privacity'>
-              <Privacity />
+                <Privacity />
             </Route>
             <PrivateRoute exact path='/account-settings'>
-              <Account />
+                <Account />
             </PrivateRoute>
             <PrivateRoute exact path='/account-settings/login-and-security'>
-              <LoginAndSecurity />
+                <LoginAndSecurity />
             </PrivateRoute>
             <Route exact path='/'>
-              <Home />
+                <Home />
             </Route>
             <Route component={NotFound} />
           </Switch>

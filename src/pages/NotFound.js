@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
@@ -15,7 +15,12 @@ const Img = styled('img')({
 }); 
 
 
-const NotFound = () => (
+function NotFound () {
+    useEffect(() => {
+        window.scrollTo(0,0);
+    }, []);
+
+    return (
     <div>
         <Container maxWidth="xl">
             <Box sx={{ flexGrow: 10 }}>
@@ -65,6 +70,7 @@ const NotFound = () => (
             </Box>
         </Container>
   </div>
-);
+)
+}
 
 export default NotFound;

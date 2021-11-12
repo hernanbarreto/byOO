@@ -23,6 +23,7 @@ initializeAppCheck(app, {
   isTokenAutoRefreshEnabled: true
 });
 
+
 const AuthContext = createContext();
 export const useAuth = () =>{
   return useContext(AuthContext);
@@ -58,15 +59,15 @@ export function AuthProvider({ children }) {
 
 }  
 
-
 export const auth = getAuth();
+
 //connectAuthEmulator(auth, "http://localhost:9099");
 //
 //const functions = getFunctions();
 //connectFunctionsEmulator(functions, "localhost", 5001);
 //
 //const database = getFirestore();
-//connectFirestoreEmulator(database, 'localhost', 8080);
+//connectFirestoreEmulator(database, 'localhost', 8090);
 //
 //const storage = getStorage();
 //connectStorageEmulator(storage, "localhost", 9199);

@@ -258,9 +258,9 @@ function InputCountrySelectPhone(props) {
         { code: 'ZW', label: 'Zimbabwe', phone: '263' },
       ];
 
-    const [valueCountri, setValueCountri] = useState(countries[9]);
+    const [valueCountri, setValueCountri] = useState(countries.find(elements => elements.code === props.country ));
     const [inputValueCountri, setInputValueCountri] = useState('');
-    const [valuePhone, setValuePhone] = useState(String('+' + countries[9].phone));
+    const [valuePhone, setValuePhone] = useState(String('+' + countries.find(elements => elements.code === props.country ).phone));
     const [stateErrorPhone, setStateErrorPhone] = useState(false);
     const [helperTextPhone, sethelperTextPhone] = useState('');
     const [valueInputPhone, setValueInputPhone] = useState(props.phone);

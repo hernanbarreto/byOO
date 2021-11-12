@@ -30,7 +30,7 @@ import { useAuth } from '../../services/firebase';
 
 const database = getFirestore();
 
-function Header() {
+function Header(details) {
     const history = useHistory ();
     const [anchorEl, setAnchorEl] = useState(null);
     const [photoURL, setPhotoURL] = useState(null);
@@ -279,6 +279,7 @@ function Header() {
                     </Menu>
                 }
                 <Login
+                    userDetails={details}
                     open={openLogin}
                     onGetClose={handleCloseLogin}
                     onGetUpdateProfile={handleUpdateProfile}

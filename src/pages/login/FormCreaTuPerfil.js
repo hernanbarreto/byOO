@@ -338,7 +338,7 @@ function FormCreaTuPerfil(props) {
 
 
                 sendMail([
-                    "automated@byoo.com", 
+                    "byOO <automated@byoo.com>", 
                     auth.currentUser.email, 
                     {
                         name: 'welcome',
@@ -1060,6 +1060,7 @@ function FormCreaTuPerfil(props) {
                                 onSubmitValuePhone={submitValuePhoneFormPicnipal} 
                                 close={!props.open}
                                 onGetEnter={handleEnter}
+                                country={props.country}
                             />
                             <Typography 
                                 variant="caption"

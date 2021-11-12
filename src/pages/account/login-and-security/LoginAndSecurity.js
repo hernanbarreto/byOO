@@ -1,4 +1,4 @@
-import React, {  useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -18,8 +18,20 @@ import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import PasswordIcon from '@mui/icons-material/Password';
+import ContactPhoneIcon from '@mui/icons-material/ContactPhone';
+import GroupsIcon from '@mui/icons-material/Groups';
+import { getFunctions, httpsCallable } from "firebase/functions";
+
+const functions = getFunctions();
+const getUser = httpsCallable(functions, 'getUser');
 
 function LoginAndSecurity() {
+    useEffect(() => {
+        window.scrollTo(0,0);
+    }, []);
+
     const history = useHistory ();
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
     const {currentUser} = useAuth();
@@ -28,7 +40,7 @@ function LoginAndSecurity() {
         margin: 'auto',
         display: 'block',
         maxWidth: '100%',
-        maxHeight: '100%',
+        maxHeight: '100px',
     }); 
     
     const handleCuenta = () => {
@@ -37,7 +49,10 @@ function LoginAndSecurity() {
 
     useEffect(() => {
         if (currentUser){
-            console.log(currentUser);
+            getUser(currentUser.uid)
+            .then((user)=>{
+                console.log(user.data);
+            });    
         }
     }, [currentUser]);
 
@@ -64,13 +79,11 @@ function LoginAndSecurity() {
         <div>
             <Container maxWidth="lg" >
                 <Box sx={{ flexGrow: 10 }}>
-                    <Paper 
-                        variant="outlined"
+                    <Paper
+                        variant='string' 
                         sx={{ 
-                            p: 2, 
                             marginTop: '50px', 
                             marginBottom: '50px', 
-                            borderRadius: '20px',
                         }}
                     >
                         <Stack
@@ -103,8 +116,9 @@ function LoginAndSecurity() {
                                     <Typography
                                         fontSize={{
                                             lg: 30,
-                                            md: 20,
-                                            sm: 20,
+                                            md: 30,
+                                            sm: 25,
+                                            xs: 25,
                                         }}                                                                                
                                         sx={{
                                             marginTop: '20px',
@@ -116,7 +130,7 @@ function LoginAndSecurity() {
                                     <Divider/>
                                     <Accordion
                                         sx={{
-                                            marginTop: '20px',
+                                            marginTop: '40px',
                                             marginBottom: '20px',
                                         }}                                    
                                     >
@@ -125,6 +139,9 @@ function LoginAndSecurity() {
                                             aria-controls="panel-password"
                                             id="panel-password"
                                         >
+                                        <ListItemIcon>
+                                            <PasswordIcon fontSize="medium" />
+                                        </ListItemIcon>
                                         <Typography><strong>Contraseña</strong></Typography>
                                         </AccordionSummary>
                                         <AccordionDetails>
@@ -144,6 +161,9 @@ function LoginAndSecurity() {
                                             aria-controls="panel-phone"
                                             id="panel-phone"
                                         >
+                                        <ListItemIcon>
+                                            <ContactPhoneIcon fontSize="medium" />
+                                        </ListItemIcon>
                                         <Typography><strong>Número de teléfono</strong></Typography>
                                         </AccordionSummary>
                                         <AccordionDetails>
@@ -155,7 +175,7 @@ function LoginAndSecurity() {
                                     <Accordion
                                         sx={{
                                             marginTop: '20px',
-                                            marginBottom: '20px',
+                                            marginBottom: '40px',
                                         }}                                    
                                     >
                                         <AccordionSummary
@@ -163,7 +183,10 @@ function LoginAndSecurity() {
                                             aria-controls="panel-social"
                                             id="panel-social"
                                         >
-                                        <Typography><strong>Redes sociales</strong></Typography>
+                                        <ListItemIcon>
+                                            <GroupsIcon fontSize="medium" />
+                                        </ListItemIcon>
+                                        <Typography><strong>Proveedores externos</strong></Typography>
                                         </AccordionSummary>
                                         <AccordionDetails>
                                         <Typography>
@@ -171,14 +194,44 @@ function LoginAndSecurity() {
                                         </Typography>
                                         </AccordionDetails>
                                     </Accordion>
-
-
+                                    <Divider/>
+                                    <Typography
+                                        fontSize={{
+                                            lg: 30,
+                                            md: 30,
+                                            sm: 25,
+                                            xs: 25,
+                                        }}                                                                                
+                                        sx={{
+                                            marginTop: '20px',
+                                            marginBottom: '20px',
+                                        }}
+                                    >
+                                        <strong>Último ingreso</strong>
+                                    </Typography>
+                                    <Stack
+                                        direction={{ xs: 'column', sm: 'row' }}
+                                        spacing={{ xs: 3, sm: 10, md: 15 }}
+                                        style={{
+                                            marginTop: '10px',
+                                            marginBottom: '10px',
+                                        }}
+                                    >
+                                        <ListItemIcon>
+                                            <ContactPhoneIcon fontSize="large" />
+                                            <Typography><strong>Número de teléfono</strong></Typography>                                    
+                                        </ListItemIcon>
+                                    </Stack>
                                 </Box>
-                            </Container>
-                            {!mobilAccess ?
-                            <Container maxWidth="xs">
-                                <Paper 
-                                    variant="outlined"
+                            </Container>                          
+                            <Container maxWidth="xs" >
+                                <Paper
+                                    variant='string'
+                                    square={true}
+                                    sx={{ 
+                                        p: 2, 
+                                        border: '1px solid gray',
+                                    }}
                                 >
                                     <Box
                                         sx={{
@@ -186,16 +239,31 @@ function LoginAndSecurity() {
                                         }} 
                                     >
                                         <Img src={security} />
-                                        <Typography variant='h6' sx={{marginTop: '20px'}}>
+                                        <Typography 
+                                            fontSize={{
+                                                lg: 20,
+                                                md: 20,
+                                                sm: 15,
+                                                xs: 15,
+                                            }}                                                                                
+                                            sx={{marginTop: '20px'}}
+                                        >
                                             <strong>Vamos a hacer que tu cuenta sea más segura</strong>
                                         </Typography>
-                                        <Typography variant='subtitle1' sx={{marginTop: '20px'}}>
+                                        <Typography 
+                                            fontSize={{
+                                                lg: 15,
+                                                md: 15,
+                                                sm: 12,
+                                                xs: 12,
+                                            }}                                                                                
+                                            sx={{marginTop: '20px'}}
+                                        >
                                             Siempre estamos trabajando para aumentar la seguridad en nuestra comunidad. Por eso, revisamos todas las cuentas para asegurarnos de que sean lo más seguras posible.
                                         </Typography>
                                     </Box>
                                 </Paper> 
                             </Container>
-                            :null}
                         </Stack>
                     </Paper> 
                 </Box>

@@ -24,6 +24,14 @@ exports.getUsers = functions.https.onCall((data) => {
   return admin.auth().getUsers(data);
 });
 
+exports.setCustomUserClaims = functions.https.onCall((data) => {
+  return admin.auth().setCustomUserClaims(data, { admin: true });
+});
+
+exports.getUser = functions.https.onCall((data) => {
+  return admin.auth().getUser(data);
+});
+
 exports.sendMail = functions.https.onCall((data) => {
   return admin.firestore().collection("mail").add({from: data[0], to: data[1], template: data[2]});
 });

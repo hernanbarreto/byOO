@@ -322,6 +322,7 @@ function Login(props) {
 
     useEffect(() => {
         setOpenFormLogin(props.open);
+        console.log(props.userDetails.user);
     }, [props]);
 
     return (
@@ -344,6 +345,7 @@ function Login(props) {
             onGetConfirmationResult={handleConfirmationResultFormLogin}
             onGetExisteCuenta={handleExisteCuenta}
             onGetEmail={handleEmailExisteCuenta}
+            country={props.userDetails.user[0].country}
             open={openFormLogin}
         />
         :null}
@@ -479,6 +481,7 @@ function Login(props) {
             facebookUser={facebookUser}
             phoneUser={phoneUser}
             name={valueInputNameFormRegistrate.split('/')[0].split(' ')[0][0].toUpperCase() + valueInputNameFormRegistrate.split('/')[0].split(' ')[0].slice(1)}
+            country={props.userDetails.user[0].country}
         />
         :null}
         </div>
