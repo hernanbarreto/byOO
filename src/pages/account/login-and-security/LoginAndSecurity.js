@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -23,9 +23,18 @@ import PasswordIcon from '@mui/icons-material/Password';
 import ContactPhoneIcon from '@mui/icons-material/ContactPhone';
 import GroupsIcon from '@mui/icons-material/Groups';
 import { getFunctions, httpsCallable } from "firebase/functions";
+import { getFirestore, 
+    doc, 
+    getDoc } from "firebase/firestore";
+import '../../login/Login.css';
+import { Button } from '@material-ui/core';
+import Skeleton from '@mui/material/Skeleton';
+import FormEliminarCuenta from './FormEliminarCuenta';
 
 const functions = getFunctions();
 const getUser = httpsCallable(functions, 'getUser');
+
+const database = getFirestore();
 
 function LoginAndSecurity() {
     useEffect(() => {
@@ -47,14 +56,66 @@ function LoginAndSecurity() {
         history.push('/account-settings');          
     }
 
+    const [createdOsName, setCreatedOsName] = useState(null);
+    const [createdOsVersion, setCreatedOsVersion] = useState(null);
+    const [createdLocationCity, setCreatedLocationCity] = useState(null);
+    const [createdLocationCountry, setCreatedLocationCountry] = useState(null);
+    const [createdLocationRegion, setCreatedLocationRegion] = useState(null);
+    const [createdBrowser, setCreatedBrowser] = useState(null);
+    const [createdDate, setCreatedDate] = useState(null);
+    const [createdlenguaje, setCreatedLenguaje] = useState(null);
+    const [loadingCreated, setLoadingCreated] = useState(true);
+    const [userName, setUserName] = useState(null);
+    const [openFormEliminarCuenta, setOpenFormEliminarCuenta] = useState(false);
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const handleUpdateProfile = async () => {
+        const infoUser = doc(database, "users", currentUser.uid);
+        try{                                  
+            const docSnap = await getDoc(infoUser);
+            if (docSnap.exists()) {
+                setUserName(docSnap.data().name.split(' ')[0]);
+                setCreatedLenguaje(docSnap.data().account.created.location.lenguaje)
+                setCreatedOsName(docSnap.data().account.created.os.name);
+                setCreatedOsVersion(docSnap.data().account.created.os.version);
+                setCreatedLocationCity(docSnap.data().account.created.location.city);
+                setCreatedLocationCountry(docSnap.data().account.created.location.country);
+                setCreatedLocationRegion(docSnap.data().account.created.location.region);
+                setCreatedBrowser(docSnap.data().account.created.browser);
+                setCreatedDate(docSnap.data().account.created.date);
+                setLoadingCreated(false);
+            }
+        }catch{
+            console.log('');
+        } 
+    }
+
+    const clearStates = () => {
+        setCreatedOsName(null);
+        setCreatedOsVersion(null);
+        setCreatedLocationCity(null);
+        setCreatedLocationCountry(null);
+        setCreatedLocationRegion(null);
+        setCreatedBrowser(null);
+        setCreatedDate(null);
+        setCreatedLenguaje(null);
+        setLoadingCreated(true);
+    }
+
     useEffect(() => {
         if (currentUser){
-            getUser(currentUser.uid)
-            .then((user)=>{
-                console.log(user.data);
-            });    
+            clearStates();
+            handleUpdateProfile();
+//            getUser(currentUser.uid)
+//            .then((user)=>{
+//                console.log(user.data);
+//                console.log(currentUser);
+//            });    
         }
     }, [currentUser]);
+
+    const handleEliminarCuenta = () => {
+        setOpenFormEliminarCuenta(true);
+    } 
 
     const breadcrumbs = [
         <Link
@@ -75,8 +136,23 @@ function LoginAndSecurity() {
         </Typography>,
       ];    
     
+      const handleClose = () => {
+          setOpenFormEliminarCuenta(false);
+      }
+
+      const handleEliminar = () => {
+        setOpenFormEliminarCuenta(false);
+        console.log('eliminar cuenta');
+    }
+
     return (
         <div>
+            <FormEliminarCuenta
+                open={openFormEliminarCuenta}
+                name={userName}
+                onGetClose={handleClose}
+                onGetEliminar={handleEliminar}
+            />
             <Container maxWidth="lg" >
                 <Box sx={{ flexGrow: 10 }}>
                     <Paper
@@ -207,7 +283,7 @@ function LoginAndSecurity() {
                                             marginBottom: '20px',
                                         }}
                                     >
-                                        <strong>Último ingreso</strong>
+                                        <strong>Historial de ingresos</strong>
                                     </Typography>
                                     <Stack
                                         direction={{ xs: 'column', sm: 'row' }}
@@ -222,6 +298,54 @@ function LoginAndSecurity() {
                                             <Typography><strong>Número de teléfono</strong></Typography>                                    
                                         </ListItemIcon>
                                     </Stack>
+                                    <Divider/>
+                                    <Typography
+                                        fontSize={{
+                                            lg: 30,
+                                            md: 30,
+                                            sm: 25,
+                                            xs: 25,
+                                        }}                                                                                
+                                        sx={{
+                                            marginTop: '20px',
+                                            marginBottom: '20px',
+                                        }}
+                                    >
+                                        <strong>Datos de creación de cuenta</strong>
+                                    </Typography>
+                                        {!loadingCreated ?
+                                    <Stack
+                                        spacing={1}
+                                        style={{
+                                            marginTop: '10px',
+                                            marginBottom: '10px',
+                                        }}
+                                    >
+                                            <Typography><strong>{createdOsName}&nbsp;{createdOsVersion}</strong>&nbsp;·&nbsp;{createdBrowser}</Typography>                                    
+                                            <Typography>{createdLocationCity}&nbsp;·&nbsp;{createdLocationRegion}&nbsp;·&nbsp;{createdLocationCountry}</Typography>                                    
+                                            <Typography>{new Date(parseInt(createdDate)).toLocaleDateString(createdlenguaje, options)}&nbsp;a las&nbsp;{new Date(parseInt(createdDate)).toLocaleTimeString(createdlenguaje)}</Typography>
+                                            <Button 
+                                                variant='outlined'
+                                                className='button__log__BW'
+                                                disableElevation
+                                                onClick={handleEliminarCuenta}
+                                            >
+                                            Eliminar cuenta
+                                            </Button>
+                                        </Stack>
+                                        :
+                                        <Stack
+                                            spacing={1}
+                                            style={{
+                                                marginTop: '10px',
+                                                marginBottom: '10px',
+                                            }}
+                                        >
+                                            <Skeleton variant="text" width="30%"/>
+                                            <Skeleton variant="text" width="50%"/>
+                                            <Skeleton variant="text" width="70%"/>
+                                        </Stack>
+                                        }  
                                 </Box>
                             </Container>                          
                             <Container maxWidth="xs" >

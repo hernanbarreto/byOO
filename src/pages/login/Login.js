@@ -13,6 +13,7 @@ import FormCreaTuPerfil from './FormCreaTuPerfil';
 import './Login.css';
 import { getFirestore } from "firebase/firestore";
 import { doc, setDoc } from "firebase/firestore";
+import {auth} from '../../services/firebase';
 
 function Login(props) {
     const [openFormLogin, setOpenFormLogin] = useState(false);
@@ -260,14 +261,35 @@ function Login(props) {
         apellido = apellido.slice(0,-1);
 
         await setDoc(doc(database, "users", profile.uid), {
-          userId: profile.uid,
-          name: nombre,
-          lastName: apellido,
-          age: valueAgeFormRegistrate,
-          profilePhoto: null,
-          googlePhoto: null,
-          facebookPhoto: null,
-          promotions: promotions,
+            userId: profile.uid,
+            name: nombre,
+            lastName: apellido,
+            age: valueAgeFormRegistrate,
+            profilePhoto: null,
+            googlePhoto: null,
+            facebookPhoto: null,
+            promotions: promotions,
+            account:{
+                created:{
+                    date: auth.currentUser.metadata.createdAt,
+                    ip: props.userDetails.user[0].ip, 
+                    browser: props.userDetails.user[1].browser.name,
+                    os:{
+                        name: props.userDetails.user[1].os.name,
+                        version: props.userDetails.user[1].os.version,
+                    },
+                    location:{
+                        city: props.userDetails.user[0].city,//tigre
+                        country: props.userDetails.user[0].country_name, //argentina
+                        region: props.userDetails.user[0].region,
+                        country_code: props.userDetails.user[0].country_code,
+                        currency_name: props.userDetails.user[0].currency_name,
+                        currency: props.userDetails.user[0].currency,
+                        lenguaje: props.userDetails.user[0].languages.split(',')[0],
+                        country_tld: props.userDetails.user[0].country_tld,
+                    },
+                },
+            },
         })
         .then(()=>{
             setOpenFormUniteComunidad(false);

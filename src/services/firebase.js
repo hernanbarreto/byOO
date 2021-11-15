@@ -19,7 +19,7 @@ const app = initializeApp(firebaseConfig);
 
 const { initializeAppCheck, ReCaptchaV3Provider } = require("firebase/app-check");
 initializeAppCheck(app, {
-  provider: new ReCaptchaV3Provider(process.env.RECAPTCHA_TOKEN),
+  provider: new ReCaptchaV3Provider(process.env.REACT_APP_RECAPTCHA_TOKEN),
   isTokenAutoRefreshEnabled: true
 });
 

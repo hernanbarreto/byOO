@@ -8,6 +8,10 @@ admin.initializeApp({
   databaseURL: "https://byoo-af7e5-default-rtdb.firebaseio.com",
 });
 
+exports.deleteUser = functions.https.onCall((data) => {
+    return admin.auth().deleteUser(data);
+});  
+
 exports.getUserByPhoneNumber = functions.https.onCall((data) => {
   return admin.auth().getUserByPhoneNumber(data);
 });

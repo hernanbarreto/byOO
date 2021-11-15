@@ -22,7 +22,7 @@ function InputAge(props) {
                 if (valueFechaNacimiento !== null){
                     var cumple = new Date(valueFechaNacimiento);
                     if ((Date.now()-cumple.getTime()) >= (1000*60*60*24*365*18)){
-                        props.onGetValueAge(valueFechaNacimiento);
+                        props.onGetValueAge(cumple.getTime());
                     }else{
                         setStateErrorFecha(true);
                         sethelperTextFecha('Debes ser mayor de 18 años para registrarte en byOO');
