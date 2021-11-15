@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Grid';
@@ -16,6 +16,14 @@ import { auth } from '../../services/firebase';
 import Link from '@mui/material/Link';
 import { useHistory } from 'react-router-dom';
 import Stack from '@mui/material/Stack';
+import FormEliminarCuenta from './login-and-security/FormEliminarCuenta';
+import { useAuth } from '../../services/firebase';
+import { emitCustomEvent } from 'react-custom-events';
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { getFirestore, 
+    doc, 
+    getDoc } from "firebase/firestore";
+import LoadingPage from '../login/LoadingPage';
 
 const Img = styled('img')({
     margin: 'auto',
@@ -24,7 +32,44 @@ const Img = styled('img')({
     maxHeight: '150px',
 }); 
 
+const functions = getFunctions();
+const deleteUser = httpsCallable(functions, 'deleteUser');
+
+const database = getFirestore();
+
 function Account() {
+    const {currentUser} = useAuth();
+    const [userName, setUserName] = useState(null);
+    const [openFormEliminarCuenta, setOpenFormEliminarCuenta] = useState(false);
+    const [userEmail, setUserMail] = useState(null);
+    const [loadingDialog, setLoadingDialog] = useState(false);
+
+    const handleUpdateProfile = async () => {
+        const infoUser = doc(database, "users", currentUser.uid);
+        try{                                  
+            const docSnap = await getDoc(infoUser);
+            if (docSnap.exists()) {
+                setUserName(docSnap.data().name.split(' ')[0]);
+                setUserMail(currentUser.email);
+            }
+        }catch{
+            console.log('');
+        } 
+    }
+
+    const clearStates = () => {
+        setUserMail(null);
+        setUserName(null);
+    }
+
+    useEffect(() => {
+        if (currentUser){
+            clearStates();
+            handleUpdateProfile();
+        }
+    }, [currentUser]);
+
+
     useEffect(() => {
         window.scrollTo(0,0);
     }, []);
@@ -59,12 +104,44 @@ function Account() {
         history.push('/account-settings/professional-tools');          
     }
 
-    const handleAccountDelete = () => {
-        history.push('/account-delete/reasons');          
+    const handleEliminarCuenta = () => {
+        setOpenFormEliminarCuenta(true);
     } 
+
+    const handleClose = () => {
+        setOpenFormEliminarCuenta(false);
+    }
+
+    const handleEliminar = () => {
+        setOpenFormEliminarCuenta(false);
+        setLoadingDialog(true);
+        deleteUser(currentUser.uid)
+        .then(()=>{
+            auth.signOut().then(()=> {
+                setLoadingDialog(false);
+                emitCustomEvent('showMsg', 'Hemos eliminado la cuenta ' + userEmail + '/info');
+            }).catch((error) => {
+                setLoadingDialog(false);
+                emitCustomEvent('showMsg', 'Hemos eliminado la cuenta ' + userEmail + '/info');
+            })    
+        })
+        .catch((error)=> {
+            setLoadingDialog(false);
+            emitCustomEvent('showMsg', 'Ocurrió un error al eliminar la cuenta ' + userEmail + '. No te preocupes, nosotros nos encargaremos de eliminarla./info');
+        })
+    }
 
     return (
         <div>
+            <LoadingPage 
+                open={loadingDialog}
+            />
+            <FormEliminarCuenta
+                open={openFormEliminarCuenta}
+                name={userName}
+                onGetClose={handleClose}
+                onGetEliminar={handleEliminar}
+            />
             <Container maxWidth="md">
                 <Box sx={{ flexGrow: 10 }}>
                     <Typography 
@@ -402,7 +479,7 @@ function Account() {
                     >
                         <Link
                             component="button"
-                            onClick={handleAccountDelete}
+                            onClick={handleEliminarCuenta}
                             sx={{
                                 color: '#5472AD !important',
                                 fontSize: '14px',
