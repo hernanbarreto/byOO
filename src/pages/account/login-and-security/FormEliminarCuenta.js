@@ -1,4 +1,4 @@
-import React, { useState }from 'react';
+import React from 'react';
 import '../../login/Login.css';
 import Dialog from '@material-ui/core/Dialog';
 import MuiDialogTitle from '@material-ui/core/DialogTitle';
@@ -9,8 +9,9 @@ import Button from '@mui/material/Button';
 import CloseIcon from '@material-ui/icons/Close';
 import IconButton from '@mui/material/IconButton';
 import { withStyles } from '@material-ui/core/styles';
-import logo from '../../header/logo.svg';
+import logo from  '../../../images/svg/undraw_throw_away_re_x60k.svg';
 import SentimentVeryDissatisfiedIcon from '@mui/icons-material/SentimentVeryDissatisfied';
+import { styled } from '@mui/material/styles';
 
 function FormEliminarCuenta(props) {
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
@@ -61,6 +62,12 @@ function FormEliminarCuenta(props) {
         props.onGetClose(true);
     }
 
+    const Img = styled('img')({
+        margin: 'auto',
+        display: 'block',
+        maxWidth: '100%',
+        maxHeight: '150px',
+    });     
 
     return (
         <div>
@@ -81,18 +88,14 @@ function FormEliminarCuenta(props) {
                 <strong>Eliminá tu cuenta</strong>
             </DialogTitle>
             <MuiDialogContent dividers>
-                <img
-                    style={{
-                        transform: 'scale(2)',
-                        display: 'block',
-                        margin: '30px auto',
-                    }}
+                <Img
                     src={logo}
                     alt='logo'
                 /> 
                 <div align='center'> 
                 <Typography variant='h6'
                     style={{
+                        marginTop: '20px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -121,7 +124,7 @@ function FormEliminarCuenta(props) {
                     className='button__log__BW'
                     onClick={handleClickContinuar}
                 >
-                    Eliminar Cuenta
+                    Confirmar
                 </Button>
             </MuiDialogContent>
             </Dialog>                          

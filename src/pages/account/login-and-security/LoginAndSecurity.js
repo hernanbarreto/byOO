@@ -30,6 +30,9 @@ import '../../login/Login.css';
 import { Button } from '@material-ui/core';
 import Skeleton from '@mui/material/Skeleton';
 import FormEliminarCuenta from './FormEliminarCuenta';
+import { auth } from '../../../services/firebase';
+import { emitCustomEvent } from 'react-custom-events';
+import LoadingPage from '../../login/LoadingPage';
 
 const functions = getFunctions();
 const deleteUser = httpsCallable(functions, 'deleteUser');
@@ -43,6 +46,8 @@ function LoginAndSecurity() {
 
     const history = useHistory ();
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
+    const [loadingDialog, setLoadingDialog] = useState(false);
+
     const {currentUser} = useAuth();
 
     const Img = styled('img')({
@@ -67,7 +72,9 @@ function LoginAndSecurity() {
     const [loadingCreated, setLoadingCreated] = useState(true);
     const [userName, setUserName] = useState(null);
     const [openFormEliminarCuenta, setOpenFormEliminarCuenta] = useState(false);
+    const [userEmail, setUserMail] = useState(null);
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+
     const handleUpdateProfile = async () => {
         const infoUser = doc(database, "users", currentUser.uid);
         try{                                  
@@ -83,6 +90,7 @@ function LoginAndSecurity() {
                 setCreatedBrowser(docSnap.data().account.created.browser);
                 setCreatedDate(docSnap.data().account.created.date);
                 setLoadingCreated(false);
+                setUserMail(currentUser.email);
             }
         }catch{
             console.log('');
@@ -99,6 +107,8 @@ function LoginAndSecurity() {
         setCreatedDate(null);
         setCreatedLenguaje(null);
         setLoadingCreated(true);
+        setUserMail(null);
+        setUserName(null);
     }
 
     useEffect(() => {
@@ -115,14 +125,30 @@ function LoginAndSecurity() {
 
     const handleEliminarCuenta = () => {
         setOpenFormEliminarCuenta(true);
+    } 
+
+    const handleClose = () => {
+        setOpenFormEliminarCuenta(false);
+    }
+
+    const handleEliminar = () => {
+        setOpenFormEliminarCuenta(false);
+        setLoadingDialog(true);
         deleteUser(currentUser.uid)
         .then(()=>{
-            console.log('usuario borrado');
+            auth.signOut().then(()=> {
+                setLoadingDialog(false);
+                emitCustomEvent('showMsg', 'Hemos eliminado la cuenta ' + userEmail + '/info');
+            }).catch((error) => {
+                setLoadingDialog(false);
+                emitCustomEvent('showMsg', 'Hemos eliminado la cuenta ' + userEmail + '/info');
+            })    
         })
         .catch((error)=> {
-            console.log(error);
+            setLoadingDialog(false);
+            emitCustomEvent('showMsg', 'Ocurrió un error al eliminar la cuenta ' + userEmail + '. No te preocupes, nosotros nos encargaremos de eliminarla./info');
         })
-    } 
+    }
 
     const breadcrumbs = [
         <Link
@@ -141,19 +167,13 @@ function LoginAndSecurity() {
         <Typography color="text.primary" key={2}>
             Inicio de sesión y seguridad
         </Typography>,
-      ];    
+    ];    
     
-      const handleClose = () => {
-          setOpenFormEliminarCuenta(false);
-      }
-
-      const handleEliminar = () => {
-        setOpenFormEliminarCuenta(false);
-        console.log('eliminar cuenta');
-    }
-
     return (
         <div>
+            <LoadingPage 
+                open={loadingDialog}
+            />
             <FormEliminarCuenta
                 open={openFormEliminarCuenta}
                 name={userName}

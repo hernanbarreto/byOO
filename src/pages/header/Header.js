@@ -72,6 +72,7 @@ function Header(details) {
 
     const handleLogout = () => {
         auth.signOut().then(()=> {
+            setPhotoURL(null);
             handleClose(null);
         }).catch((error) => {
           console.log(error.message);
@@ -95,6 +96,8 @@ function Header(details) {
     useEffect(() => {
         if (currentUser){
             handleUpdateProfile();
+        }else{
+            handleLogout();
         }
     }, [currentUser]);
 
