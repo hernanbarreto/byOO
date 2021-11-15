@@ -32,7 +32,7 @@ import Skeleton from '@mui/material/Skeleton';
 import FormEliminarCuenta from './FormEliminarCuenta';
 
 const functions = getFunctions();
-const getUser = httpsCallable(functions, 'getUser');
+const deleteUser = httpsCallable(functions, 'deleteUser');
 
 const database = getFirestore();
 
@@ -115,6 +115,13 @@ function LoginAndSecurity() {
 
     const handleEliminarCuenta = () => {
         setOpenFormEliminarCuenta(true);
+        deleteUser(currentUser.uid)
+        .then(()=>{
+            console.log('usuario borrado');
+        })
+        .catch((error)=> {
+            console.log(error);
+        })
     } 
 
     const breadcrumbs = [
