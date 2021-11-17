@@ -8,6 +8,14 @@ admin.initializeApp({
   databaseURL: "https://byoo-af7e5-default-rtdb.firebaseio.com",
 });
 
+exports.verifyIdToken = functions.https.onCall((data) => {
+  return admin.auth().verifyIdToken(data, true);
+});  
+
+exports.revokeRefreshTokens = functions.https.onCall((data) => {
+  return admin.auth().revokeRefreshTokens(data);
+});  
+
 exports.deleteUser = functions.https.onCall((data) => {
     return admin.auth().deleteUser(data);
 });  

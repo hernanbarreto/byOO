@@ -36,6 +36,9 @@ import LoadingPage from '../../login/LoadingPage';
 
 const functions = getFunctions();
 const deleteUser = httpsCallable(functions, 'deleteUser');
+const verifyIdToken = httpsCallable(functions, 'verifyIdToken');
+const revokeRefreshTokens = httpsCallable(functions, 'revokeRefreshTokens');
+const getUser = httpsCallable(functions, 'getUser');
 
 const database = getFirestore();
 
@@ -91,9 +94,14 @@ function LoginAndSecurity() {
                 setCreatedDate(docSnap.data().account.created.date);
                 setLoadingCreated(false);
                 setUserMail(currentUser.email);
+            }else{
+                auth.signOut().then(()=> {
+                    emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
+                }).catch((error) => {
+                    emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
+                })        
             }
         }catch{
-            console.log('');
         } 
     }
 
@@ -113,13 +121,26 @@ function LoginAndSecurity() {
 
     useEffect(() => {
         if (currentUser){
-            clearStates();
-            handleUpdateProfile();
-//            getUser(currentUser.uid)
-//            .then((user)=>{
-//                console.log(user.data);
-//                console.log(currentUser);
-//            });    
+            verifyIdToken(currentUser.accessToken)
+            .then((payload) => {
+                clearStates();
+                handleUpdateProfile();
+            })
+            .catch((error) => {
+              if (error.code === 'auth/id-token-revoked') {
+                auth.signOut().then(()=> {
+                    emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
+                }).catch((error) => {
+                    emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
+                })        
+              } else {
+                auth.signOut().then(()=> {
+                    emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
+                }).catch((error) => {
+                    emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
+                })        
+              }
+            });
         }
     }, [currentUser]);
 
@@ -146,7 +167,7 @@ function LoginAndSecurity() {
         })
         .catch((error)=> {
             setLoadingDialog(false);
-            emitCustomEvent('showMsg', 'Ocurrió un error al eliminar la cuenta ' + userEmail + '. No te preocupes, nosotros nos encargaremos de eliminarla./info');
+            emitCustomEvent('showMsg', 'Ocurrió un error al eliminar la cuenta ' + userEmail + '. No te preocupes, nosotros nos encargaremos de eliminarla./error');
         })
     }
 
@@ -169,6 +190,67 @@ function LoginAndSecurity() {
         </Typography>,
     ];    
     
+    const handleCerrarSesiones = () => {
+        if (currentUser){
+            revokeRefreshTokens(currentUser.uid)
+            .then(() => {
+            return getUser(currentUser.uid);
+            })
+            .then((userRecord) => {
+            return new Date(userRecord.data.tokensValidAfterTime).getTime()/1000;
+            })
+            .then((timestamp) => {
+                auth.signOut().then(()=> {
+                }).catch((error) => {
+                })        
+            });
+        }
+    }
+
+    const numbers = [1, 2, 3, 4, 5];
+    const listItems = numbers.map((number, index) =>
+        <Paper
+            key={index+1}
+            variant='string'
+            sx={{ 
+                p: 2, 
+                border: '1px solid lightgray',
+                borderRadius: '20px',
+            }}
+            style={{
+                marginBottom: '10px',
+            }}
+        >
+        {!loadingCreated ?
+            <Stack
+                key={index+1}
+                spacing={1}
+                style={{
+                    marginTop: '0px',
+                    marginBottom: '0px',
+                }}
+            >
+                <Typography key={(3*index)+1}><strong>{createdOsName}&nbsp;{createdOsVersion}</strong>&nbsp;•&nbsp;{createdBrowser}</Typography>                                    
+                <Typography key={(3*index)+2}>{createdLocationCity}&nbsp;•&nbsp;{createdLocationRegion}&nbsp;•&nbsp;{createdLocationCountry}</Typography>                                    
+                <Typography key={(3*index)+3}>{new Date(parseInt(createdDate)).toLocaleDateString(createdlenguaje, options)}&nbsp;a las&nbsp;{new Date(parseInt(createdDate)).toLocaleTimeString(createdlenguaje)}</Typography>
+            </Stack>
+            :
+            <Stack
+                key={index+1}
+                spacing={1}
+                style={{
+                    marginTop: '0px',
+                    marginBottom: '0px',
+                }}
+            >
+                <Skeleton key={(3*index)+1} variant="text" width="30%"/>
+                <Skeleton key={(3*index)+2} variant="text" width="50%"/>
+                <Skeleton key={(3*index)+3} variant="text" width="70%"/>
+            </Stack>
+            } 
+        </Paper> 
+    );
+
     return (
         <div>
             <LoadingPage 
@@ -180,7 +262,7 @@ function LoginAndSecurity() {
                 onGetClose={handleClose}
                 onGetEliminar={handleEliminar}
             />
-            <Container maxWidth="lg" >
+            <Container maxWidth="lg">
                 <Box sx={{ flexGrow: 10 }}>
                     <Paper
                         variant='string' 
@@ -190,7 +272,7 @@ function LoginAndSecurity() {
                         }}
                     >
                         <Stack
-                            direction={{ xs: 'column', sm: 'row' }}
+                            direction={{ xs: 'column', md: 'row' }}
                             spacing={{ xs: 3, sm: 10, md: 15 }}
                             style={{
                                 marginTop: '30px',
@@ -310,20 +392,24 @@ function LoginAndSecurity() {
                                             marginBottom: '20px',
                                         }}
                                     >
-                                        <strong>Historial de ingresos</strong>
+                                        <strong>Sesiones activas</strong>
                                     </Typography>
                                     <Stack
-                                        direction={{ xs: 'column', sm: 'row' }}
-                                        spacing={{ xs: 3, sm: 10, md: 15 }}
+                                        direction='column'
                                         style={{
                                             marginTop: '10px',
                                             marginBottom: '10px',
                                         }}
                                     >
-                                        <ListItemIcon>
-                                            <ContactPhoneIcon fontSize="large" />
-                                            <Typography><strong>Número de teléfono</strong></Typography>                                    
-                                        </ListItemIcon>
+                                        {listItems}
+                                        <Button 
+                                            variant='outlined'
+                                            className='button__log__continuar'
+                                            disableElevation
+                                            onClick={handleCerrarSesiones}
+                                        >
+                                        Cerrar todas las sesiones
+                                        </Button>
                                     </Stack>
                                     <Divider/>
                                     <Typography
@@ -340,16 +426,24 @@ function LoginAndSecurity() {
                                     >
                                         <strong>Datos de creación de cuenta</strong>
                                     </Typography>
-                                        {!loadingCreated ?
+                                    <Paper
+                                        variant='string'
+                                        sx={{ 
+                                            p: 2, 
+                                            border: '1px solid lightgray',
+                                            borderRadius: '20px',
+                                        }}
+                                    >
+                                    {!loadingCreated ?
                                     <Stack
                                         spacing={1}
                                         style={{
-                                            marginTop: '10px',
-                                            marginBottom: '10px',
+                                            marginTop: '0px',
+                                            marginBottom: '0px',
                                         }}
                                     >
-                                            <Typography><strong>{createdOsName}&nbsp;{createdOsVersion}</strong>&nbsp;·&nbsp;{createdBrowser}</Typography>                                    
-                                            <Typography>{createdLocationCity}&nbsp;·&nbsp;{createdLocationRegion}&nbsp;·&nbsp;{createdLocationCountry}</Typography>                                    
+                                            <Typography><strong>{createdOsName}&nbsp;{createdOsVersion}</strong>&nbsp;•&nbsp;{createdBrowser}</Typography>                                    
+                                            <Typography>{createdLocationCity}&nbsp;•&nbsp;{createdLocationRegion}&nbsp;•&nbsp;{createdLocationCountry}</Typography>                                    
                                             <Typography>{new Date(parseInt(createdDate)).toLocaleDateString(createdlenguaje, options)}&nbsp;a las&nbsp;{new Date(parseInt(createdDate)).toLocaleTimeString(createdlenguaje)}</Typography>
                                             <Button 
                                                 variant='outlined'
@@ -357,37 +451,45 @@ function LoginAndSecurity() {
                                                 disableElevation
                                                 onClick={handleEliminarCuenta}
                                             >
-                                            Eliminar cuenta
+                                            Elimina tu cuenta
                                             </Button>
                                         </Stack>
                                         :
                                         <Stack
                                             spacing={1}
                                             style={{
-                                                marginTop: '10px',
-                                                marginBottom: '10px',
+                                                marginTop: '0px',
+                                                marginBottom: '0px',
                                             }}
                                         >
                                             <Skeleton variant="text" width="30%"/>
                                             <Skeleton variant="text" width="50%"/>
                                             <Skeleton variant="text" width="70%"/>
                                         </Stack>
-                                        }  
+                                        } 
+                                    </Paper> 
                                 </Box>
-                            </Container>                          
-                            <Container maxWidth="xs" >
+                            </Container>
+                            <Container maxWidth="md"
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'flex-start',
+                                    justifyContent: 'center',
+                                    width: '100%',
+                                }}                            
+                            >
                                 <Paper
                                     variant='string'
                                     square={true}
                                     sx={{ 
                                         p: 2, 
-                                        border: '1px solid gray',
+                                        border: '1px solid lightgray',
                                     }}
                                 >
                                     <Box
                                         sx={{
                                             margin: '30px',
-                                        }} 
+                                        }}                                        
                                     >
                                         <Img src={security} />
                                         <Typography 

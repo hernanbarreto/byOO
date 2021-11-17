@@ -34,6 +34,7 @@ const Img = styled('img')({
 
 const functions = getFunctions();
 const deleteUser = httpsCallable(functions, 'deleteUser');
+const verifyIdToken = httpsCallable(functions, 'verifyIdToken');
 
 const database = getFirestore();
 
@@ -51,9 +52,14 @@ function Account() {
             if (docSnap.exists()) {
                 setUserName(docSnap.data().name.split(' ')[0]);
                 setUserMail(currentUser.email);
+            }else{
+                auth.signOut().then(()=> {
+                    emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/info');
+                }).catch((error) => {
+                    emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/info');
+                })        
             }
         }catch{
-            console.log('');
         } 
     }
 
@@ -64,8 +70,26 @@ function Account() {
 
     useEffect(() => {
         if (currentUser){
-            clearStates();
-            handleUpdateProfile();
+            verifyIdToken(currentUser.accessToken)
+            .then((payload) => {
+                clearStates();
+                handleUpdateProfile();
+            })
+            .catch((error) => {
+              if (error.code === 'auth/id-token-revoked') {
+                auth.signOut().then(()=> {
+                    emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
+                }).catch((error) => {
+                    emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
+                })        
+              } else {
+                auth.signOut().then(()=> {
+                    emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
+                }).catch((error) => {
+                    emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
+                })        
+              }
+            });
         }
     }, [currentUser]);
 
@@ -169,7 +193,7 @@ function Account() {
                         <Typography 
                             variant='subtitle1'
                         >
-                            {auth.currentUser.email}&nbsp;{'·'}&nbsp;
+                            {auth.currentUser.email}&nbsp;{'•'}&nbsp;
                         </Typography>
                         <Typography 
                             variant='subtitle1'

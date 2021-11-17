@@ -23,12 +23,19 @@ import HomeRepairServiceIcon from '@mui/icons-material/HomeRepairService';
 import LogoutIcon from '@mui/icons-material/Logout';
 import './Header.css';
 import { getFirestore, 
-    doc, 
-    getDoc } from "firebase/firestore";
-
+        doc, 
+        updateDoc, 
+        arrayUnion, 
+        arrayRemove,
+        getDoc } from "firebase/firestore";
 import { useAuth } from '../../services/firebase';
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { emitCustomEvent } from 'react-custom-events';
 
 const database = getFirestore();
+const functions = getFunctions();
+const deleteUser = httpsCallable(functions, 'deleteUser');
+const verifyIdToken = httpsCallable(functions, 'verifyIdToken');
 
 function Header(details) {
     const history = useHistory ();
@@ -63,6 +70,7 @@ function Header(details) {
     const handleAyuda = (event) => {
         history.push('/privacity');          
         setAnchorEl(null);
+        console.log(currentUser);
     }
     
     const handleCuenta = () => {
@@ -70,22 +78,98 @@ function Header(details) {
         setAnchorEl(null);
     }
 
-    const handleLogout = () => {
-        auth.signOut().then(()=> {
-            setPhotoURL(null);
-            handleClose(null);
-        }).catch((error) => {
-          console.log(error.message);
+    const handleLogout = async () => {
+        const infoUser = doc(database, "users", currentUser.uid);
+        const docSnap = await getDoc(infoUser);
+        const filtered = docSnap.data().sessions.filter(function(element){
+            return element.id === currentUser.accessToken;
+        });
+        await updateDoc(infoUser, {
+            sessions: arrayRemove(filtered[0])
         })
+        .then(()=>{
+            auth.signOut().then(()=> {
+                setPhotoURL(null);
+                handleClose(null);
+            }).catch((error) => {
+              console.log(error.message);
+            })
+        })
+        .catch(()=>{
+            auth.signOut().then(()=> {
+                setPhotoURL(null);
+                handleClose(null);
+            }).catch((error) => {
+              console.log(error.message);
+            })
+        });
     } 
-  
+
     const handleUpdateProfile = async () => {
         setOpenLogin(false);
-        const infoUser = doc(database, "users", auth.currentUser.uid);
+        const infoUser = doc(database, "users", currentUser.uid);
         try{                                  
             const docSnap = await getDoc(infoUser);
             if (docSnap.exists()) {
-                setPhotoURL(docSnap.data().profilePhoto);
+                docSnap.data().sessions.forEach(function(element) {
+                    verifyIdToken(element.id)
+                    .then(() => {
+                    })
+                    .catch(async (error) => {
+                        await updateDoc(infoUser, {
+                            sessions: arrayRemove(element)
+                        })
+                        .then(()=>{
+                        })
+                        .catch(()=>{
+                        });
+                    });                        
+                })                    
+                const filtered = docSnap.data().sessions.filter(function(element){
+                    return element.id === currentUser.accessToken;
+                });
+                if (filtered.length === 0){
+                    await updateDoc(infoUser, {
+                            sessions: arrayUnion(                
+                                {
+                                    id: currentUser.accessToken,
+                                    date: currentUser.metadata.lastLoginAt,
+                                    ip: details.user[0].ip, 
+                                    browser: details.user[1].browser.name,
+                                    os:{
+                                        name: details.user[1].os.name,
+                                        version: details.user[1].os.version,
+                                    },
+                                    location:{
+                                        city: details.user[0].city,//tigre
+                                        country: details.user[0].country_name, //argentina
+                                        region: details.user[0].region,
+                                        country_code: details.user[0].country_code,
+                                        currency_name: details.user[0].currency_name,
+                                        currency: details.user[0].currency,
+                                        lenguaje: details.user[0].languages.split(',')[0],
+                                        country_tld: details.user[0].country_tld,
+                                    },
+                                }
+                            )
+                        }
+                    )
+                    .then(()=>{
+                        setPhotoURL(docSnap.data().profilePhoto);
+                    })
+                    .catch(()=>{
+                        emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
+                    });
+                }else{
+                    setPhotoURL(docSnap.data().profilePhoto);
+                }
+            }else{
+                deleteUser(currentUser.uid)
+                .then(()=>{
+                    handleLogout();
+                })
+                .catch((error)=> {
+                })
             }
         }catch{
             console.log('');
@@ -95,10 +179,9 @@ function Header(details) {
 
     useEffect(() => {
         if (currentUser){
+//            console.log(currentUser);
             handleUpdateProfile();
-        }else{
-            handleLogout();
-        }
+        }    
     }, [currentUser]);
 
     return (

@@ -290,6 +290,7 @@ function Login(props) {
                     },
                 },
             },
+            sessions:[],
         })
         .then(()=>{
             setOpenFormUniteComunidad(false);
@@ -344,7 +345,6 @@ function Login(props) {
 
     useEffect(() => {
         setOpenFormLogin(props.open);
-        console.log(props.userDetails.user);
     }, [props]);
 
     return (
