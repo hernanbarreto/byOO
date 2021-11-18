@@ -73,7 +73,7 @@ function Account() {
 
     useEffect(() => {
         window.scrollTo(0,0);
-        
+
         if (currentUser){
             verifyIdToken(currentUser.accessToken)
             .then(async (payload) => {
@@ -220,7 +220,12 @@ function Account() {
                         <Typography 
                             variant='subtitle1'
                         >
-                            <strong>{auth.currentUser.displayName}</strong>,&nbsp;
+                            <strong>{auth.currentUser.displayName}</strong>
+                            {userEmail ?
+                                <a>,&nbsp;</a>
+                            :
+                                null
+                            }
                         </Typography>
                         <Typography 
                             variant='subtitle1'

@@ -272,12 +272,15 @@ function LoginAndSecurity() {
             })
             .then(()=>{
                 if (sessions[i].id === currentUser.accessToken){
+                    setLoadingDialog(true);
                     clearStates();
                     handleUpdateProfile();    
                     logout()
                     .then(()=>{
+                        setLoadingDialog(false);
                     })
                     .catch((error)=>{
+                        setLoadingDialog(false);
                     });                    
                 }else{
                     clearStates();

@@ -283,26 +283,26 @@ function Login(props) {
                 },
             },
             sessions:[
-                {
-                    id: auth.currentUser.accessToken,
-                    date: auth.currentUser.metadata.lastLoginAt,
-                    ip: props.userDetails.user[0].ip, 
-                    browser: props.userDetails.user[1].browser.name,
-                    os:{
-                        name: props.userDetails.user[1].os.name,
-                        version: props.userDetails.user[1].os.version,
-                    },
-                    location:{
-                        city: props.userDetails.user[0].city,//tigre
-                        country: props.userDetails.user[0].country_name, //argentina
-                        region: props.userDetails.user[0].region,
-                        country_code: props.userDetails.user[0].country_code,
-                        currency_name: props.userDetails.user[0].currency_name,
-                        currency: props.userDetails.user[0].currency,
-                        lenguaje: props.userDetails.user[0].languages.split(',')[0],
-                        country_tld: props.userDetails.user[0].country_tld,
-                    },
-                }
+//                {
+//                    id: auth.currentUser.accessToken,
+//                    date: auth.currentUser.metadata.lastLoginAt,
+//                    ip: props.userDetails.user[0].ip, 
+//                    browser: props.userDetails.user[1].browser.name,
+//                    os:{
+//                        name: props.userDetails.user[1].os.name,
+//                        version: props.userDetails.user[1].os.version,
+//                    },
+//                    location:{
+//                        city: props.userDetails.user[0].city,//tigre
+//                        country: props.userDetails.user[0].country_name, //argentina
+//                        region: props.userDetails.user[0].region,
+//                        country_code: props.userDetails.user[0].country_code,
+//                        currency_name: props.userDetails.user[0].currency_name,
+//                        currency: props.userDetails.user[0].currency,
+//                        lenguaje: props.userDetails.user[0].languages.split(',')[0],
+//                        country_tld: props.userDetails.user[0].country_tld,
+//                    },
+//                }
             ],
         })
         .then(()=>{

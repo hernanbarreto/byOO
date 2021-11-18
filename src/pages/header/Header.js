@@ -32,15 +32,16 @@ import { getFirestore,
 import { useAuth } from '../../services/firebase';
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { emitCustomEvent } from 'react-custom-events';
+import LoadingPage from '../login/LoadingPage';
 
 
 const database = getFirestore();
 const functions = getFunctions();
-const deleteUser = httpsCallable(functions, 'deleteUser');
 const verifyIdToken = httpsCallable(functions, 'verifyIdToken');
 
 function Header(details) {
     const history = useHistory ();
+    const [loadingDialog, setLoadingDialog] = useState(false);
     const [anchorEl, setAnchorEl] = useState(null);
     const [photoURL, setPhotoURL] = useState(null);
     const [openLogin, setOpenLogin] =useState(false);
@@ -81,23 +82,27 @@ function Header(details) {
     }
 
     const handleLogout = async () => {
+        setLoadingDialog(true);
         logout()
         .then(()=>{
             setPhotoURL(null);
             handleClose(null);
+            setLoadingDialog(false);
         })
         .catch((error)=>{
             setPhotoURL(null);
             handleClose(null);
+            setLoadingDialog(false);
         });
     } 
 
     const handleUpdateProfile = async () => {
         setOpenLogin(false);
+        console.log('pase');
         const infoUser = doc(database, "users", currentUser.uid);
         try{                                  
             const docSnap = await getDoc(infoUser);
-            console.log('docSnap:', docSnap);
+            console.log(docSnap.exists());
             if (docSnap.exists()) {
                 docSnap.data().sessions.forEach(function(element) {
                     verifyIdToken(element.id)
@@ -160,7 +165,6 @@ function Header(details) {
 
 
     useEffect(() => {
-        console.log('header:',currentUser);
         if (currentUser){
             handleUpdateProfile();
         }    

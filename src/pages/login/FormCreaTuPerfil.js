@@ -57,6 +57,7 @@ import { getStorage,
 import CircularProgress from '@mui/material/CircularProgress';
 import { green } from '@mui/material/colors';
 import { emitCustomEvent } from 'react-custom-events';
+import Chip from '@mui/material/Chip';
 
 var steps = [
              'Confirmá tu número de teléfono', 
@@ -299,6 +300,18 @@ function FormCreaTuPerfil(props) {
                     .catch((error)=>{
                         emitCustomEvent('showMsg', 'No hemos podido enviar un mail a ' + auth.currentUser.email + ' para que verfiques tu cuenta./error');
                     });
+
+                    sendMail([
+                        "byOO <automated@byoo.com>", 
+                        auth.currentUser.email, 
+                        {
+                            name: 'welcome',
+                            data: {
+                                username: props.name,
+                            }
+                        }
+                    ])
+                    .then(() => console.log("Queued email for delivery!"));    
                 }
                 if (props.googleUser !== null){
                     //se logeo por google
@@ -335,19 +348,6 @@ function FormCreaTuPerfil(props) {
                 setPhotoUploaded(null);
                 setFilePhoto(null);
                 setLoading(false);
-
-
-                sendMail([
-                    "byOO <automated@byoo.com>", 
-                    auth.currentUser.email, 
-                    {
-                        name: 'welcome',
-                        data: {
-                            username: props.name,
-                        }
-                    }
-                ])
-                .then(() => console.log("Queued email for delivery!"));
                 props.onGetFinish(true);
             }else{
                 if (steps.length === 4){
@@ -1202,8 +1202,14 @@ function FormCreaTuPerfil(props) {
                                 }}
                             >
                                 { googlePhotoState !== null ?
-                                    <div>
-                                    {!selectedPhotoGoogle ?    
+                                    <Stack
+                                        direction='column'
+                                        style={{
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                        }}
+                                    >
+                                    {!selectedPhotoGoogle ?                                     
                                     <Avatar
                                         onClick={handleSelectPhotoGoogle}
                                         src={googlePhotoState}
@@ -1216,10 +1222,17 @@ function FormCreaTuPerfil(props) {
                                         sx={{ width: 100, height: 100, cursor: 'pointer', border: "3px solid #44b700", }}
                                     />
                                     }
-                                     </div>
+                                    <Chip label="google" sx={{fontSize:'14px', maxWidth: '100px'}}/>
+                                    </Stack>
                                 :null}
                                 { facebookPhotoState !== null ?
-                                    <div>
+                                    <Stack
+                                        direction='column'
+                                        style={{
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                        }}
+                                    >
                                     {!selectedPhotoFacebook ?
                                         <Avatar
                                             onClick={handleSelectPhotoFacebook}
@@ -1233,7 +1246,8 @@ function FormCreaTuPerfil(props) {
                                             sx={{ width: 100, height: 100, cursor: 'pointer', border: "3px solid #44b700", }}
                                         />
                                     }
-                                    </div>
+                                    <Chip label="facebook" sx={{fontSize:'14px', maxWidth: '100px'}}/>
+                                    </Stack>
                                 :null}
                                 <Badge 
                                     anchorOrigin={{
@@ -1270,10 +1284,17 @@ function FormCreaTuPerfil(props) {
                                         </div>
                                     }
                                 >
+                                <Stack
+                                    direction='column'
+                                    style={{
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                    }}
+                                >
                                 {!selectedPhotoAvatar ?
                                     <div>
                                         {photoUploaded === null ?
-                                            <Box sx={{ m: 1, position: 'relative' }}>
+                                            <Box sx={{ position: 'relative' }}>
                                                 <Avatar
                                                     onClick={handleSelectPhotoAvatar}
                                                     sx={{ width: 100, height: 100, cursor: 'pointer' }}
@@ -1294,7 +1315,7 @@ function FormCreaTuPerfil(props) {
                                                 )}
                                             </Box>      
                                         :
-                                            <Box sx={{ m: 1, position: 'relative' }}>
+                                            <Box sx={{ position: 'relative' }}>
                                                 <Avatar
                                                     onClick={handleSelectPhotoAvatar}
                                                     src={photoUploaded}
@@ -1318,7 +1339,7 @@ function FormCreaTuPerfil(props) {
                                 :
                                     <div>
                                         {photoUploaded === null ?
-                                            <Box sx={{ m: 1, position: 'relative' }}>
+                                            <Box sx={{ position: 'relative' }}>
                                                 <Avatar
                                                     onClick={handleSelectPhotoAvatar}
                                                     sx={{ width: 100, height: 100, cursor: 'pointer', border: "3px solid #44b700"}}
@@ -1339,7 +1360,7 @@ function FormCreaTuPerfil(props) {
                                                 )}
                                             </Box>      
                                         :
-                                            <Box sx={{ m: 1, position: 'relative' }}>
+                                            <Box sx={{ position: 'relative' }}>
                                                 <Avatar
                                                     onClick={handleSelectPhotoAvatar}
                                                     src={photoUploaded}
@@ -1361,6 +1382,8 @@ function FormCreaTuPerfil(props) {
                                         }
                                     </div>
                                 }
+                                <Chip label="otra" sx={{fontSize:'14px', maxWidth: '100px'}}/>
+                                </Stack>
                                 </Badge>
                             </Stack>
                             <Button 

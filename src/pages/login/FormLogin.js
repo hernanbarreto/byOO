@@ -253,15 +253,10 @@ function FormLogin(props) {
                 const auth = getAuth();
                 getUserByEmail(valueInputEmailFormPrincipal)
                 .then((userRecord) => {
-                    let p = userRecord.data.providerData;
-                    let p2=[];
-                    for (var i=0; i<p.length; i++){
-                        if (p[i].email === valueInputEmailFormPrincipal){
-                            p2.push(p[i].providerId);
-                            break;
-                        }
-                    }
-                    if (p2[0] === 'password'){
+                    const filtered = userRecord.data.providerData.filter(function(element){
+                        return ((element.email === valueInputEmailFormPrincipal) && (element.providerId === 'password'));
+                    });
+                    if (filtered.length !== 0){
                         props.onGetValueInputEmailFormPrincipal(valueInputEmailFormPrincipal);
                         props.onGetOpenFormIniciarSesion (true);
                         props.onGetClose(true);                        
