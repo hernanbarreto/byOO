@@ -315,6 +315,7 @@ function InputCountrySelectPhone(props) {
 
     const handleKey = (e) => {
         if (e.key === 'Enter') {
+            e.target.blur();
             props.onGetEnter(true);
         }
     }    

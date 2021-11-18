@@ -25,14 +25,18 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { getFirestore, 
     doc, 
-    getDoc } from "firebase/firestore";
+    getDoc,
+    updateDoc,
+    arrayRemove,
+        } from "firebase/firestore";
 import '../../login/Login.css';
 import { Button } from '@material-ui/core';
 import Skeleton from '@mui/material/Skeleton';
 import FormEliminarCuenta from './FormEliminarCuenta';
-import { auth } from '../../../services/firebase';
+import { logout } from '../../../services/firebase';
 import { emitCustomEvent } from 'react-custom-events';
 import LoadingPage from '../../login/LoadingPage';
+import Chip from '@mui/material/Chip';
 
 const functions = getFunctions();
 const deleteUser = httpsCallable(functions, 'deleteUser');
@@ -41,12 +45,10 @@ const revokeRefreshTokens = httpsCallable(functions, 'revokeRefreshTokens');
 const getUser = httpsCallable(functions, 'getUser');
 
 const database = getFirestore();
+var sessions = [];
+var listItems = null;
 
 function LoginAndSecurity() {
-    useEffect(() => {
-        window.scrollTo(0,0);
-    }, []);
-
     const history = useHistory ();
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
     const [loadingDialog, setLoadingDialog] = useState(false);
@@ -77,6 +79,8 @@ function LoginAndSecurity() {
     const [openFormEliminarCuenta, setOpenFormEliminarCuenta] = useState(false);
     const [userEmail, setUserMail] = useState(null);
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    
+    const [listo, setListo] = useState(false);
 
     const handleUpdateProfile = async () => {
         const infoUser = doc(database, "users", currentUser.uid);
@@ -94,12 +98,18 @@ function LoginAndSecurity() {
                 setCreatedDate(docSnap.data().account.created.date);
                 setLoadingCreated(false);
                 setUserMail(currentUser.email);
+                docSnap.data().sessions.forEach(e=>{
+                    sessions.push(e);
+                });
+                setListo(true);
             }else{
-                auth.signOut().then(()=> {
+                logout()
+                .then(()=>{
                     emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
-                }).catch((error) => {
+                })
+                .catch((error)=>{
                     emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
-                })        
+                });
             }
         }catch{
         } 
@@ -117,32 +127,66 @@ function LoginAndSecurity() {
         setLoadingCreated(true);
         setUserMail(null);
         setUserName(null);
+        sessions = [];
+        listItems = null;
     }
 
     useEffect(() => {
+        window.scrollTo(0,0);
+
         if (currentUser){
             verifyIdToken(currentUser.accessToken)
-            .then((payload) => {
-                clearStates();
-                handleUpdateProfile();
+            .then(async (payload) => {
+                const infoUser = doc(database, "users", currentUser.uid);
+                const docSnap = await getDoc(infoUser);
+                if (docSnap.exists()){
+                    const filtered = docSnap.data().sessions.filter(function(element){
+                        return element.id === currentUser.accessToken;
+                    });
+                    if (filtered.length !== 0){
+                        clearStates();
+                        handleUpdateProfile();    
+                    }else{
+                        logout()
+                        .then(()=>{
+                            emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
+                        })
+                        .catch((error)=>{
+                            console.log(error);
+                            emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
+                        });    
+                    }
+                }else{
+                    logout()
+                    .then(()=>{
+                        emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
+                    })
+                    .catch((error)=>{
+                        emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
+                    });    
+                }
             })
             .catch((error) => {
               if (error.code === 'auth/id-token-revoked') {
-                auth.signOut().then(()=> {
+                logout()
+                .then(()=>{
                     emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
-                }).catch((error) => {
+                })
+                .catch((error)=>{
                     emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
-                })        
+                });
               } else {
-                auth.signOut().then(()=> {
+                logout()
+                .then(()=>{
                     emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
-                }).catch((error) => {
+                })
+                .catch((error)=>{
                     emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
-                })        
+                });
               }
             });
         }
-    }, [currentUser]);
+    }, []);
 
     const handleEliminarCuenta = () => {
         setOpenFormEliminarCuenta(true);
@@ -157,13 +201,15 @@ function LoginAndSecurity() {
         setLoadingDialog(true);
         deleteUser(currentUser.uid)
         .then(()=>{
-            auth.signOut().then(()=> {
+            logout()
+            .then(()=>{
                 setLoadingDialog(false);
                 emitCustomEvent('showMsg', 'Hemos eliminado la cuenta ' + userEmail + '/info');
-            }).catch((error) => {
+            })
+            .catch((error)=>{
                 setLoadingDialog(false);
                 emitCustomEvent('showMsg', 'Hemos eliminado la cuenta ' + userEmail + '/info');
-            })    
+            });
         })
         .catch((error)=> {
             setLoadingDialog(false);
@@ -192,6 +238,7 @@ function LoginAndSecurity() {
     
     const handleCerrarSesiones = () => {
         if (currentUser){
+            setLoadingDialog(true);
             revokeRefreshTokens(currentUser.uid)
             .then(() => {
             return getUser(currentUser.uid);
@@ -200,56 +247,131 @@ function LoginAndSecurity() {
             return new Date(userRecord.data.tokensValidAfterTime).getTime()/1000;
             })
             .then((timestamp) => {
-                auth.signOut().then(()=> {
-                }).catch((error) => {
-                })        
+                logout()
+                .then(()=>{
+                    setLoadingDialog(false);
+                })
+                .catch((error)=>{
+                    setLoadingDialog(false);
+                });
             });
         }
     }
 
-    const numbers = [1, 2, 3, 4, 5];
-    const listItems = numbers.map((number, index) =>
-        <Paper
-            key={index+1}
-            variant='string'
-            sx={{ 
-                p: 2, 
-                border: '1px solid lightgray',
-                borderRadius: '20px',
-            }}
-            style={{
-                marginBottom: '10px',
-            }}
-        >
-        {!loadingCreated ?
-            <Stack
+    const handleCLoseSessionDevice = async (i) => {
+        const database = getFirestore();
+        const infoUser = doc(database, "users", currentUser.uid);
+        const docSnap = await getDoc(infoUser);
+        if (docSnap.exists()) {
+          const filtered = docSnap.data().sessions.filter(function(element){
+              return element.id === sessions[i].id;
+          });
+          if (filtered.length !== 0){
+            await updateDoc(infoUser, {
+                sessions: arrayRemove(filtered[0])
+            })
+            .then(()=>{
+                if (sessions[i].id === currentUser.accessToken){
+                    clearStates();
+                    handleUpdateProfile();    
+                    logout()
+                    .then(()=>{
+                    })
+                    .catch((error)=>{
+                    });                    
+                }else{
+                    clearStates();
+                    handleUpdateProfile();    
+                }        
+            })
+            .catch(()=>{
+                if (sessions[i].id === currentUser.accessToken){
+                    clearStates();
+                    handleUpdateProfile();    
+                    logout()
+                    .then(()=>{
+                    })
+                    .catch((error)=>{
+                    });                    
+                }else{
+                    clearStates();
+                    handleUpdateProfile();    
+                }        
+            });
+          }else{
+            if (sessions[i].id === currentUser.accessToken){
+                clearStates();
+                handleUpdateProfile();    
+                logout()
+                .then(()=>{
+                })
+                .catch((error)=>{
+                });                    
+            }else{
+                clearStates();
+                handleUpdateProfile();    
+            }    
+          }
+        }else{
+            logout()
+            .then(()=>{
+            })
+            .catch((error)=>{
+            });
+        }
+    }
+
+    useEffect(() => {
+        if (listo){
+            setListo(false);
+            listItems = sessions.map((session, index) =>
+            <Paper
                 key={index+1}
-                spacing={1}
+                variant='string'
+                sx={{ 
+                    p: 2, 
+                    border: '1px solid lightgray',
+                    borderRadius: '20px',
+                }}
                 style={{
-                    marginTop: '0px',
-                    marginBottom: '0px',
+                    marginBottom: '10px',
                 }}
             >
-                <Typography key={(3*index)+1}><strong>{createdOsName}&nbsp;{createdOsVersion}</strong>&nbsp;•&nbsp;{createdBrowser}</Typography>                                    
-                <Typography key={(3*index)+2}>{createdLocationCity}&nbsp;•&nbsp;{createdLocationRegion}&nbsp;•&nbsp;{createdLocationCountry}</Typography>                                    
-                <Typography key={(3*index)+3}>{new Date(parseInt(createdDate)).toLocaleDateString(createdlenguaje, options)}&nbsp;a las&nbsp;{new Date(parseInt(createdDate)).toLocaleTimeString(createdlenguaje)}</Typography>
-            </Stack>
-            :
-            <Stack
-                key={index+1}
-                spacing={1}
-                style={{
-                    marginTop: '0px',
-                    marginBottom: '0px',
-                }}
-            >
-                <Skeleton key={(3*index)+1} variant="text" width="30%"/>
-                <Skeleton key={(3*index)+2} variant="text" width="50%"/>
-                <Skeleton key={(3*index)+3} variant="text" width="70%"/>
-            </Stack>
-            } 
-        </Paper> 
-    );
+                <Stack
+                    key={index+1}
+                    spacing={1}
+                    style={{
+                        marginTop: '0px',
+                        marginBottom: '0px',
+                    }}
+                >
+                    {(sessions[index].id === currentUser.accessToken) ?
+                        <Chip size='small' color='success' label="SESIÓN ACTUAL" sx={{fontSize:'10px', maxWidth: '100px'}}/>
+                    :null
+                    }
+                    <Typography key={(4*index)+1}><strong>{sessions[index].os.name}&nbsp;{sessions[index].os.version}</strong>&nbsp;•&nbsp;{sessions[index].browser}</Typography>                                    
+                    <Typography key={(4*index)+2}>{sessions[index].location.city}&nbsp;•&nbsp;{sessions[index].location.region}&nbsp;•&nbsp;{sessions[index].location.country}</Typography>                                    
+                    <Typography key={(4*index)+3}>{new Date(parseInt(sessions[index].date)).toLocaleDateString(sessions[index].location.lenguaje, options)}&nbsp;a las&nbsp;{new Date(parseInt(sessions[index].date)).toLocaleTimeString(sessions[index].location.lenguaje)}</Typography>
+                    <Link
+                        key={(4*index)+4}
+                        underline="none"
+                        onClick={(e, item) => {handleCLoseSessionDevice(index);}}
+                        sx={{
+                            display: 'flex',
+                            justifyContent: 'right',
+                            color: '#222222 !important',
+                            fontSize: '14px',
+                            cursor: 'pointer',
+                            userSelect: 'none',
+                        }} 
+                        >
+                            <strong>Cerrar sesión</strong>
+                        </Link>
+                </Stack>
+            </Paper> 
+            );    
+        }
+    }, [listo, currentUser]);
 
     return (
         <div>
@@ -518,7 +640,7 @@ function LoginAndSecurity() {
                                 </Paper> 
                             </Container>
                         </Stack>
-                    </Paper> 
+                    </Paper>
                 </Box>
             </Container>
         </div>

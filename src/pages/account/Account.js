@@ -24,6 +24,7 @@ import { getFirestore,
     doc, 
     getDoc } from "firebase/firestore";
 import LoadingPage from '../login/LoadingPage';
+import { logout } from '../../services/firebase';
 
 const Img = styled('img')({
     margin: 'auto',
@@ -53,11 +54,13 @@ function Account() {
                 setUserName(docSnap.data().name.split(' ')[0]);
                 setUserMail(currentUser.email);
             }else{
-                auth.signOut().then(()=> {
+                logout()
+                .then(()=>{
                     emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/info');
-                }).catch((error) => {
+                })
+                .catch((error)=>{
                     emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/info');
-                })        
+                });
             }
         }catch{
         } 
@@ -69,33 +72,60 @@ function Account() {
     }
 
     useEffect(() => {
+        window.scrollTo(0,0);
+        
         if (currentUser){
             verifyIdToken(currentUser.accessToken)
-            .then((payload) => {
-                clearStates();
-                handleUpdateProfile();
+            .then(async (payload) => {
+                const infoUser = doc(database, "users", currentUser.uid);
+                const docSnap = await getDoc(infoUser);
+                if (docSnap.exists()){
+                    const filtered = docSnap.data().sessions.filter(function(element){
+                        return element.id === currentUser.accessToken;
+                    });
+                    if (filtered.length !== 0){
+                        clearStates();
+                        handleUpdateProfile();    
+                    }else{
+                        logout()
+                        .then(()=>{
+                            emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
+                        })
+                        .catch((error)=>{
+                            console.log(error);
+                            emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
+                        });    
+                    }
+                }else{
+                    logout()
+                    .then(()=>{
+                        emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
+                    })
+                    .catch((error)=>{
+                        emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
+                    });    
+                }
             })
             .catch((error) => {
               if (error.code === 'auth/id-token-revoked') {
-                auth.signOut().then(()=> {
+                logout()
+                .then(()=>{
                     emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
-                }).catch((error) => {
+                })
+                .catch((error)=>{
                     emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
-                })        
+                });
               } else {
-                auth.signOut().then(()=> {
+                logout()
+                .then(()=>{
                     emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
-                }).catch((error) => {
+                })
+                .catch((error)=>{
                     emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
-                })        
+                });
               }
             });
         }
-    }, [currentUser]);
-
-
-    useEffect(() => {
-        window.scrollTo(0,0);
     }, []);
 
     const history = useHistory ();
@@ -141,13 +171,15 @@ function Account() {
         setLoadingDialog(true);
         deleteUser(currentUser.uid)
         .then(()=>{
-            auth.signOut().then(()=> {
+            logout()
+            .then(()=>{
                 setLoadingDialog(false);
                 emitCustomEvent('showMsg', 'Hemos eliminado la cuenta ' + userEmail + '/info');
-            }).catch((error) => {
+            })
+            .catch((error)=>{
                 setLoadingDialog(false);
                 emitCustomEvent('showMsg', 'Hemos eliminado la cuenta ' + userEmail + '/info');
-            })    
+            });
         })
         .catch((error)=> {
             setLoadingDialog(false);

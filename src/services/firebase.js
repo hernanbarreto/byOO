@@ -2,8 +2,14 @@ import React, { useState, useEffect, useContext, createContext } from 'react';
 import { initializeApp } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
-import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
+import { 
+  doc, 
+  updateDoc, 
+  arrayRemove,
+  getDoc, 
+  getFirestore, 
+  connectFirestoreEmulator} from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FB_API,
@@ -45,7 +51,7 @@ export function AuthProvider({ children }) {
   function getUser() {
     return auth.currentUser
   }
-
+  
   const value = {
     currentUser,
     getUser,
@@ -60,6 +66,33 @@ export function AuthProvider({ children }) {
 }  
 
 export const auth = getAuth();
+
+export const logout = async () =>{
+  const database = getFirestore();
+  const infoUser = doc(database, "users", auth.currentUser.uid);
+  const docSnap = await getDoc(infoUser);
+  if (docSnap.exists()) {
+    const filtered = docSnap.data().sessions.filter(function(element){
+        return element.id === auth.currentUser.accessToken;
+    });
+    if (filtered.length !== 0){
+      await updateDoc(infoUser, {
+          sessions: arrayRemove(filtered[0])
+      })
+      .then(()=>{
+          return auth.signOut() 
+      })
+      .catch(()=>{
+        return auth.signOut() 
+      });
+    }else{
+      return auth.signOut() 
+    }
+  }else{
+    return auth.signOut() 
+  }
+}
+
 
 //connectAuthEmulator(auth, "http://localhost:9099");
 //

@@ -7,7 +7,7 @@ function LoadingPage(props) {
     return (
         <div>
             <Backdrop
-                sx={{ color: 'rgb(78, 50, 126)', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+                sx={{ color: 'rgb(78, 50, 126)', zIndex: (theme) => theme.zIndex.drawer + 1000000000 }}
                 open={props.open}
             >
                 <Box sx={{ m: 1, position: 'relative' }}>

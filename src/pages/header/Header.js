@@ -1,5 +1,5 @@
 import React, {  useState, useEffect } from 'react';
-import { auth } from '../../services/firebase';
+import { logout } from '../../services/firebase';
 import logo from './byOO_1.svg';
 import Login from '../login/Login'
 import DehazeIcon from '@material-ui/icons/Dehaze';
@@ -22,7 +22,8 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import HomeRepairServiceIcon from '@mui/icons-material/HomeRepairService';
 import LogoutIcon from '@mui/icons-material/Logout';
 import './Header.css';
-import { getFirestore, 
+import { getFirestore,
+        Timestamp, 
         doc, 
         updateDoc, 
         arrayUnion, 
@@ -31,6 +32,7 @@ import { getFirestore,
 import { useAuth } from '../../services/firebase';
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { emitCustomEvent } from 'react-custom-events';
+
 
 const database = getFirestore();
 const functions = getFunctions();
@@ -79,29 +81,14 @@ function Header(details) {
     }
 
     const handleLogout = async () => {
-        const infoUser = doc(database, "users", currentUser.uid);
-        const docSnap = await getDoc(infoUser);
-        const filtered = docSnap.data().sessions.filter(function(element){
-            return element.id === currentUser.accessToken;
-        });
-        await updateDoc(infoUser, {
-            sessions: arrayRemove(filtered[0])
-        })
+        logout()
         .then(()=>{
-            auth.signOut().then(()=> {
-                setPhotoURL(null);
-                handleClose(null);
-            }).catch((error) => {
-              console.log(error.message);
-            })
+            setPhotoURL(null);
+            handleClose(null);
         })
-        .catch(()=>{
-            auth.signOut().then(()=> {
-                setPhotoURL(null);
-                handleClose(null);
-            }).catch((error) => {
-              console.log(error.message);
-            })
+        .catch((error)=>{
+            setPhotoURL(null);
+            handleClose(null);
         });
     } 
 
@@ -110,6 +97,7 @@ function Header(details) {
         const infoUser = doc(database, "users", currentUser.uid);
         try{                                  
             const docSnap = await getDoc(infoUser);
+            console.log('docSnap:', docSnap);
             if (docSnap.exists()) {
                 docSnap.data().sessions.forEach(function(element) {
                     verifyIdToken(element.id)
@@ -133,7 +121,7 @@ function Header(details) {
                             sessions: arrayUnion(                
                                 {
                                     id: currentUser.accessToken,
-                                    date: currentUser.metadata.lastLoginAt,
+                                    date: Timestamp.now().toMillis(),
                                     ip: details.user[0].ip, 
                                     browser: details.user[1].browser.name,
                                     os:{
@@ -164,12 +152,6 @@ function Header(details) {
                     setPhotoURL(docSnap.data().profilePhoto);
                 }
             }else{
-                deleteUser(currentUser.uid)
-                .then(()=>{
-                    handleLogout();
-                })
-                .catch((error)=> {
-                })
             }
         }catch{
             console.log('');
@@ -178,8 +160,8 @@ function Header(details) {
 
 
     useEffect(() => {
+        console.log('header:',currentUser);
         if (currentUser){
-//            console.log(currentUser);
             handleUpdateProfile();
         }    
     }, [currentUser]);
