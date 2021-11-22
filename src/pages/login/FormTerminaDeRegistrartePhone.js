@@ -15,12 +15,11 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@material-ui/core/IconButton';
 import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
 import { makeStyles } from '@material-ui/core/styles';
-import LoadingPage from './LoadingPage';
 import Link from '@mui/material/Link';
+import {emitCustomEvent} from 'react-custom-events';
 
 function FormTerminaDeRegistratePhone(props) {
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
-    const [loadingDialog, setLoadingDialog] = useState(false);
     const [checked, setChecked] = useState(false);
 
     const styles = (theme) => ({});
@@ -74,7 +73,7 @@ function FormTerminaDeRegistratePhone(props) {
 
     const handleCloseDialogREG = () => {
         props.onGetReturn(true);
-        setLoadingDialog(false);
+        emitCustomEvent('openLoadingPage', false);
     }
 
     /*variables del componente InputName Form Registrate*/
@@ -124,16 +123,16 @@ function FormTerminaDeRegistratePhone(props) {
         if (variableEstadoCargadoNewValueNameFormRegistrate){
             if (valueInputNameFormRegistrate !== ''){ 
                 if (valueInputAgeFormRegistrate !== ''){
-                    setLoadingDialog(true);
+                    emitCustomEvent('openLoadingPage', true);
                     props.onGetName(valueInputNameFormRegistrate);
                     props.onGetAge(valueInputAgeFormRegistrate); 
                     props.onGetClose(true);
                     props.onGetPromotions(!checked);
-                    setLoadingDialog(false);
+                    emitCustomEvent('openLoadingPage', false);
                 }
             }
             setVariableEstadoCargadoNewValueNameFormRegistrate(false);       
-        } 
+        }          
     },[props, checked, variableEstadoCargadoNewValueAgeFormRegistrate, valueInputNameFormRegistrate, variableEstadoCargadoNewValueNameFormRegistrate, valueInputAgeFormRegistrate]);
     /*fin atencion del valor ingresado del componente InputPassword del form Registrate*/   
 
@@ -166,9 +165,6 @@ function FormTerminaDeRegistratePhone(props) {
                 keepMounted
                 disableEscapeKeyDown={true}
             >
-            <LoadingPage 
-                open={loadingDialog}
-            />
             <DialogTitle 
                 onClose={handleCloseDialogREG}>
                 <strong>Terminá de registrarte</strong>

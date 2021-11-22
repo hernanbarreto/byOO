@@ -41,7 +41,7 @@ function InputAge(props) {
                 props.onGetValueAge('');
             }
             props.onSubmitValueAge(false);
-        }
+        }         
     },[props, valueFechaNacimiento]);
 
     const handleKey = (e) => {

@@ -12,6 +12,7 @@ import PrivateRoute from './pages/PrivateRoute';
 import NotFound from './pages/NotFound';
 import { useUserAgent } from '@oieduardorabelo/use-user-agent';
 import Axios from 'axios';
+import LoadingPage from './pages/login/LoadingPage';
 
 function App() {
   const details = useUserAgent();
@@ -32,6 +33,7 @@ function App() {
         <Info />
         <Router>
           <Header user={userDetails}/>
+          <LoadingPage/>
           <Switch>
             <Route exact path='/privacity'>
                 <Privacity />

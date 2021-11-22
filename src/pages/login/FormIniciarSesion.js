@@ -19,11 +19,9 @@ import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
 import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import { Divider } from '@material-ui/core';
-import LoadingPage from './LoadingPage';
 
 function FormIniciarSesion(props) {
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
-    const [loadingDialog, setLoadingDialog] = useState(false);
 
     const[ openMsg, setOpenMsg] = useState(false);
     const [severityInfo, setSeverityInfo] = useState('success');
@@ -77,7 +75,7 @@ function FormIniciarSesion(props) {
 
     const handleCloseIniciarSesion = () => {
         props.onGetReturn(true);
-        setLoadingDialog(false);
+        emitCustomEvent('openLoadingPage', false);
     }
 
     /*submit Iniciar sesion*/
@@ -92,7 +90,7 @@ function FormIniciarSesion(props) {
 
     const handleRecuperarPassword = () => {
         props.onGetRecoveryPass(true);
-        setLoadingDialog(false);
+        emitCustomEvent('openLoadingPage', false);
     }
 
     /*variables del componente InputPassword del form inicias sesion*/
@@ -110,19 +108,19 @@ function FormIniciarSesion(props) {
     /*fin variables de componente InputPassword del form iniciar sesion*/
 
     /*atencion del valor ingresado del componente InputPassword del form iniciar sesion*/
-    useEffect(() => {
+    useEffect(() => {       
         if (variableEstadoCargadoNewValuePasswordFormIniciarSesion){
             if ((valueInputPasswordFormIniciarSesion !== '')) {
-                setLoadingDialog(true);
+                emitCustomEvent('openLoadingPage', true);
                 const auth = getAuth();
                 signInWithEmailAndPassword(auth, props.email, valueInputPasswordFormIniciarSesion)
                     .then((userCredential) => {
                         props.onGetClose(true);
-                        setLoadingDialog(false);
+                        emitCustomEvent('openLoadingPage', false);
                     })
                     .catch((error) => {
                         if (error.code === 'auth/wrong-password'){
-                            setLoadingDialog(false);
+                            emitCustomEvent('openLoadingPage', false);
                             setMsg('El password ingresado es incorrecto, no te preocupes volvé a intentarlo')
                             setSeverityInfo('error')
                             setOpenMsg(true);
@@ -133,10 +131,10 @@ function FormIniciarSesion(props) {
                               .then(() => {
                                 emitCustomEvent('showMsg', String('Demasiados intentos fallidos, te hemos enviado un enlace para restablecer tu contraseña a la dirección ') + String(props.email) + String('/') + String('info'));
                                 props.onGetClose(true);
-                                setLoadingDialog(false);
+                                emitCustomEvent('openLoadingPage', false);
                             })
                               .catch((error) => {
-                                setLoadingDialog(false);
+                                emitCustomEvent('openLoadingPage', false);
                                 setMsg(error.code.split('/')[1].replace(/-/g,' '));
                                 setSeverityInfo('error');
                                 setOpenMsg(true);                    
@@ -145,12 +143,12 @@ function FormIniciarSesion(props) {
                         if (error.code === 'auth/invalid-email'){
                             emitCustomEvent('showMsg', String('No existe una cuenta asociada a ') + String(props.email) + String('/') + String('error'));
                             props.onGetClose(true);
-                            setLoadingDialog(false);
+                            emitCustomEvent('openLoadingPage', false);
                         }
                     });
             }
             setVariableEstadoCargadoNewValuePasswordFormIniciarSesion(false);       
-        } 
+        }         
     },[valueInputPasswordFormIniciarSesion, variableEstadoCargadoNewValuePasswordFormIniciarSesion, props]);
     /*fin atencion del valor ingresado del componente InputPassword del form Inicias sesion*/
 
@@ -168,9 +166,6 @@ function FormIniciarSesion(props) {
                 keepMounted
                 disableEscapeKeyDown={true}
             >
-            <LoadingPage 
-                open={loadingDialog}
-            />
             <DialogTitle 
                 onClose={handleCloseIniciarSesion}
             >

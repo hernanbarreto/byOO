@@ -79,7 +79,7 @@ function InputName(props) {
                 }
             }
             props.onSubmitValueName(false);
-        }
+        }          
     },[props, valueInputName, valueInputLastName]);
 
     const handleKey = (e) => {

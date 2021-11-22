@@ -357,7 +357,7 @@ function Login(props) {
     }
 
     useEffect(() => {
-        setOpenFormLogin(props.open);
+        setOpenFormLogin(props.open);        
     }, [props]);
 
     return (

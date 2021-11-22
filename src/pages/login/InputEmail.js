@@ -45,7 +45,7 @@ function InputEmail(props) {
                 props.onGetValueEmail('');
             }
             props.onSubmitValueEmail(false);
-        }
+        }        
     },[props, valueInputEmail]);
     
     return (

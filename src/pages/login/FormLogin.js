@@ -22,9 +22,9 @@ import { getAuth,
          RecaptchaVerifier } from "firebase/auth";
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
-import LoadingPage from './LoadingPage';
 import { getFunctions, httpsCallable } from "firebase/functions";
 import Link from '@mui/material/Link';
+import { emitCustomEvent } from 'react-custom-events';
 
 const functions = getFunctions();
 const getUserByPhoneNumber = httpsCallable(functions, 'getUserByPhoneNumber');
@@ -39,7 +39,6 @@ function FormLogin(props) {
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
     const [txtBtnContinuar, setTxtBtnContinuar] = useState('Continuar');
     const [classNameBtnContinuar, setClassNameBtnContinuar] = useState('button__log__continuar');
-    const [loadingDialog, setLoadingDialog] = useState(false);
 
     const [ openMsg, setOpenMsg] = useState(false);
     const [severityInfo, setSeverityInfo] = useState('success');
@@ -100,10 +99,10 @@ function FormLogin(props) {
         if (recaptchaVerifier !== undefined)
             if (!recaptchaVerifier.destroyed) 
                 recaptchaVerifier.clear();
-        props.onGetClose(true);
+        emitCustomEvent('openLoadingPage', false);
         setTxtBtnContinuar('Continuar');
         setClassNameBtnContinuar('button__log__continuar');
-        setLoadingDialog(false);
+        props.onGetClose(true);
     }
     
     const handleClickLogEmail = () => {
@@ -175,10 +174,10 @@ function FormLogin(props) {
     /*fin variables de componente CountrySelectPhone*/
 
     /*atencion del valor ingresado del componente CountrySelectPhone*/
-    useEffect(() => {
+    useEffect(() => {       
         if (variableEstadoCargadoNewValuePhoneFormPrincipal){
             if ((valueInputPhoneFormPrincipal !== '')) {
-                setLoadingDialog(true);
+                emitCustomEvent('openLoadingPage', true);
                 getUserByPhoneNumber(valueInputPhoneFormPrincipal)  
                 .then((userRecord) => {
                     //el usuario existe
@@ -191,11 +190,11 @@ function FormLogin(props) {
                     }, auth);
                     setTxtBtnContinuar('Cancelar');
                     setClassNameBtnContinuar('button__log__BW');
-                    setLoadingDialog(false);
+                    emitCustomEvent('openLoadingPage', false);
                     
                     signInWithPhoneNumber(auth, valueInputPhoneFormPrincipal, recaptchaVerifier)
                     .then((confirmationResult) => {
-                        setLoadingDialog(true);
+                        emitCustomEvent('openLoadingPage', true);
                         if (recaptchaVerifier !== undefined)
                             if (!recaptchaVerifier.destroyed) 
                                 recaptchaVerifier.clear();
@@ -204,11 +203,11 @@ function FormLogin(props) {
                         props.onGetPhoneNumber(valueInputPhoneFormPrincipal);
                         props.onGetConfirmationResult(confirmationResult);
                         props.onGetOpenFormVerificaCodigoPhone(true);
-                        setLoadingDialog(false);
+                        emitCustomEvent('openLoadingPage', false);
                     }).catch((error) => {
                         // Error; SMS not sent
                         // ...
-                        setLoadingDialog(false);
+                        emitCustomEvent('openLoadingPage', false);
                         if (recaptchaVerifier !== undefined)
                             if (!recaptchaVerifier.destroyed) 
                                 recaptchaVerifier.clear();
@@ -223,11 +222,11 @@ function FormLogin(props) {
                     //el usuario no existe
                     props.onGetPhoneNumber(valueInputPhoneFormPrincipal);
                     props.onGetOpenFormTerminaDeRegistrartePhone(true);
-                    setLoadingDialog(false);
+                    emitCustomEvent('openLoadingPage', false);
                 });
              }
             setVariableEstadoCargadoNewValuePhoneFormPrincipal(false);       
-        } 
+        }         
     },[props, valueInputPhoneFormPrincipal, variableEstadoCargadoNewValuePhoneFormPrincipal]);
     /*fin atencion del valor ingresado del componente CountrySelectPhone*/
 
@@ -246,10 +245,10 @@ function FormLogin(props) {
     /*fin variables del componente InputEmail Form Principal*/
       
     /*atencion del valor ingresado del componente Input Email del form principal*/
-    useEffect(() => {
+    useEffect(() => {       
         if (variableEstadoCargadoNewValueEmailFormPrincipal){
             if ((valueInputEmailFormPrincipal !== '')) {
-                setLoadingDialog(true);
+                emitCustomEvent('openLoadingPage', true);
                 const auth = getAuth();
                 getUserByEmail(valueInputEmailFormPrincipal)
                 .then((userRecord) => {
@@ -257,21 +256,21 @@ function FormLogin(props) {
                         return ((element.email === valueInputEmailFormPrincipal) && (element.providerId === 'password'));
                     });
                     if (filtered.length !== 0){
+                        emitCustomEvent('openLoadingPage', false);
                         props.onGetValueInputEmailFormPrincipal(valueInputEmailFormPrincipal);
                         props.onGetOpenFormIniciarSesion (true);
                         props.onGetClose(true);                        
-                        setLoadingDialog(false);        
                     }else{
                         fetchSignInMethodsForEmail(auth, valueInputEmailFormPrincipal)
                         .then(providers => {
                             var i = providers.indexOf('password');
                             i !== -1 && providers.splice( i, 1 );
+                            emitCustomEvent('openLoadingPage', false);
                             props.onGetExisteCuenta(providers);
                             props.onGetEmail(valueInputEmailFormPrincipal);
-                            setLoadingDialog(false);
                         })
                         .catch((error) => {
-                            setLoadingDialog(false);
+                            emitCustomEvent('openLoadingPage', false);
                             setMsg(error.code.split('/')[1].replace(/-/g,' '));
                             setSeverityInfo('error');
                             setOpenMsg(true);                    
@@ -283,21 +282,21 @@ function FormLogin(props) {
                     .then(providers => {
                         if ((providers.length) === 0) {
                             //email inexistente, debe crear password
+                            emitCustomEvent('openLoadingPage', false);
                             props.onGetValueInputEmailFormPrincipal(valueInputEmailFormPrincipal);
                             props.onGetOpenFormRegistrate (true);
                             props.onGetClose(true);
-                            setLoadingDialog(false);
                         } else {
                             var i = providers.indexOf('password');
                             i !== -1 && providers.splice( i, 1 );
+                            emitCustomEvent('openLoadingPage', false);
                             props.onGetExisteCuenta(providers);
                             props.onGetEmail(valueInputEmailFormPrincipal);
-                            setLoadingDialog(false);
                         }
                     })
                     .catch((error) => {
                         // Some error occurred, you can inspect the code: error.code
-                        setLoadingDialog(false);
+                        emitCustomEvent('openLoadingPage', false);
                         setMsg(error.code.split('/')[1].replace(/-/g,' '));
                         setSeverityInfo('error');
                         setOpenMsg(true);                    
@@ -305,18 +304,18 @@ function FormLogin(props) {
                 });                
             }
             setVariableEstadoCargadoNewValueEmailFormPrincipal(false);       
-        } 
+        }       
     },[props, valueInputEmailFormPrincipal, variableEstadoCargadoNewValueEmailFormPrincipal]);
     /*fin atencion del valor ingresado del componente Input Email del form principal*/    
     
     const handleProvidersGoogle = (providers) => {
         props.onGetExisteCuenta(providers);
-        setLoadingDialog(false);
+        emitCustomEvent('openLoadingPage', false);
     }
 
     const handleProvidersFacebook = (providers) => {
         props.onGetExisteCuenta(providers);
-        setLoadingDialog(false);
+        emitCustomEvent('openLoadingPage', false);
     }
 
     const handleEmail = (email) => {
@@ -337,7 +336,7 @@ function FormLogin(props) {
     }
 
     const handleGoogleUser = (value) => {
-        setLoadingDialog(false);
+        emitCustomEvent('openLoadingPage', false);
         props.onGetNameFormTerminaDeRegistrarte(value.profileObj.givenName);
         props.onGetApellidoFormTerminaDeRegistrarte(value.profileObj.familyName);
         props.onGetEmailFormTerminaDeRegistrarte(value.profileObj.email);
@@ -346,7 +345,7 @@ function FormLogin(props) {
     }
 
     const handleFacebookUser = (value) => {
-        setLoadingDialog(false);
+        emitCustomEvent('openLoadingPage', false);
         props.onGetNameFormTerminaDeRegistrarte(value.name.split(' ')[0]);
         props.onGetApellidoFormTerminaDeRegistrarte(value.name.split(' ')[1]);
         props.onGetEmailFormTerminaDeRegistrarte(value.email);
@@ -355,7 +354,7 @@ function FormLogin(props) {
     }
 
     const handleClickGoogle = () => {
-        setLoadingDialog(true);
+        emitCustomEvent('openLoadingPage', true);
         if (recaptchaVerifier !== undefined)
             if (!recaptchaVerifier.destroyed) 
                 recaptchaVerifier.clear();
@@ -364,7 +363,7 @@ function FormLogin(props) {
     }
 
     const handleClickFacebook = () => {
-        setLoadingDialog(true);
+        emitCustomEvent('openLoadingPage', true);
         if (recaptchaVerifier !== undefined)
             if (!recaptchaVerifier.destroyed) 
                 recaptchaVerifier.clear();
@@ -373,11 +372,11 @@ function FormLogin(props) {
     }
 
     const handleErrorFacebook = () => {
-        setLoadingDialog(false);
+        emitCustomEvent('openLoadingPage', false);
     }
 
     const handleErrorGoogle = () => {
-        setLoadingDialog(false);        
+        emitCustomEvent('openLoadingPage', false);
     }
 
     const handlePoliticaDePrivacidad = () => {
@@ -398,9 +397,6 @@ function FormLogin(props) {
                 keepMounted
                 disableEscapeKeyDown={true}
             >
-            <LoadingPage 
-                open={loadingDialog}
-            />
             <DialogTitle 
                 onClose={handleCloseLogin}>
                 <strong>Inicia sesión o registrate</strong>

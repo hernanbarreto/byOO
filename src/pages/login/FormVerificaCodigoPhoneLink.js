@@ -14,12 +14,11 @@ import { getAuth,
          linkWithCredential } from "firebase/auth";
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
-import LoadingPage from './LoadingPage';
 import { PinInput, PinInputField } from '@chakra-ui/react';
+import {emitCustomEvent} from 'react-custom-events';
 
 function FormVerificaCodigoPhoneLink(props) {
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
-    const [loadingDialog, setLoadingDialog] = useState(false);
     const [codeVerification, setCodeVerification] = useState('');
     const [value, setValue] = useState('');
     const[ openMsg, setOpenMsg] = useState(false);
@@ -73,12 +72,12 @@ function FormVerificaCodigoPhoneLink(props) {
     
     const handleCloseFormVerificaCodigoPhone = () => {
         props.onGetReturn(true);
-        setLoadingDialog(false); 
+        emitCustomEvent('openLoadingPage', false);
     } 
 
     const handleVolveAEnviarlo = () => {
         props.onGetReturn(true);
-        setLoadingDialog(false); 
+        emitCustomEvent('openLoadingPage', false);
     }
 
     const handleChange = (value) => {
@@ -86,7 +85,7 @@ function FormVerificaCodigoPhoneLink(props) {
       }
     
     const handleComplete = (value) => {
-        setLoadingDialog(true); 
+        emitCustomEvent('openLoadingPage', true);
         setCodeVerification(value);
     }
 
@@ -94,7 +93,7 @@ function FormVerificaCodigoPhoneLink(props) {
         if (props.open){
             setValue('');
             setCodeVerification('');
-        }
+        }             
     }, [props]);
 
 
@@ -108,7 +107,7 @@ function FormVerificaCodigoPhoneLink(props) {
                     props.onGetLinked(true);
                 }).catch((error) => {
                     if (error.code === 'auth/invalid-verification-code'){
-                        setLoadingDialog(false);        
+                        emitCustomEvent('openLoadingPage', false);
                         setMsg('El código ingresado es incorrecto.');
                         setSeverityInfo('error');
                         setOpenMsg(true);                    
@@ -116,7 +115,7 @@ function FormVerificaCodigoPhoneLink(props) {
                         setCodeVerification('');
                     }                    
                     if (error.code === 'auth/provider-already-linked'){
-                        setLoadingDialog(false);        
+                        emitCustomEvent('openLoadingPage', false);
                         setMsg('Ya tenes un telefono asociado a tu cuenta.');
                         setSeverityInfo('error');
                         setOpenMsg(true);                    
@@ -125,7 +124,7 @@ function FormVerificaCodigoPhoneLink(props) {
                     }                    
                 });
             }
-        }    
+        }                
    }, [props, codeVerification]);
 
     return (
@@ -141,9 +140,6 @@ function FormVerificaCodigoPhoneLink(props) {
                 keepMounted
                 disableEscapeKeyDown={true}
             >
-            <LoadingPage 
-                open={loadingDialog}
-            />
             <DialogTitle
                 onClose={handleCloseFormVerificaCodigoPhone}
             >

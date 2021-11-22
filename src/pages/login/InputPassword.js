@@ -53,7 +53,7 @@ function InputPassword(props) {
                 props.onGetValuePassword('');
             }
             props.onSubmitValuePassword(false);
-        }
+        }         
     },[props, valuePassword]);  
 
     const handleKey = (e) => {

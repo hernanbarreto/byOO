@@ -1,4 +1,4 @@
-import React, { useState }from 'react';
+import React from 'react';
 import './Login.css';
 import Dialog from '@material-ui/core/Dialog';
 import MuiDialogTitle from '@material-ui/core/DialogTitle';
@@ -8,11 +8,10 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import Button from '@mui/material/Button';
 import { withStyles } from '@material-ui/core/styles';
 import logo from '../header/logo.svg';
-import LoadingPage from './LoadingPage';
+import {emitCustomEvent} from 'react-custom-events';
 
 function FormBienvenidos(props) {
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
-    const [loadingDialog, setLoadingDialog] = useState(false);
 
     const styles = (theme) => ({});
     const DialogTitle = withStyles(styles)((props) => {
@@ -40,7 +39,7 @@ function FormBienvenidos(props) {
     });
 
     const handleClickContinuar = () => {
-        setLoadingDialog(false);
+        emitCustomEvent('openLoadingPage', false);
         props.onGetContinuar(true);
     } 
 
@@ -56,9 +55,6 @@ function FormBienvenidos(props) {
                 keepMounted
                 disableEscapeKeyDown={true}
             >
-            <LoadingPage 
-                open={loadingDialog}
-            />
             <DialogTitle
             >
                 <strong>Creá tu perfil</strong>

@@ -18,11 +18,9 @@ import MuiDialogContent from '@material-ui/core/DialogContent';
 import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
 import { emitCustomEvent } from 'react-custom-events';
 import { Divider } from '@material-ui/core';
-import LoadingPage from './LoadingPage';
 
 function FormRecoveryPassword(props) { 
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
-    const [loadingDialog, setLoadingDialog] = useState(false);
 
     const[ openMsg, setOpenMsg] = useState(false);
     const [severityInfo, setSeverityInfo] = useState('success');
@@ -76,7 +74,7 @@ function FormRecoveryPassword(props) {
 
     const handleCloseRecuperarPSW = () => {
         props.onGetReturn(true);
-        setLoadingDialog(false);
+        emitCustomEvent('openLoadingPage', false);
     }
 
     /*submit Restablecer Pass*/
@@ -107,7 +105,7 @@ function FormRecoveryPassword(props) {
     useEffect(() => {
         if (variableEstadoCargadoNewValueEmailFormPrincipal){
             if ((valueInputEmailFormPrincipal !== '')) { 
-                setLoadingDialog(true);
+                emitCustomEvent('openLoadingPage', true);
                 const auth = getAuth();
                 fetchSignInMethodsForEmail(auth, valueInputEmailFormPrincipal)
                     .then(providers => {
@@ -116,7 +114,7 @@ function FormRecoveryPassword(props) {
                             setMsg('No existe ninguna cuenta asociada a ' + String(valueInputEmailFormPrincipal));
                             setSeverityInfo('info');
                             setOpenMsg(true);
-                            setLoadingDialog(false);
+                            emitCustomEvent('openLoadingPage', false);
                         } else {
                             //email existente,
                             if ((providers.find(element => element === 'password')) !== undefined){
@@ -124,16 +122,16 @@ function FormRecoveryPassword(props) {
                                 .then(() => {
                                     props.onGetClose(true);
                                     emitCustomEvent('showMsg', String('Hemos enviado un enlace para restablecer tu contraseña a la dirección ') + String(valueInputEmailFormPrincipal) + String('/') + String('success'));
-                                    setLoadingDialog(false);
+                                    emitCustomEvent('openLoadingPage', false);
                                 })
                                 .catch((error) => {
                                     if (error.message.includes('auth/user-not-found')){
-                                        setLoadingDialog(false);
+                                        emitCustomEvent('openLoadingPage', false);
                                         setMsg('No existe ninguna cuenta asociada a ' + String(valueInputEmailFormPrincipal));
                                         setSeverityInfo('info');
                                         setOpenMsg(true);
                                     }else{
-                                        setLoadingDialog(false);
+                                        emitCustomEvent('openLoadingPage', false);
                                         setMsg('Ha ocurrido un error, volvé a intentarlo')
                                         setSeverityInfo('info')
                                         setOpenMsg(true);
@@ -141,7 +139,7 @@ function FormRecoveryPassword(props) {
                                 }
                                 );                                            
                             }else{
-                                setLoadingDialog(false);
+                                emitCustomEvent('openLoadingPage', false);
                                 setMsg('La cuenta ' + String(valueInputEmailFormPrincipal) + ' no tiene configurado un ingreso mediante contraseña');
                                 setSeverityInfo('info');
                                 setOpenMsg(true);                    
@@ -149,14 +147,14 @@ function FormRecoveryPassword(props) {
                         }
                 })
                 .catch((error) => {
-                    setLoadingDialog(false);
+                    emitCustomEvent('openLoadingPage', false);
                     setMsg('Ha ocurrido un error, volvé a intentarlo');
                     setSeverityInfo('info');
                     setOpenMsg(true);
                 });           
             }
             setVariableEstadoCargadoNewValueEmailFormPrincipal(false);
-        } 
+        }           
     },[props, valueInputEmailFormPrincipal, variableEstadoCargadoNewValueEmailFormPrincipal]);
     /*fin atencion del valor ingresado del componente Input Email del form principal*/
 
@@ -173,9 +171,6 @@ function FormRecoveryPassword(props) {
                 keepMounted
                 disableEscapeKeyDown={true}
             >
-            <LoadingPage 
-                open={loadingDialog}
-            />
             <DialogTitle 
                 onClose={handleCloseRecuperarPSW}
             >

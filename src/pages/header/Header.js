@@ -1,4 +1,4 @@
-import React, {  useState, useEffect } from 'react';
+import React, {  useState, useEffect, useCallback } from 'react';
 import { logout } from '../../services/firebase';
 import logo from './byOO_1.svg';
 import Login from '../login/Login'
@@ -32,8 +32,6 @@ import { getFirestore,
 import { useAuth } from '../../services/firebase';
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { emitCustomEvent } from 'react-custom-events';
-import LoadingPage from '../login/LoadingPage';
-
 
 const database = getFirestore();
 const functions = getFunctions();
@@ -41,7 +39,6 @@ const verifyIdToken = httpsCallable(functions, 'verifyIdToken');
 
 function Header(details) {
     const history = useHistory ();
-    const [loadingDialog, setLoadingDialog] = useState(false);
     const [anchorEl, setAnchorEl] = useState(null);
     const [photoURL, setPhotoURL] = useState(null);
     const [openLogin, setOpenLogin] =useState(false);
@@ -82,21 +79,21 @@ function Header(details) {
     }
 
     const handleLogout = async () => {
-        setLoadingDialog(true);
+        emitCustomEvent('openLoadingPage', true);
         logout()
         .then(()=>{
             setPhotoURL(null);
             handleClose(null);
-            setLoadingDialog(false);
+            emitCustomEvent('openLoadingPage', false);
         })
         .catch((error)=>{
             setPhotoURL(null);
             handleClose(null);
-            setLoadingDialog(false);
+            emitCustomEvent('openLoadingPage', false);
         });
     } 
 
-    const handleUpdateProfile = async () => {
+    const handleUpdateProfile = useCallback(async () => {
         setOpenLogin(false);
         console.log('pase');
         const infoUser = doc(database, "users", currentUser.uid);
@@ -161,14 +158,14 @@ function Header(details) {
         }catch{
             console.log('');
         } 
-    }
+    },[currentUser, details]);
 
 
-    useEffect(() => {
+    useEffect(() => {      
         if (currentUser){
             handleUpdateProfile();
-        }    
-    }, [currentUser]);
+        }         
+    }, [currentUser, handleUpdateProfile]);
 
     return (
         <div className='header'>

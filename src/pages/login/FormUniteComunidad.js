@@ -17,7 +17,6 @@ import { getAuth,
          signInWithPhoneNumber, 
          RecaptchaVerifier } from "firebase/auth";
 import { emitCustomEvent } from 'react-custom-events';
-import LoadingPage from './LoadingPage';
 import Link from '@mui/material/Link';
 import { getFunctions, httpsCallable } from "firebase/functions";
 
@@ -27,7 +26,6 @@ const updateUser = httpsCallable(functions, 'updateUser');
 var recaptchaVerifier;
 function FormUniteComunidad(props) {
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
-    const [loadingDialog, setLoadingDialog] = useState(false);
     const [cancel, setCancel] = useState(false);
     const styles = (theme) => ({});
       
@@ -56,7 +54,7 @@ function FormUniteComunidad(props) {
 
     const handleCloseUniteComunidad = () => {
         props.onGetClose(true);
-        setLoadingDialog(false);
+        emitCustomEvent('openLoadingPage', false);
     }
 
     function isUserEqual(googleUser, firebaseUser) {
@@ -91,7 +89,7 @@ function FormUniteComunidad(props) {
         const auth = getAuth();
 
         if (props.googleUser !== null){
-            setLoadingDialog(true);
+            emitCustomEvent('openLoadingPage', true);
             //hay que crear usuario con google.com
             const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
                 unsubscribe();
@@ -115,14 +113,14 @@ function FormUniteComunidad(props) {
                         updateUser([user.user.uid, { emailVerified: false, displayName: nombreOK,}])
                         .then((userRecord) => {
                                 props.onGetRegistred (userRecord.data);    
-                                setLoadingDialog(false);
-                        })
+                                emitCustomEvent('openLoadingPage', false);
+                            })
                         .catch((error) => {
                             try{
                                 emitCustomEvent('showMsg', 'Error: ' + error + String('/') + String('error'));
                             }catch{}
                             handleCloseUniteComunidad ();                    
-                            setLoadingDialog(false);
+                            emitCustomEvent('openLoadingPage', false);
                         });                                                            
                     }) 
                     .catch((error) => {
@@ -130,19 +128,19 @@ function FormUniteComunidad(props) {
                             emitCustomEvent('showMsg', 'Error: ' + error.code.split('/')[1].replace(/-/g,' ') + String('/') + String('error'));
                         }catch{}
                         handleCloseUniteComunidad ();                    
-                        setLoadingDialog(false);
+                        emitCustomEvent('openLoadingPage', false);
                     });
                 } else {
                     try{
                         emitCustomEvent('showMsg', 'Error: el usuario ya se encuentra logeado' + String('/') + String('error'));
                     }catch{}
                     handleCloseUniteComunidad ();                    
-                    setLoadingDialog(false);
+                    emitCustomEvent('openLoadingPage', false);
                 }
             });
         }else{
             if (props.facebookUser !== null){
-                setLoadingDialog(true);
+                emitCustomEvent('openLoadingPage', true);
                 const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
                     unsubscribe();
                     // Check if we are already signed-in Firebase with the correct user.
@@ -165,14 +163,14 @@ function FormUniteComunidad(props) {
                             updateUser([user.user.uid, { emailVerified: false, displayName: nombreOK,}])
                             .then((user) => {
                                 props.onGetRegistred (user.data);    
-                                setLoadingDialog(false);
+                                emitCustomEvent('openLoadingPage', false);
                             })
                             .catch((error) => {
                                 try{
                                     emitCustomEvent('showMsg', 'Error: ' + error + String('/') + String('error'));
                                 }catch{}
                                 handleCloseUniteComunidad ();                    
-                                setLoadingDialog(false);
+                                emitCustomEvent('openLoadingPage', false);
                             });                                
                         }) 
                         .catch((error) => {
@@ -180,14 +178,14 @@ function FormUniteComunidad(props) {
                                 emitCustomEvent('showMsg', error.code.split('/')[1].replace(/-/g,' ') + String('/') + String('error'));
                             }catch{}
                             handleCloseUniteComunidad ();                    
-                            setLoadingDialog(false);
+                            emitCustomEvent('openLoadingPage', false);
                         });
                     } else {
                         try{
                             emitCustomEvent('showMsg', 'Error: el usuario ya se encuentra logeado' + String('/') + String('error'));
                         }catch{}
                         handleCloseUniteComunidad ();                    
-                        setLoadingDialog(false);
+                        emitCustomEvent('openLoadingPage', false);
                     }
                     });    
             }else{
@@ -202,14 +200,14 @@ function FormUniteComunidad(props) {
                     }, auth);
                     signInWithPhoneNumber(auth, props.phoneNumber, recaptchaVerifier)
                     .then((confirmationResult) => {
-                        setLoadingDialog(true);
+                        emitCustomEvent('openLoadingPage', true);
                         if (recaptchaVerifier !== undefined)
                             if (!recaptchaVerifier.destroyed) 
                                 recaptchaVerifier.clear();
                         props.onGetConfirmationResult(confirmationResult);
                         props.onGetOpenFormVerificaCodigoPhone(true);
                         setCancel(false);
-                        setLoadingDialog(false);
+                        emitCustomEvent('openLoadingPage', false);
                     }).catch((error) => {
                         // Error; SMS not sent
                         // ...
@@ -217,7 +215,7 @@ function FormUniteComunidad(props) {
                             if (!recaptchaVerifier.destroyed) 
                                 recaptchaVerifier.clear();
                         setCancel(false);
-                        setLoadingDialog(false);
+                        emitCustomEvent('openLoadingPage', false);
                         try{
                             emitCustomEvent('showMsg', String('No pudimos enviar el SMS al número de teléfono ') + String(props.phoneNumber) + String('/') + String('error'));
                         }catch{}
@@ -225,7 +223,7 @@ function FormUniteComunidad(props) {
                     });                                    
                 }else{
                     //hay que crear usuario con mail
-                    setLoadingDialog(true);
+                    emitCustomEvent('openLoadingPage', true);
                     createUserWithEmailAndPassword(auth, props.email, props.pass)
                     .then((user) => {
                         while(props.name === ''){}
@@ -241,14 +239,14 @@ function FormUniteComunidad(props) {
                         updateUser([user.user.uid, { emailVerified: false, displayName: nombreOK,}])
                         .then((user) => {
                             props.onGetRegistred (user.data);    
-                            setLoadingDialog(false);
+                            emitCustomEvent('openLoadingPage', false);
                         })
                         .catch((error) => {
                             try{
                                 emitCustomEvent('showMsg', 'Error: ' + error + String('/') + String('error'));
                             }catch{}
                             handleCloseUniteComunidad ();                    
-                            setLoadingDialog(false);
+                            emitCustomEvent('openLoadingPage', false);
                         });                                
                     })
                     .catch((error) => {
@@ -256,7 +254,7 @@ function FormUniteComunidad(props) {
                             emitCustomEvent('showMsg', 'Error: ' + error.code.split('/')[1].replace(/-/g,' ') + String('/') + String('error'));
                         }catch{}
                         handleCloseUniteComunidad ();                    
-                        setLoadingDialog(false);
+                        emitCustomEvent('openLoadingPage', false);
                     });
                 }
             }
@@ -277,7 +275,7 @@ function FormUniteComunidad(props) {
     useEffect(() => {
         if (props.open){
             setCancel(false);
-        }
+        }         
     }, [props]);
 
     const handleMasInformacion = () =>{
@@ -296,9 +294,6 @@ function FormUniteComunidad(props) {
                 keepMounted
                 disableEscapeKeyDown={true}
             >
-            <LoadingPage 
-                open={loadingDialog}
-            />
             <DialogTitle>
                 <strong>Unite a nuestra comunidad</strong>
             </DialogTitle>

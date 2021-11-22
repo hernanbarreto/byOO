@@ -1,14 +1,21 @@
-import React from 'react'
+import React, { useState } from 'react'
 import CircularProgress from '@mui/material/CircularProgress';
 import Backdrop from '@mui/material/Backdrop';
 import Box from '@mui/material/Box';
+import { useCustomEventListener } from 'react-custom-events';
 
-function LoadingPage(props) {
+function LoadingPage() {
+    const [open, setOpen] = useState(false);
+
+    useCustomEventListener('openLoadingPage', data => {
+        setOpen(data);
+    });
+    
+
     return (
-        <div>
             <Backdrop
-                sx={{ color: 'rgb(78, 50, 126)', zIndex: (theme) => theme.zIndex.drawer + 100000000 }}
-                open={props.open}
+                sx={{ color: 'rgb(78, 50, 126)', zIndex: (theme) => theme.zIndex.tooltip + 1 }}
+                open={open}
             >
                 <Box sx={{ m: 1, position: 'relative' }}>
                 <CircularProgress 
@@ -25,7 +32,6 @@ function LoadingPage(props) {
                 <img src={require('../header/logo_load.png').default} alt='logo_load.png'/>
                 </Box>
             </Backdrop>                        
-        </div>
     )
 }
 

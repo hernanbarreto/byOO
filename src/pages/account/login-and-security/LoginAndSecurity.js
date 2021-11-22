@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -35,12 +35,11 @@ import Skeleton from '@mui/material/Skeleton';
 import FormEliminarCuenta from './FormEliminarCuenta';
 import { logout } from '../../../services/firebase';
 import { emitCustomEvent } from 'react-custom-events';
-import LoadingPage from '../../login/LoadingPage';
 import Chip from '@mui/material/Chip';
+import { useInitPage } from '../../useInitPage';
 
 const functions = getFunctions();
 const deleteUser = httpsCallable(functions, 'deleteUser');
-const verifyIdToken = httpsCallable(functions, 'verifyIdToken');
 const revokeRefreshTokens = httpsCallable(functions, 'revokeRefreshTokens');
 const getUser = httpsCallable(functions, 'getUser');
 
@@ -51,9 +50,9 @@ var listItems = null;
 function LoginAndSecurity() {
     const history = useHistory ();
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
-    const [loadingDialog, setLoadingDialog] = useState(false);
-
+    const {state} = useInitPage();
     const {currentUser} = useAuth();
+    const [isMounted, setIsMounted] = useState(true);
 
     const Img = styled('img')({
         margin: 'auto',
@@ -82,11 +81,12 @@ function LoginAndSecurity() {
     
     const [listo, setListo] = useState(false);
 
-    const handleUpdateProfile = async () => {
+    const handleUpdateProfile = useCallback(async () => {
         const infoUser = doc(database, "users", currentUser.uid);
         try{                                  
             const docSnap = await getDoc(infoUser);
             if (docSnap.exists()) {
+                if (isMounted){
                 setUserName(docSnap.data().name.split(' ')[0]);
                 setCreatedLenguaje(docSnap.data().account.created.location.lenguaje)
                 setCreatedOsName(docSnap.data().account.created.os.name);
@@ -102,6 +102,7 @@ function LoginAndSecurity() {
                     sessions.push(e);
                 });
                 setListo(true);
+                }
             }else{
                 logout()
                 .then(()=>{
@@ -113,9 +114,11 @@ function LoginAndSecurity() {
             }
         }catch{
         } 
-    }
+    },[currentUser, isMounted]);
 
-    const clearStates = () => {
+    const clearStates = useCallback(() => {
+        if(isMounted){
+        listItems = null;
         setCreatedOsName(null);
         setCreatedOsVersion(null);
         setCreatedLocationCity(null);
@@ -128,65 +131,20 @@ function LoginAndSecurity() {
         setUserMail(null);
         setUserName(null);
         sessions = [];
-        listItems = null;
-    }
+        }
+    },[isMounted]);
 
     useEffect(() => {
-        window.scrollTo(0,0);
-
-        if (currentUser){
-            verifyIdToken(currentUser.accessToken)
-            .then(async (payload) => {
-                const infoUser = doc(database, "users", currentUser.uid);
-                const docSnap = await getDoc(infoUser);
-                if (docSnap.exists()){
-                    const filtered = docSnap.data().sessions.filter(function(element){
-                        return element.id === currentUser.accessToken;
-                    });
-                    if (filtered.length !== 0){
-                        clearStates();
-                        handleUpdateProfile();    
-                    }else{
-                        logout()
-                        .then(()=>{
-                            emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
-                        })
-                        .catch((error)=>{
-                            console.log(error);
-                            emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
-                        });    
-                    }
-                }else{
-                    logout()
-                    .then(()=>{
-                        emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
-                    })
-                    .catch((error)=>{
-                        emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
-                    });    
-                }
-            })
-            .catch((error) => {
-              if (error.code === 'auth/id-token-revoked') {
-                logout()
-                .then(()=>{
-                    emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
-                })
-                .catch((error)=>{
-                    emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
-                });
-              } else {
-                logout()
-                .then(()=>{
-                    emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
-                })
-                .catch((error)=>{
-                    emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
-                });
-              }
-            });
+        setIsMounted(true);
+        if (state !== null){
+            if (state){
+                clearStates();
+                handleUpdateProfile();
+            }
         }
-    }, []);
+        return () => {setIsMounted(false)}
+    }, [state, handleUpdateProfile, clearStates]);
+
 
     const handleEliminarCuenta = () => {
         setOpenFormEliminarCuenta(true);
@@ -198,21 +156,21 @@ function LoginAndSecurity() {
 
     const handleEliminar = () => {
         setOpenFormEliminarCuenta(false);
-        setLoadingDialog(true);
+        emitCustomEvent('openLoadingPage', true);
         deleteUser(currentUser.uid)
         .then(()=>{
             logout()
             .then(()=>{
-                setLoadingDialog(false);
+                emitCustomEvent('openLoadingPage', false);
                 emitCustomEvent('showMsg', 'Hemos eliminado la cuenta ' + userEmail + '/info');
             })
             .catch((error)=>{
-                setLoadingDialog(false);
+                emitCustomEvent('openLoadingPage', false);
                 emitCustomEvent('showMsg', 'Hemos eliminado la cuenta ' + userEmail + '/info');
             });
         })
         .catch((error)=> {
-            setLoadingDialog(false);
+            emitCustomEvent('openLoadingPage', false);
             emitCustomEvent('showMsg', 'Ocurrió un error al eliminar la cuenta ' + userEmail + '. No te preocupes, nosotros nos encargaremos de eliminarla./error');
         })
     }
@@ -238,7 +196,7 @@ function LoginAndSecurity() {
     
     const handleCerrarSesiones = () => {
         if (currentUser){
-            setLoadingDialog(true);
+            emitCustomEvent('openLoadingPage', true);
             revokeRefreshTokens(currentUser.uid)
             .then(() => {
             return getUser(currentUser.uid);
@@ -249,16 +207,16 @@ function LoginAndSecurity() {
             .then((timestamp) => {
                 logout()
                 .then(()=>{
-                    setLoadingDialog(false);
+                    emitCustomEvent('openLoadingPage', false);
                 })
                 .catch((error)=>{
-                    setLoadingDialog(false);
+                    emitCustomEvent('openLoadingPage', false);
                 });
             });
         }
     }
 
-    const handleCLoseSessionDevice = async (i) => {
+    const handleCLoseSessionDevice = useCallback(async (i) => {
         const database = getFirestore();
         const infoUser = doc(database, "users", currentUser.uid);
         const docSnap = await getDoc(infoUser);
@@ -272,15 +230,15 @@ function LoginAndSecurity() {
             })
             .then(()=>{
                 if (sessions[i].id === currentUser.accessToken){
-                    setLoadingDialog(true);
+                    emitCustomEvent('openLoadingPage', true);
                     clearStates();
                     handleUpdateProfile();    
                     logout()
                     .then(()=>{
-                        setLoadingDialog(false);
+                        emitCustomEvent('openLoadingPage', false);
                     })
                     .catch((error)=>{
-                        setLoadingDialog(false);
+                        emitCustomEvent('openLoadingPage', false);
                     });                    
                 }else{
                     clearStates();
@@ -322,9 +280,11 @@ function LoginAndSecurity() {
             .catch((error)=>{
             });
         }
-    }
+    },[currentUser, handleUpdateProfile, clearStates]);
 
-    useEffect(() => {
+    useEffect(() => { 
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+
         if (listo){
             setListo(false);
             listItems = sessions.map((session, index) =>
@@ -374,13 +334,10 @@ function LoginAndSecurity() {
             </Paper> 
             );    
         }
-    }, [listo, currentUser]);
+    }, [listo, currentUser, handleCLoseSessionDevice]);
 
     return (
         <div>
-            <LoadingPage 
-                open={loadingDialog}
-            />
             <FormEliminarCuenta
                 open={openFormEliminarCuenta}
                 name={userName}
@@ -398,7 +355,7 @@ function LoginAndSecurity() {
                     >
                         <Stack
                             direction={{ xs: 'column', md: 'row' }}
-                            spacing={{ xs: 3, sm: 10, md: 15 }}
+                            spacing={{ xs: 3 }}
                             style={{
                                 marginTop: '30px',
                                 marginBottom: '30px',
@@ -526,7 +483,23 @@ function LoginAndSecurity() {
                                             marginBottom: '10px',
                                         }}
                                     >
+                                        {!loadingCreated ?
+                                        <>
                                         {listItems}
+                                        </>
+                                        :
+                                        <Stack
+                                            spacing={1}
+                                            style={{
+                                                marginTop: '0px',
+                                                marginBottom: '0px',
+                                            }}
+                                        >
+                                            <Skeleton variant="text" width="30%"/>
+                                            <Skeleton variant="text" width="50%"/>
+                                            <Skeleton variant="text" width="70%"/>
+                                        </Stack>
+                                        }
                                         <Button 
                                             variant='outlined'
                                             className='button__log__continuar'

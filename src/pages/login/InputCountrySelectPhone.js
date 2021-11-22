@@ -310,7 +310,7 @@ function InputCountrySelectPhone(props) {
                 props.onGetValuePhone('');
             }
             props.onSubmitValuePhone(false);
-        }
+        }          
     },[props, valueInputPhone, valuePhone]);
 
     const handleKey = (e) => {

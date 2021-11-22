@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Grid';
@@ -23,8 +23,9 @@ import { getFunctions, httpsCallable } from "firebase/functions";
 import { getFirestore, 
     doc, 
     getDoc } from "firebase/firestore";
-import LoadingPage from '../login/LoadingPage';
 import { logout } from '../../services/firebase';
+import { useInitPage } from '../useInitPage';
+import Skeleton from '@mui/material/Skeleton';
 
 const Img = styled('img')({
     margin: 'auto',
@@ -35,7 +36,6 @@ const Img = styled('img')({
 
 const functions = getFunctions();
 const deleteUser = httpsCallable(functions, 'deleteUser');
-const verifyIdToken = httpsCallable(functions, 'verifyIdToken');
 
 const database = getFirestore();
 
@@ -44,15 +44,28 @@ function Account() {
     const [userName, setUserName] = useState(null);
     const [openFormEliminarCuenta, setOpenFormEliminarCuenta] = useState(false);
     const [userEmail, setUserMail] = useState(null);
-    const [loadingDialog, setLoadingDialog] = useState(false);
+    const {state} = useInitPage();
+    const [isMounted, setIsMounted] = useState(true);
+    const [loading, setLoading] = useState(true);
 
-    const handleUpdateProfile = async () => {
+    const clearStates = useCallback(() => {
+        if(isMounted){
+        setUserMail(null);
+        setUserName(null);
+        }
+    },[isMounted]);
+
+    const handleUpdateProfile = useCallback(async () => {
+        setLoading(true);
         const infoUser = doc(database, "users", currentUser.uid);
         try{                                  
             const docSnap = await getDoc(infoUser);
             if (docSnap.exists()) {
+                if(isMounted){
                 setUserName(docSnap.data().name.split(' ')[0]);
                 setUserMail(currentUser.email);
+                setLoading(false)
+                }
             }else{
                 logout()
                 .then(()=>{
@@ -64,69 +77,18 @@ function Account() {
             }
         }catch{
         } 
-    }
-
-    const clearStates = () => {
-        setUserMail(null);
-        setUserName(null);
-    }
+    },[currentUser, isMounted]);
 
     useEffect(() => {
-        window.scrollTo(0,0);
-
-        if (currentUser){
-            verifyIdToken(currentUser.accessToken)
-            .then(async (payload) => {
-                const infoUser = doc(database, "users", currentUser.uid);
-                const docSnap = await getDoc(infoUser);
-                if (docSnap.exists()){
-                    const filtered = docSnap.data().sessions.filter(function(element){
-                        return element.id === currentUser.accessToken;
-                    });
-                    if (filtered.length !== 0){
-                        clearStates();
-                        handleUpdateProfile();    
-                    }else{
-                        logout()
-                        .then(()=>{
-                            emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
-                        })
-                        .catch((error)=>{
-                            console.log(error);
-                            emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
-                        });    
-                    }
-                }else{
-                    logout()
-                    .then(()=>{
-                        emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
-                    })
-                    .catch((error)=>{
-                        emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
-                    });    
-                }
-            })
-            .catch((error) => {
-              if (error.code === 'auth/id-token-revoked') {
-                logout()
-                .then(()=>{
-                    emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
-                })
-                .catch((error)=>{
-                    emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
-                });
-              } else {
-                logout()
-                .then(()=>{
-                    emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
-                })
-                .catch((error)=>{
-                    emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
-                });
-              }
-            });
+        setIsMounted(true);
+        if (state !== null){
+            if (state){
+                clearStates();
+                handleUpdateProfile();
+            }
         }
-    }, []);
+        return () => {setIsMounted(false)}
+    }, [state, handleUpdateProfile, clearStates]);
 
     const history = useHistory ();
 
@@ -168,30 +130,27 @@ function Account() {
 
     const handleEliminar = () => {
         setOpenFormEliminarCuenta(false);
-        setLoadingDialog(true);
+        emitCustomEvent('openLoadingPage', true);
         deleteUser(currentUser.uid)
         .then(()=>{
             logout()
             .then(()=>{
-                setLoadingDialog(false);
+                emitCustomEvent('openLoadingPage', false);
                 emitCustomEvent('showMsg', 'Hemos eliminado la cuenta ' + userEmail + '/info');
             })
             .catch((error)=>{
-                setLoadingDialog(false);
+                emitCustomEvent('openLoadingPage', false);
                 emitCustomEvent('showMsg', 'Hemos eliminado la cuenta ' + userEmail + '/info');
             });
         })
         .catch((error)=> {
-            setLoadingDialog(false);
+            emitCustomEvent('openLoadingPage', false);
             emitCustomEvent('showMsg', 'Ocurrió un error al eliminar la cuenta ' + userEmail + '. No te preocupes, nosotros nos encargaremos de eliminarla./info');
         })
     }
 
     return (
         <div>
-            <LoadingPage 
-                open={loadingDialog}
-            />
             <FormEliminarCuenta
                 open={openFormEliminarCuenta}
                 name={userName}
@@ -217,12 +176,14 @@ function Account() {
 
 
                     >
+                    {!loading ?
+                        <> 
                         <Typography 
                             variant='subtitle1'
                         >
                             <strong>{auth.currentUser.displayName}</strong>
                             {userEmail ?
-                                <a>,&nbsp;</a>
+                                <em>,&nbsp;</em>
                             :
                                 null
                             }
@@ -247,6 +208,10 @@ function Account() {
                                 <strong>Ir al perfil</strong>
                             </Link>
                         </Typography>
+                        </>
+                    :
+                    <Skeleton variant="text" width="50%"/>
+                    }
                     </Stack>
                     <Grid 
                         container 

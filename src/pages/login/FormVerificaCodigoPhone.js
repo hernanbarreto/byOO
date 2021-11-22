@@ -15,12 +15,11 @@ import { getAuth,
          signInWithCredential } from "firebase/auth";
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
-import LoadingPage from './LoadingPage';
 import { PinInput, PinInputField } from '@chakra-ui/react';
+import {emitCustomEvent} from 'react-custom-events';
 
 function FormVerificaCodigoPhone(props) {
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
-    const [loadingDialog, setLoadingDialog] = useState(false);
     const [codeVerification, setCodeVerification] = useState('');
     const [value, setValue] = useState('');
     const[ openMsg, setOpenMsg] = useState(false);
@@ -74,12 +73,12 @@ function FormVerificaCodigoPhone(props) {
     
     const handleCloseFormVerificaCodigoPhone = () => {
         props.onGetReturn(true);
-        setLoadingDialog(false); 
+        emitCustomEvent('openLoadingPage', false);
     } 
 
     const handleVolveAEnviarlo = () => {
         props.onGetReturn(true);
-        setLoadingDialog(false); 
+        emitCustomEvent('openLoadingPage', false);
     }
 
     const handleChange = (value) => {
@@ -87,7 +86,7 @@ function FormVerificaCodigoPhone(props) {
       }
     
     const handleComplete = (value) => {
-        setLoadingDialog(true); 
+        emitCustomEvent('openLoadingPage', true);
         setCodeVerification(value);
     }
 
@@ -95,7 +94,7 @@ function FormVerificaCodigoPhone(props) {
         if (props.open){
             setValue('');
             setCodeVerification('');
-        }
+        }             
     }, [props]);
 
 
@@ -125,9 +124,9 @@ function FormVerificaCodigoPhone(props) {
                                 displayName: nombreOK,
                             }).then(() => {
                                 props.onGetRegistred(auth.currentUser);
-                                setLoadingDialog(false); 
+                                emitCustomEvent('openLoadingPage', false);
                             }).catch((error) => {
-                                setLoadingDialog(false);        
+                                emitCustomEvent('openLoadingPage', false);
                                 setMsg('Error: ' + error.code.split('/')[1].replace(/-/g,' '));
                                 setSeverityInfo('error');
                                 setOpenMsg(true);
@@ -135,11 +134,11 @@ function FormVerificaCodigoPhone(props) {
                         }        
                     }else{
                         props.onGetClose(true);
-                        setLoadingDialog(false); 
+                        emitCustomEvent('openLoadingPage', false);
                     }
                 }).catch((error) => {
                     if (error.code === 'auth/invalid-verification-code'){
-                        setLoadingDialog(false);        
+                        emitCustomEvent('openLoadingPage', false);
                         setMsg('El código ingresado es incorrecto.');
                         setSeverityInfo('error');
                         setOpenMsg(true);                    
@@ -147,7 +146,7 @@ function FormVerificaCodigoPhone(props) {
                         setCodeVerification('');
                     }                    
                     if (error.code === 'auth/provider-already-linked'){
-                        setLoadingDialog(false);        
+                        emitCustomEvent('openLoadingPage', false);
                         setMsg('Ya tenes un telefono asociado a tu cuenta.');
                         setSeverityInfo('error');
                         setOpenMsg(true);                    
@@ -156,7 +155,7 @@ function FormVerificaCodigoPhone(props) {
                     }                    
                 });
             }
-        }    
+        }                
    }, [props, codeVerification]);
 
     return (
@@ -172,9 +171,6 @@ function FormVerificaCodigoPhone(props) {
                 keepMounted
                 disableEscapeKeyDown={true}
             >
-            <LoadingPage 
-                open={loadingDialog}
-            />
             <DialogTitle
                 onClose={handleCloseFormVerificaCodigoPhone}
             >

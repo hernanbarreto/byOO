@@ -9,7 +9,6 @@ import Button from '@mui/material/Button';
 import { withStyles } from '@material-ui/core/styles';
 import CloseIcon from '@material-ui/icons/Close';
 import IconButton from '@mui/material/IconButton';
-import LoadingPage from './LoadingPage';
 import Avatar from '@mui/material/Avatar';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import InputPassword from './InputPassword';
@@ -41,7 +40,6 @@ function FormExisteCuenta(props) {
     const [facebookProvider, setFacebookProvider] = useState(false);
     const [passwordProvider, setPasswordProvider] = useState(false);
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
-    const [loadingDialog, setLoadingDialog] = useState(false);
 
     const styles = (theme) => ({});
     const DialogTitle = withStyles(styles)((props) => {
@@ -82,7 +80,7 @@ function FormExisteCuenta(props) {
     });
 
     const handleCloseExisteCuenta = () => {
-        setLoadingDialog(false);
+        emitCustomEvent('openLoadingPage', false);
         props.onGetReturn(true);
     }
 
@@ -98,23 +96,23 @@ function FormExisteCuenta(props) {
 
     const handleRecuperarPassword = () => {
         props.onGetRecoveryPass(true);
-        setLoadingDialog(false);
+        emitCustomEvent('openLoadingPage', false);
     }
 
     const handleErrorFacebook = () => {
-        setLoadingDialog(false);
+        emitCustomEvent('openLoadingPage', false);
     }
 
     const handleErrorGoogle = () => {
-        setLoadingDialog(false);        
+        emitCustomEvent('openLoadingPage', false);
     }
 
     const handleClickGoogle = () => {
-        setLoadingDialog(true);
+        emitCustomEvent('openLoadingPage', true);
     }
 
     const handleClickFacebook = () => {
-        setLoadingDialog(true);
+        emitCustomEvent('openLoadingPage', true);
     }
 
     const handleEmail = (email) => {
@@ -126,7 +124,7 @@ function FormExisteCuenta(props) {
             props.onGetOpenFormTerminaDeRegistrarte(true);
         }
         props.onGetClose(true);
-        setLoadingDialog(false);
+        emitCustomEvent('openLoadingPage', false);
     }
     
     const handleTerminaRegistrarteFacebook = (value) => {
@@ -134,11 +132,11 @@ function FormExisteCuenta(props) {
             props.onGetOpenFormTerminaDeRegistrarte(true);
         }
         props.onGetClose(true);
-        setLoadingDialog(false);
+        emitCustomEvent('openLoadingPage', false);
     }
 
     const handleGoogleUser = (value) => {
-        setLoadingDialog(false);
+        emitCustomEvent('openLoadingPage', false);
         props.onGetNameFormTerminaDeRegistrarte(value.profileObj.givenName);
         props.onGetApellidoFormTerminaDeRegistrarte(value.profileObj.familyName);
         props.onGetEmailFormTerminaDeRegistrarte(value.profileObj.email);
@@ -147,7 +145,7 @@ function FormExisteCuenta(props) {
     }
 
     const handleFacebookUser = (value) => {
-        setLoadingDialog(false);
+        emitCustomEvent('openLoadingPage', false);
         props.onGetNameFormTerminaDeRegistrarte(value.name.split(' ')[0]);
         props.onGetApellidoFormTerminaDeRegistrarte(value.name.split(' ')[1]);
         props.onGetEmailFormTerminaDeRegistrarte(value.email);
@@ -174,7 +172,7 @@ function FormExisteCuenta(props) {
     /*fin variables de componente InputPassword del form iniciar sesion*/
 
     /*atencion del valor ingresado del componente InputPassword del form iniciar sesion*/
-    useEffect(() => {
+    useEffect(() => {        
         if (props.open){
             if (props.email !== null){
                 let k='';            
@@ -207,16 +205,16 @@ function FormExisteCuenta(props) {
 
         if (variableEstadoCargadoNewValuePasswordFormIniciarSesion){
             if ((valueInputPasswordFormIniciarSesion !== '')) {
-                setLoadingDialog(true);
+                emitCustomEvent('openLoadingPage', true);
                 const auth = getAuth();
                 signInWithEmailAndPassword(auth, props.email, valueInputPasswordFormIniciarSesion)
                     .then((userCredential) => {
                         props.onGetClose(true);
-                        setLoadingDialog(false);
+                        emitCustomEvent('openLoadingPage', false);
                     })
                     .catch((error) => {
                         if (error.code === 'auth/wrong-password'){
-                            setLoadingDialog(false);
+                            emitCustomEvent('openLoadingPage', false);
                             setMsg('El password ingresado es incorrecto, no te preocupes volvé a intentarlo')
                             setSeverityInfo('error')
                             setOpenMsg(true);
@@ -227,10 +225,10 @@ function FormExisteCuenta(props) {
                               .then(() => {
                                 emitCustomEvent('showMsg', String('Demasiados intentos fallidos, te hemos enviado un enlace para restablecer tu contraseña a la dirección ') + String(props.email) + String('/') + String('info'));
                                 props.onGetClose(true);
-                                setLoadingDialog(false);
+                                emitCustomEvent('openLoadingPage', false);
                             })
                               .catch((error) => {
-                                setLoadingDialog(false);
+                                emitCustomEvent('openLoadingPage', false);
                                 setMsg(error.code.split('/')[1].replace(/-/g,' '));
                                 setSeverityInfo('error');
                                 setOpenMsg(true);                    
@@ -239,12 +237,12 @@ function FormExisteCuenta(props) {
                         if (error.code === 'auth/invalid-email'){
                             emitCustomEvent('showMsg', String('No existe una cuenta asociada a ') + String(props.email) + String('/') + String('error'));
                             props.onGetClose(true);
-                            setLoadingDialog(false);
+                            emitCustomEvent('openLoadingPage', false);
                         }
                     });
             }
             setVariableEstadoCargadoNewValuePasswordFormIniciarSesion(false);       
-        } 
+        }          
     },[valueInputPasswordFormIniciarSesion, variableEstadoCargadoNewValuePasswordFormIniciarSesion, props, email]);
     /*fin atencion del valor ingresado del componente InputPassword del form Inicias sesion*/
 
@@ -262,9 +260,6 @@ function FormExisteCuenta(props) {
                 keepMounted
                 disableEscapeKeyDown={true}
             >
-            <LoadingPage 
-                open={loadingDialog}
-            />
             <DialogTitle
                 onClose={handleCloseExisteCuenta}
             >
