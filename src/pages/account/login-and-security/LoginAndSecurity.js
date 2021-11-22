@@ -28,6 +28,8 @@ import { getFirestore,
     getDoc,
     updateDoc,
     arrayRemove,
+    Timestamp, 
+    arrayUnion, 
         } from "firebase/firestore";
 import '../../login/Login.css';
 import { Button } from '@material-ui/core';
@@ -37,6 +39,11 @@ import { logout } from '../../../services/firebase';
 import { emitCustomEvent } from 'react-custom-events';
 import Chip from '@mui/material/Chip';
 import { useInitPage } from '../../useInitPage';
+import DesktopWindowsIcon from '@mui/icons-material/DesktopWindows';
+import CustomizedSwitch from '../../custom/CustomSwitch';
+import { getAuth, unlink, linkWithPopup, GoogleAuthProvider, FacebookAuthProvider } from "firebase/auth";
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
 
 const functions = getFunctions();
 const deleteUser = httpsCallable(functions, 'deleteUser');
@@ -47,7 +54,18 @@ const database = getFirestore();
 var sessions = [];
 var listItems = null;
 
-function LoginAndSecurity() {
+function LoginAndSecurity(details) {
+    const [ openMsg, setOpenMsg] = useState(false);
+    const [severityInfo, setSeverityInfo] = useState('success');
+    const [msg, setMsg] = useState('');
+    const handleCloseMsg = (event, reason) => {
+        if (reason === 'clickaway') {
+          return;
+        }
+    
+        setOpenMsg(false);
+    };
+
     const history = useHistory ();
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
     const {state} = useInitPage();
@@ -77,32 +95,56 @@ function LoginAndSecurity() {
     const [userName, setUserName] = useState(null);
     const [openFormEliminarCuenta, setOpenFormEliminarCuenta] = useState(false);
     const [userEmail, setUserMail] = useState(null);
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }    
     const [listo, setListo] = useState(false);
+    
+    const [googleProvider, setGoogleProvider] = useState(false);
+    const [facebookProvider, setFacebookProvider] = useState(false);
+    const [providers, setProviders] = useState(null);
 
     const handleUpdateProfile = useCallback(async () => {
         const infoUser = doc(database, "users", currentUser.uid);
         try{                                  
             const docSnap = await getDoc(infoUser);
             if (docSnap.exists()) {
-                if (isMounted){
-                setUserName(docSnap.data().name.split(' ')[0]);
-                setCreatedLenguaje(docSnap.data().account.created.location.lenguaje)
-                setCreatedOsName(docSnap.data().account.created.os.name);
-                setCreatedOsVersion(docSnap.data().account.created.os.version);
-                setCreatedLocationCity(docSnap.data().account.created.location.city);
-                setCreatedLocationCountry(docSnap.data().account.created.location.country);
-                setCreatedLocationRegion(docSnap.data().account.created.location.region);
-                setCreatedBrowser(docSnap.data().account.created.browser);
-                setCreatedDate(docSnap.data().account.created.date);
-                setLoadingCreated(false);
-                setUserMail(currentUser.email);
-                docSnap.data().sessions.forEach(e=>{
-                    sessions.push(e);
-                });
-                setListo(true);
-                }
+                getUser(currentUser.uid)
+                .then((record) => {
+                    if (isMounted){
+                        setProviders(record.data.providerData);
+                        record.data.providerData.forEach((item) => {
+                            if(item.providerId === 'google.com'){
+                                setGoogleProvider(true);
+                            }
+                            if(item.providerId === 'facebook.com'){
+                                setFacebookProvider(true);
+                            }
+                        })
+                        setUserName(docSnap.data().name.split(' ')[0]);
+                        setCreatedLenguaje(docSnap.data().account.created.location.lenguaje)
+                        setCreatedOsName(docSnap.data().account.created.os.name);
+                        setCreatedOsVersion(docSnap.data().account.created.os.version);
+                        setCreatedLocationCity(docSnap.data().account.created.location.city);
+                        setCreatedLocationCountry(docSnap.data().account.created.location.country);
+                        setCreatedLocationRegion(docSnap.data().account.created.location.region);
+                        setCreatedBrowser(docSnap.data().account.created.browser);
+                        setCreatedDate(docSnap.data().account.created.date);
+                        setUserMail(currentUser.email);
+                        docSnap.data().sessions.forEach(e=>{
+                            sessions.push(e);
+                        });
+                        setListo(true);
+                        setLoadingCreated(false);
+                    }
+                })
+                .catch(() => {
+                    logout()
+                    .then(()=>{
+                        emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
+                    })
+                    .catch((error)=>{
+                        emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
+                    });    
+                })
             }else{
                 logout()
                 .then(()=>{
@@ -118,6 +160,10 @@ function LoginAndSecurity() {
 
     const clearStates = useCallback(() => {
         if(isMounted){
+        setLoadingCreated(true);
+        setGoogleProvider(false);
+        setFacebookProvider(false);
+        setProviders(null);
         listItems = null;
         setCreatedOsName(null);
         setCreatedOsVersion(null);
@@ -127,7 +173,6 @@ function LoginAndSecurity() {
         setCreatedBrowser(null);
         setCreatedDate(null);
         setCreatedLenguaje(null);
-        setLoadingCreated(true);
         setUserMail(null);
         setUserName(null);
         sessions = [];
@@ -152,6 +197,8 @@ function LoginAndSecurity() {
 
     const handleClose = () => {
         setOpenFormEliminarCuenta(false);
+        clearStates();
+        handleUpdateProfile();  
     }
 
     const handleEliminar = () => {
@@ -301,7 +348,17 @@ function LoginAndSecurity() {
                 }}
             >
                 <Stack
-                    key={index+1}
+                    direction='row'
+                    spacing={1}
+                    key={(2*index)+1}
+                    style={{
+                        marginTop: '0px',
+                        marginBottom: '0px',
+                    }}
+                >
+                <DesktopWindowsIcon fontSize='large'/>
+                <Stack
+                    key={(2*index)+2}
                     spacing={1}
                     style={{
                         marginTop: '0px',
@@ -329,12 +386,267 @@ function LoginAndSecurity() {
                         }} 
                         >
                             <strong>Cerrar sesión</strong>
-                        </Link>
+                    </Link>
+                </Stack>
                 </Stack>
             </Paper> 
             );    
         }
     }, [listo, currentUser, handleCLoseSessionDevice]);
+
+    const handleChangeGoogleSwitch= (state) => {
+        if (!state){
+            //esta desvinculando
+            if (providers.length === 1){
+                //esta desvinculando a su unico proveedor
+                if (providers[0].providerId === 'google.com'){
+                    handleEliminarCuenta();                    
+                }else{
+                    //hay algun error
+                    clearStates();
+                    handleUpdateProfile();                    
+                }
+            }else{
+                //esta desvinculando pero tiene mas proveedores de ingreso
+                const auth = getAuth();
+                unlink(auth.currentUser, 'google.com')
+                .then(() => {
+                    clearStates();
+                    handleUpdateProfile();                    
+                    setMsg('Se ha desvinculado el ingreso por Google');
+                    setSeverityInfo('info');
+                    setOpenMsg(true);  
+                }).catch((error) => {
+                    setMsg('Ha ocurrido un error al intentar desvincular Google de tu cuenta');
+                    setSeverityInfo('error');
+                    setOpenMsg(true);                      
+                });
+            }
+        }else{
+            //esta vinculando
+            const provider = new GoogleAuthProvider();
+            const auth = getAuth();
+            const antToken = auth.currentUser.accessToken;
+            linkWithPopup(auth.currentUser, provider)
+            .then(async() => {
+                const newToken = auth.currentUser.accessToken;
+                const database = getFirestore();
+                const infoUser = doc(database, "users", currentUser.uid);
+                const docSnap = await getDoc(infoUser);
+                if (docSnap.exists()) {
+                  const filtered = docSnap.data().sessions.filter(function(element){
+                      return element.id === antToken;
+                });
+                  if (filtered.length !== 0){
+                    await updateDoc(infoUser, {
+                        sessions: arrayRemove(filtered[0])
+                    })
+                    .then(async()=>{
+                            await updateDoc(infoUser, {
+                                sessions: arrayUnion(                
+                                    {
+                                        id: newToken,
+                                        date: Timestamp.now().toMillis(),
+                                        ip: details.user[0].ip, 
+                                        browser: details.user[1].browser.name,
+                                        os:{
+                                            name: details.user[1].os.name,
+                                            version: details.user[1].os.version,
+                                        },
+                                        location:{
+                                            city: details.user[0].city,//tigre
+                                            country: details.user[0].country_name, //argentina
+                                            region: details.user[0].region,
+                                            country_code: details.user[0].country_code,
+                                            currency_name: details.user[0].currency_name,
+                                            currency: details.user[0].currency,
+                                            lenguaje: details.user[0].languages.split(',')[0],
+                                            country_tld: details.user[0].country_tld,
+                                        },
+                                    }
+                                )
+                            }
+                            )
+                            .then(()=>{
+                                clearStates();
+                                handleUpdateProfile();                    
+                                setMsg('Se ha vinculado el ingreso por Google');
+                                setSeverityInfo('success');
+                                setOpenMsg(true);        
+                            })
+                            .catch((error)=>{
+                                logout()
+                                .then(()=>{
+                                    emitCustomEvent('openLoadingPage', false);
+                                })
+                                .catch((error)=>{
+                                    emitCustomEvent('openLoadingPage', false);
+                                });                                
+                            });
+                    })
+                    .catch((error)=>{ 
+                        logout()
+                        .then(()=>{
+                            emitCustomEvent('openLoadingPage', false);
+                        })
+                        .catch((error)=>{
+                            emitCustomEvent('openLoadingPage', false);
+                        });                        
+                    });
+                  }else{ 
+                    logout()
+                    .then(()=>{
+                        emitCustomEvent('openLoadingPage', false);
+                    })
+                    .catch((error)=>{
+                        emitCustomEvent('openLoadingPage', false);
+                    });                    
+                  }
+                }else{
+                    logout()
+                    .then(()=>{
+                        emitCustomEvent('openLoadingPage', false);
+                    })
+                    .catch((error)=>{
+                        emitCustomEvent('openLoadingPage', false);
+                    });                    
+                }
+            }).catch((error) => {
+                clearStates();
+                handleUpdateProfile();                    
+                setMsg('No se hemos podido vincular el acceso por Google a tu cuenta. Prueba con otra cuenta de Google');
+                setSeverityInfo('error');
+                setOpenMsg(true);        
+            });
+        }
+    }
+
+    const handleChangeFacebookSwitch= (e) => {
+        if (!state){
+            //esta desvinculando
+            if (providers.length === 1){
+                //esta desvinculando a su unico proveedor
+                if (providers[0].providerId === 'facebook.com'){
+                    handleEliminarCuenta();                    
+                }else{
+                    //hay algun error
+                    clearStates();
+                    handleUpdateProfile();                    
+                }
+            }else{
+                //esta desvinculando pero tiene mas proveedores de ingreso
+                const auth = getAuth();
+                unlink(auth.currentUser, 'facebook.com')
+                .then(() => {
+                    clearStates();
+                    handleUpdateProfile();                    
+                    setMsg('Se ha desvinculado el ingreso por Facebook');
+                    setSeverityInfo('info');
+                    setOpenMsg(true);  
+                }).catch((error) => {
+                    setMsg('Ha ocurrido un error al intentar desvincular Facebook de tu cuenta');
+                    setSeverityInfo('error');
+                    setOpenMsg(true);                      
+                });
+            }
+        }else{
+            //esta vinculando
+            const provider = new FacebookAuthProvider();
+            const auth = getAuth();
+            const antToken = auth.currentUser.accessToken;
+            linkWithPopup(auth.currentUser, provider)
+            .then(async() => {
+                const newToken = auth.currentUser.accessToken;
+                const database = getFirestore();
+                const infoUser = doc(database, "users", currentUser.uid);
+                const docSnap = await getDoc(infoUser);
+                if (docSnap.exists()) {
+                  const filtered = docSnap.data().sessions.filter(function(element){
+                      return element.id === antToken;
+                });
+                  if (filtered.length !== 0){
+                    await updateDoc(infoUser, {
+                        sessions: arrayRemove(filtered[0])
+                    })
+                    .then(async()=>{
+                            await updateDoc(infoUser, {
+                                sessions: arrayUnion(                
+                                    {
+                                        id: newToken,
+                                        date: Timestamp.now().toMillis(),
+                                        ip: details.user[0].ip, 
+                                        browser: details.user[1].browser.name,
+                                        os:{
+                                            name: details.user[1].os.name,
+                                            version: details.user[1].os.version,
+                                        },
+                                        location:{
+                                            city: details.user[0].city,//tigre
+                                            country: details.user[0].country_name, //argentina
+                                            region: details.user[0].region,
+                                            country_code: details.user[0].country_code,
+                                            currency_name: details.user[0].currency_name,
+                                            currency: details.user[0].currency,
+                                            lenguaje: details.user[0].languages.split(',')[0],
+                                            country_tld: details.user[0].country_tld,
+                                        },
+                                    }
+                                )
+                            }
+                            )
+                            .then(()=>{
+                                clearStates();
+                                handleUpdateProfile();                    
+                                setMsg('Se ha vinculado el ingreso por Facebook');
+                                setSeverityInfo('success');
+                                setOpenMsg(true);        
+                            })
+                            .catch((error)=>{
+                                logout()
+                                .then(()=>{
+                                    emitCustomEvent('openLoadingPage', false);
+                                })
+                                .catch((error)=>{
+                                    emitCustomEvent('openLoadingPage', false);
+                                });                                
+                            });
+                    })
+                    .catch((error)=>{ 
+                        logout()
+                        .then(()=>{
+                            emitCustomEvent('openLoadingPage', false);
+                        })
+                        .catch((error)=>{
+                            emitCustomEvent('openLoadingPage', false);
+                        });                        
+                    });
+                  }else{ 
+                    logout()
+                    .then(()=>{
+                        emitCustomEvent('openLoadingPage', false);
+                    })
+                    .catch((error)=>{
+                        emitCustomEvent('openLoadingPage', false);
+                    });                    
+                  }
+                }else{
+                    logout()
+                    .then(()=>{
+                        emitCustomEvent('openLoadingPage', false);
+                    })
+                    .catch((error)=>{
+                        emitCustomEvent('openLoadingPage', false);
+                    });                    
+                }
+            }).catch((error) => {
+                clearStates();
+                handleUpdateProfile();                    
+                setMsg('No se hemos podido vincular el acceso por Fecebook a tu cuenta. Prueba con otra cuenta de Fecebook');
+                setSeverityInfo('error');
+                setOpenMsg(true);        
+            });
+        }
+    }
 
     return (
         <div>
@@ -456,9 +768,51 @@ function LoginAndSecurity() {
                                         <Typography><strong>Proveedores externos</strong></Typography>
                                         </AccordionSummary>
                                         <AccordionDetails>
-                                        <Typography>
-                                            Datos de ingreso de redes sociales
-                                        </Typography>
+                                            <Divider/>
+                                            {!loadingCreated ?
+                                            <Stack
+                                                direction='column'
+                                                style={{
+                                                    marginTop: '10px',
+                                                    marginBottom: '10px'
+                                                }}
+                                            >
+                                            <CustomizedSwitch
+                                                label='Google'
+                                                strong={true}
+                                                checked={googleProvider}
+                                                onGetChange={handleChangeGoogleSwitch}
+                                            />
+                                            {(providers.length === 1) && (googleProvider) ? 
+                                            <Chip size='small' color='info' label="único proveedor" sx={{fontSize:'11px', maxWidth: '100px'}}/>
+                                            :null}
+                                            </Stack>
+                                            :
+                                            <Skeleton variant="text" width="100%"/>
+                                            }
+                                            <Divider/>
+                                            {!loadingCreated ?
+                                            <Stack
+                                                direction='column'
+                                                style={{
+                                                    marginTop: '10px',
+                                                    marginBottom: '10px'
+                                                }}
+                                            >
+                                            <CustomizedSwitch
+                                                label='Facebook'
+                                                strong={true}
+                                                checked={facebookProvider}
+                                                onGetChange={handleChangeFacebookSwitch}
+                                            />
+                                            {(providers.length === 1) && (facebookProvider) ? 
+                                            <Chip size='small' color='info' label="único proveedor" sx={{fontSize:'11px', maxWidth: '100px'}}/>
+                                            :null}
+                                            </Stack>
+                                            :
+                                            <Skeleton variant="text" width="100%"/>
+                                            }
+                                            <Divider/>
                                         </AccordionDetails>
                                     </Accordion>
                                     <Divider/>
@@ -618,6 +972,9 @@ function LoginAndSecurity() {
                         </Stack>
                     </Paper>
                 </Box>
+                <Snackbar open={openMsg} autoHideDuration={6000} onClose={handleCloseMsg} anchorOrigin={{ vertical: 'top', horizontal: 'center' }} sx={{width: '100%'}}>
+                    <Alert onClose={handleCloseMsg} severity={severityInfo}>{msg}</Alert>
+                </Snackbar>            
             </Container>
         </div>
     )

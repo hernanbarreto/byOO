@@ -42,7 +42,7 @@ function App() {
                 <Account />
             </PrivateRoute>
             <PrivateRoute exact path='/account-settings/login-and-security'>
-                <LoginAndSecurity />
+                <LoginAndSecurity user={userDetails}/>
             </PrivateRoute>
             <Route exact path='/'>
                 <Home />
