@@ -41,9 +41,11 @@ import Chip from '@mui/material/Chip';
 import { useInitPage } from '../../useInitPage';
 import DesktopWindowsIcon from '@mui/icons-material/DesktopWindows';
 import CustomizedSwitch from '../../custom/CustomSwitch';
-import { getAuth, unlink, linkWithPopup, GoogleAuthProvider, FacebookAuthProvider } from "firebase/auth";
+import { getAuth, unlink, linkWithCredential, GoogleAuthProvider, FacebookAuthProvider, onAuthStateChanged } from "firebase/auth";
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
+import FacebookLogin from 'react-facebook-login/dist/facebook-login-render-props';
+import GoogleLogin from 'react-google-login';
 
 const functions = getFunctions();
 const deleteUser = httpsCallable(functions, 'deleteUser');
@@ -264,6 +266,7 @@ function LoginAndSecurity(details) {
     }
 
     const handleCLoseSessionDevice = useCallback(async (i) => {
+        emitCustomEvent('openLoadingPage', true);
         const database = getFirestore();
         const infoUser = doc(database, "users", currentUser.uid);
         const docSnap = await getDoc(infoUser);
@@ -277,7 +280,6 @@ function LoginAndSecurity(details) {
             })
             .then(()=>{
                 if (sessions[i].id === currentUser.accessToken){
-                    emitCustomEvent('openLoadingPage', true);
                     clearStates();
                     handleUpdateProfile();    
                     logout()
@@ -288,6 +290,7 @@ function LoginAndSecurity(details) {
                         emitCustomEvent('openLoadingPage', false);
                     });                    
                 }else{
+                    emitCustomEvent('openLoadingPage', false);
                     clearStates();
                     handleUpdateProfile();    
                 }        
@@ -298,10 +301,13 @@ function LoginAndSecurity(details) {
                     handleUpdateProfile();    
                     logout()
                     .then(()=>{
+                        emitCustomEvent('openLoadingPage', false);
                     })
                     .catch((error)=>{
+                        emitCustomEvent('openLoadingPage', false);
                     });                    
                 }else{
+                    emitCustomEvent('openLoadingPage', false);
                     clearStates();
                     handleUpdateProfile();    
                 }        
@@ -312,10 +318,13 @@ function LoginAndSecurity(details) {
                 handleUpdateProfile();    
                 logout()
                 .then(()=>{
+                    emitCustomEvent('openLoadingPage', false);
                 })
                 .catch((error)=>{
+                    emitCustomEvent('openLoadingPage', false);
                 });                    
             }else{
+                emitCustomEvent('openLoadingPage', false);
                 clearStates();
                 handleUpdateProfile();    
             }    
@@ -323,8 +332,10 @@ function LoginAndSecurity(details) {
         }else{
             logout()
             .then(()=>{
+                emitCustomEvent('openLoadingPage', false);
             })
             .catch((error)=>{
+                emitCustomEvent('openLoadingPage', false);
             });
         }
     },[currentUser, handleUpdateProfile, clearStates]);
@@ -394,258 +405,341 @@ function LoginAndSecurity(details) {
         }
     }, [listo, currentUser, handleCLoseSessionDevice]);
 
-    const handleChangeGoogleSwitch= (state) => {
-        if (!state){
-            //esta desvinculando
-            if (providers.length === 1){
-                //esta desvinculando a su unico proveedor
-                if (providers[0].providerId === 'google.com'){
-                    handleEliminarCuenta();                    
-                }else{
-                    //hay algun error
-                    clearStates();
-                    handleUpdateProfile();                    
-                }
+    const handleDesvincularFacebook = () => {        
+        //esta desvinculando
+        if (providers.length === 1){
+            //esta desvinculando a su unico proveedor
+            if (providers[0].providerId === 'facebook.com'){
+                emitCustomEvent('openLoadingPage', false);
+                handleEliminarCuenta();                    
             }else{
-                //esta desvinculando pero tiene mas proveedores de ingreso
-                const auth = getAuth();
-                unlink(auth.currentUser, 'google.com')
-                .then(() => {
-                    clearStates();
-                    handleUpdateProfile();                    
-                    setMsg('Se ha desvinculado el ingreso por Google');
-                    setSeverityInfo('info');
-                    setOpenMsg(true);  
-                }).catch((error) => {
-                    setMsg('Ha ocurrido un error al intentar desvincular Google de tu cuenta');
-                    setSeverityInfo('error');
-                    setOpenMsg(true);                      
-                });
-            }
-        }else{
-            //esta vinculando
-            const provider = new GoogleAuthProvider();
-            const auth = getAuth();
-            const antToken = auth.currentUser.accessToken;
-            linkWithPopup(auth.currentUser, provider)
-            .then(async() => {
-                const newToken = auth.currentUser.accessToken;
-                const database = getFirestore();
-                const infoUser = doc(database, "users", currentUser.uid);
-                const docSnap = await getDoc(infoUser);
-                if (docSnap.exists()) {
-                  const filtered = docSnap.data().sessions.filter(function(element){
-                      return element.id === antToken;
-                });
-                  if (filtered.length !== 0){
-                    await updateDoc(infoUser, {
-                        sessions: arrayRemove(filtered[0])
-                    })
-                    .then(async()=>{
-                            await updateDoc(infoUser, {
-                                sessions: arrayUnion(                
-                                    {
-                                        id: newToken,
-                                        date: Timestamp.now().toMillis(),
-                                        ip: details.user[0].ip, 
-                                        browser: details.user[1].browser.name,
-                                        os:{
-                                            name: details.user[1].os.name,
-                                            version: details.user[1].os.version,
-                                        },
-                                        location:{
-                                            city: details.user[0].city,//tigre
-                                            country: details.user[0].country_name, //argentina
-                                            region: details.user[0].region,
-                                            country_code: details.user[0].country_code,
-                                            currency_name: details.user[0].currency_name,
-                                            currency: details.user[0].currency,
-                                            lenguaje: details.user[0].languages.split(',')[0],
-                                            country_tld: details.user[0].country_tld,
-                                        },
-                                    }
-                                )
-                            }
-                            )
-                            .then(()=>{
-                                clearStates();
-                                handleUpdateProfile();                    
-                                setMsg('Se ha vinculado el ingreso por Google');
-                                setSeverityInfo('success');
-                                setOpenMsg(true);        
-                            })
-                            .catch((error)=>{
-                                logout()
-                                .then(()=>{
-                                    emitCustomEvent('openLoadingPage', false);
-                                })
-                                .catch((error)=>{
-                                    emitCustomEvent('openLoadingPage', false);
-                                });                                
-                            });
-                    })
-                    .catch((error)=>{ 
-                        logout()
-                        .then(()=>{
-                            emitCustomEvent('openLoadingPage', false);
-                        })
-                        .catch((error)=>{
-                            emitCustomEvent('openLoadingPage', false);
-                        });                        
-                    });
-                  }else{ 
-                    logout()
-                    .then(()=>{
-                        emitCustomEvent('openLoadingPage', false);
-                    })
-                    .catch((error)=>{
-                        emitCustomEvent('openLoadingPage', false);
-                    });                    
-                  }
-                }else{
-                    logout()
-                    .then(()=>{
-                        emitCustomEvent('openLoadingPage', false);
-                    })
-                    .catch((error)=>{
-                        emitCustomEvent('openLoadingPage', false);
-                    });                    
-                }
-            }).catch((error) => {
+                //hay algun error
+                emitCustomEvent('openLoadingPage', false);
                 clearStates();
                 handleUpdateProfile();                    
-                setMsg('No se hemos podido vincular el acceso por Google a tu cuenta. Prueba con otra cuenta de Google');
+            }
+        }else{
+            //esta desvinculando pero tiene mas proveedores de ingreso
+            const auth = getAuth();
+            unlink(auth.currentUser, 'facebook.com')
+            .then(() => {
+                emitCustomEvent('openLoadingPage', false);
+                clearStates();
+                handleUpdateProfile();                    
+                setMsg('Se ha desvinculado el ingreso por Facebook');
+                setSeverityInfo('info');
+                setOpenMsg(true);  
+            }).catch((error) => {
+                emitCustomEvent('openLoadingPage', false);
+                setMsg('Ha ocurrido un error al intentar desvincular Facebook de tu cuenta');
                 setSeverityInfo('error');
-                setOpenMsg(true);        
+                setOpenMsg(true);                      
             });
         }
     }
 
-    const handleChangeFacebookSwitch= (e) => {
-        if (!state){
-            //esta desvinculando
-            if (providers.length === 1){
-                //esta desvinculando a su unico proveedor
-                if (providers[0].providerId === 'facebook.com'){
-                    handleEliminarCuenta();                    
-                }else{
-                    //hay algun error
-                    clearStates();
-                    handleUpdateProfile();                    
-                }
-            }else{
-                //esta desvinculando pero tiene mas proveedores de ingreso
-                const auth = getAuth();
-                unlink(auth.currentUser, 'facebook.com')
-                .then(() => {
-                    clearStates();
-                    handleUpdateProfile();                    
-                    setMsg('Se ha desvinculado el ingreso por Facebook');
-                    setSeverityInfo('info');
-                    setOpenMsg(true);  
-                }).catch((error) => {
-                    setMsg('Ha ocurrido un error al intentar desvincular Facebook de tu cuenta');
-                    setSeverityInfo('error');
-                    setOpenMsg(true);                      
-                });
-            }
-        }else{
-            //esta vinculando
-            const provider = new FacebookAuthProvider();
-            const auth = getAuth();
-            const antToken = auth.currentUser.accessToken;
-            linkWithPopup(auth.currentUser, provider)
-            .then(async() => {
-                const newToken = auth.currentUser.accessToken;
-                const database = getFirestore();
-                const infoUser = doc(database, "users", currentUser.uid);
-                const docSnap = await getDoc(infoUser);
-                if (docSnap.exists()) {
-                  const filtered = docSnap.data().sessions.filter(function(element){
-                      return element.id === antToken;
-                });
-                  if (filtered.length !== 0){
-                    await updateDoc(infoUser, {
-                        sessions: arrayRemove(filtered[0])
-                    })
-                    .then(async()=>{
-                            await updateDoc(infoUser, {
-                                sessions: arrayUnion(                
-                                    {
-                                        id: newToken,
-                                        date: Timestamp.now().toMillis(),
-                                        ip: details.user[0].ip, 
-                                        browser: details.user[1].browser.name,
-                                        os:{
-                                            name: details.user[1].os.name,
-                                            version: details.user[1].os.version,
-                                        },
-                                        location:{
-                                            city: details.user[0].city,//tigre
-                                            country: details.user[0].country_name, //argentina
-                                            region: details.user[0].region,
-                                            country_code: details.user[0].country_code,
-                                            currency_name: details.user[0].currency_name,
-                                            currency: details.user[0].currency,
-                                            lenguaje: details.user[0].languages.split(',')[0],
-                                            country_tld: details.user[0].country_tld,
-                                        },
-                                    }
+    const responseFacebook = (response) => {
+        //esta vinculando
+        const auth = getAuth();
+        const antToken = auth.currentUser.accessToken;
+        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+            unsubscribe();
+            if (!isUserEqualF(response, firebaseUser)) {
+                const credential = FacebookAuthProvider.credential(response.accessToken);
+                linkWithCredential(auth.currentUser, credential)
+                .then(async() => {
+                    const newToken = auth.currentUser.accessToken;
+                    const database = getFirestore();
+                    const infoUser = doc(database, "users", currentUser.uid);
+                    const docSnap = await getDoc(infoUser);
+                    if (docSnap.exists()) {
+                    const filtered = docSnap.data().sessions.filter(function(element){
+                        return element.id === antToken;
+                    });
+                    if (filtered.length !== 0){
+                        await updateDoc(infoUser, {
+                            sessions: arrayRemove(filtered[0])
+                        })
+                        .then(async()=>{
+                                await updateDoc(infoUser, {
+                                    sessions: arrayUnion(                
+                                        {
+                                            id: newToken,
+                                            date: Timestamp.now().toMillis(),
+                                            ip: details.user[0].ip, 
+                                            browser: details.user[1].browser.name,
+                                            os:{
+                                                name: details.user[1].os.name,
+                                                version: details.user[1].os.version,
+                                            },
+                                            location:{
+                                                city: details.user[0].city,//tigre
+                                                country: details.user[0].country_name, //argentina
+                                                region: details.user[0].region,
+                                                country_code: details.user[0].country_code,
+                                                currency_name: details.user[0].currency_name,
+                                                currency: details.user[0].currency,
+                                                lenguaje: details.user[0].languages.split(',')[0],
+                                                country_tld: details.user[0].country_tld,
+                                            },
+                                        }
+                                    )
+                                }
                                 )
-                            }
-                            )
-                            .then(()=>{
-                                clearStates();
-                                handleUpdateProfile();                    
-                                setMsg('Se ha vinculado el ingreso por Facebook');
-                                setSeverityInfo('success');
-                                setOpenMsg(true);        
-                            })
-                            .catch((error)=>{
-                                logout()
                                 .then(()=>{
                                     emitCustomEvent('openLoadingPage', false);
+                                    clearStates();
+                                    handleUpdateProfile();                    
+                                    setMsg('Se ha vinculado el ingreso por Facebook');
+                                    setSeverityInfo('success');
+                                    setOpenMsg(true);        
                                 })
                                 .catch((error)=>{
-                                    emitCustomEvent('openLoadingPage', false);
-                                });                                
-                            });
-                    })
-                    .catch((error)=>{ 
+                                    logout()
+                                    .then(()=>{
+                                        emitCustomEvent('openLoadingPage', false);
+                                    })
+                                    .catch((error)=>{
+                                        emitCustomEvent('openLoadingPage', false);
+                                    });                                
+                                });
+                        })
+                        .catch((error)=>{ 
+                            logout()
+                            .then(()=>{
+                                emitCustomEvent('openLoadingPage', false);
+                            })
+                            .catch((error)=>{
+                                emitCustomEvent('openLoadingPage', false);
+                            });                        
+                        });
+                    }else{ 
                         logout()
                         .then(()=>{
                             emitCustomEvent('openLoadingPage', false);
                         })
                         .catch((error)=>{
                             emitCustomEvent('openLoadingPage', false);
-                        });                        
-                    });
-                  }else{ 
-                    logout()
-                    .then(()=>{
-                        emitCustomEvent('openLoadingPage', false);
-                    })
-                    .catch((error)=>{
-                        emitCustomEvent('openLoadingPage', false);
-                    });                    
-                  }
-                }else{
-                    logout()
-                    .then(()=>{
-                        emitCustomEvent('openLoadingPage', false);
-                    })
-                    .catch((error)=>{
-                        emitCustomEvent('openLoadingPage', false);
-                    });                    
-                }
-            }).catch((error) => {
+                        });                    
+                    }
+                    }else{
+                        logout()
+                        .then(()=>{
+                            emitCustomEvent('openLoadingPage', false);
+                        })
+                        .catch((error)=>{
+                            emitCustomEvent('openLoadingPage', false);
+                        });                    
+                    }
+                }).catch((error) => {
+                    emitCustomEvent('openLoadingPage', false);
+                    clearStates();
+                    handleUpdateProfile();                    
+                    setMsg('No se hemos podido vincular el acceso por Fecebook a tu cuenta. Prueba con otra cuenta de Fecebook');
+                    setSeverityInfo('error');
+                    setOpenMsg(true);        
+                });
+            } else {
+                emitCustomEvent('openLoadingPage', false);
                 clearStates();
                 handleUpdateProfile();                    
-                setMsg('No se hemos podido vincular el acceso por Fecebook a tu cuenta. Prueba con otra cuenta de Fecebook');
+                setMsg('No se hemos podido vincular el acceso por Fecebook a tu cuenta.');
                 setSeverityInfo('error');
                 setOpenMsg(true);        
+            }
+            });    
+    }
+
+    function isUserEqualF(response, firebaseUser) {
+        if (firebaseUser) {
+          const providerData = firebaseUser.providerData;
+          for (let i = 0; i < providerData.length; i++) {
+            if (providerData[i].providerId === FacebookAuthProvider.PROVIDER_ID &&
+                providerData[i].uid === response.id) {
+              // We don't need to reauth the Firebase connection.
+              return true;
+            }
+          }
+        }
+        return false;
+    }
+
+    const handleErrorFacebook = () => {
+        emitCustomEvent('openLoadingPage', false);
+        clearStates();
+        handleUpdateProfile();                    
+        setMsg('No se hemos podido vincular el acceso por Fecebook a tu cuenta.');
+        setSeverityInfo('error');
+        setOpenMsg(true);        
+    }
+
+
+    const handleDesvincularGoogle= () => {
+        //esta desvinculando
+        if (providers.length === 1){
+            //esta desvinculando a su unico proveedor
+            if (providers[0].providerId === 'google.com'){
+                emitCustomEvent('openLoadingPage', false);
+                handleEliminarCuenta();                    
+            }else{
+                //hay algun error
+                emitCustomEvent('openLoadingPage', false);
+                clearStates();
+                handleUpdateProfile();                    
+            }
+        }else{
+            //esta desvinculando pero tiene mas proveedores de ingreso
+            const auth = getAuth();
+            unlink(auth.currentUser, 'google.com')
+            .then(() => {
+                emitCustomEvent('openLoadingPage', false);
+                clearStates();
+                handleUpdateProfile();                    
+                setMsg('Se ha desvinculado el ingreso por Google');
+                setSeverityInfo('info');
+                setOpenMsg(true);  
+            }).catch((error) => {
+                emitCustomEvent('openLoadingPage', false);
+                setMsg('Ha ocurrido un error al intentar desvincular Google de tu cuenta');
+                setSeverityInfo('error');
+                setOpenMsg(true);                      
             });
         }
+    }
+
+    const responseGoogleError = () => {
+        emitCustomEvent('openLoadingPage', false);
+        clearStates();
+        handleUpdateProfile();                    
+        setMsg('No se hemos podido vincular el acceso por Google a tu cuenta.');
+        setSeverityInfo('error');
+        setOpenMsg(true);        
+    }
+
+    const responseGoogleSuccess = (googleUser) => {
+        //esta vinculando
+        const auth = getAuth();
+        const antToken = auth.currentUser.accessToken;
+        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+            unsubscribe();
+            if (!isUserEqualG(googleUser, firebaseUser)) {
+                const credential = GoogleAuthProvider.credential(googleUser.getAuthResponse().id_token);
+                linkWithCredential(auth.currentUser, credential)
+                .then(async() => {
+                    const newToken = auth.currentUser.accessToken;
+                    const database = getFirestore();
+                    const infoUser = doc(database, "users", currentUser.uid);
+                    const docSnap = await getDoc(infoUser);
+                    if (docSnap.exists()) {
+                      const filtered = docSnap.data().sessions.filter(function(element){
+                          return element.id === antToken;
+                    });
+                      if (filtered.length !== 0){
+                        await updateDoc(infoUser, {
+                            sessions: arrayRemove(filtered[0])
+                        })
+                        .then(async()=>{
+                                await updateDoc(infoUser, {
+                                    sessions: arrayUnion(                
+                                        {
+                                            id: newToken,
+                                            date: Timestamp.now().toMillis(),
+                                            ip: details.user[0].ip, 
+                                            browser: details.user[1].browser.name,
+                                            os:{
+                                                name: details.user[1].os.name,
+                                                version: details.user[1].os.version,
+                                            },
+                                            location:{
+                                                city: details.user[0].city,//tigre
+                                                country: details.user[0].country_name, //argentina
+                                                region: details.user[0].region,
+                                                country_code: details.user[0].country_code,
+                                                currency_name: details.user[0].currency_name,
+                                                currency: details.user[0].currency,
+                                                lenguaje: details.user[0].languages.split(',')[0],
+                                                country_tld: details.user[0].country_tld,
+                                            },
+                                        }
+                                    )
+                                }
+                                )
+                                .then(()=>{
+                                    emitCustomEvent('openLoadingPage', false);
+                                    clearStates();
+                                    handleUpdateProfile();                    
+                                    setMsg('Se ha vinculado el ingreso por Google');
+                                    setSeverityInfo('success');
+                                    setOpenMsg(true);        
+                                })
+                                .catch((error)=>{
+                                    logout()
+                                    .then(()=>{
+                                        emitCustomEvent('openLoadingPage', false);
+                                    })
+                                    .catch((error)=>{
+                                        emitCustomEvent('openLoadingPage', false);
+                                    });                                
+                                });
+                        })
+                        .catch((error)=>{ 
+                            logout()
+                            .then(()=>{
+                                emitCustomEvent('openLoadingPage', false);
+                            })
+                            .catch((error)=>{
+                                emitCustomEvent('openLoadingPage', false);
+                            });                        
+                        });
+                      }else{ 
+                        logout()
+                        .then(()=>{
+                            emitCustomEvent('openLoadingPage', false);
+                        })
+                        .catch((error)=>{
+                            emitCustomEvent('openLoadingPage', false);
+                        });                    
+                      }
+                    }else{
+                        logout()
+                        .then(()=>{
+                            emitCustomEvent('openLoadingPage', false);
+                        })
+                        .catch((error)=>{
+                            emitCustomEvent('openLoadingPage', false);
+                        });                    
+                    }
+                }).catch((error) => {
+                    emitCustomEvent('openLoadingPage', false);
+                    clearStates();
+                    handleUpdateProfile();                    
+                    setMsg('No se hemos podido vincular el acceso por Google a tu cuenta. Prueba con otra cuenta de Google');
+                    setSeverityInfo('error');
+                    setOpenMsg(true);        
+                });
+            }else {
+                emitCustomEvent('openLoadingPage', false);
+                clearStates();
+                handleUpdateProfile();                    
+                setMsg('No se hemos podido vincular el acceso por Google a tu cuenta.');
+                setSeverityInfo('error');
+                setOpenMsg(true);        
+            }
+        });  
+    }
+
+    function isUserEqualG(googleUser, firebaseUser) {
+        if (firebaseUser) {
+          const providerData = firebaseUser.providerData;
+          for (let i = 0; i < providerData.length; i++) {
+            if (providerData[i].providerId === GoogleAuthProvider.PROVIDER_ID &&
+                providerData[i].uid === googleUser.getBasicProfile().getId()) {
+              // We don't need to reauth the Firebase connection.
+              return true;
+            }
+          }
+        }
+        return false;
     }
 
     return (
@@ -777,12 +871,29 @@ function LoginAndSecurity(details) {
                                                     marginBottom: '10px'
                                                 }}
                                             >
-                                            <CustomizedSwitch
-                                                label='Google'
-                                                strong={true}
-                                                checked={googleProvider}
-                                                onGetChange={handleChangeGoogleSwitch}
-                                            />
+                                            <GoogleLogin
+                                                jsSrc={'https://apis.google.com/js/client.js'}
+                                                clientId={process.env.REACT_APP_GOOGLEID}
+                                                onSuccess={responseGoogleSuccess}
+                                                onFailure={responseGoogleError}
+                                                scope= 'https://www.googleapis.com/auth/user.birthday.read https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+                                                cookiePolicy = {"single_host_origin"}
+                                                render={renderProps => (
+                                                    <CustomizedSwitch
+                                                        label='Google'
+                                                        strong={true}
+                                                        checked={googleProvider}
+                                                        onGetChange={e=>{
+                                                            emitCustomEvent('openLoadingPage', true);
+                                                            if(e){
+                                                                renderProps.onClick();
+                                                            }else{
+                                                                handleDesvincularGoogle();
+                                                            }
+                                                        }}
+                                                    />
+                                                )}
+                                            />            
                                             {(providers.length === 1) && (googleProvider) ? 
                                             <Chip size='small' color='info' label="único proveedor" sx={{fontSize:'11px', maxWidth: '100px'}}/>
                                             :null}
@@ -799,12 +910,34 @@ function LoginAndSecurity(details) {
                                                     marginBottom: '10px'
                                                 }}
                                             >
-                                            <CustomizedSwitch
-                                                label='Facebook'
-                                                strong={true}
-                                                checked={facebookProvider}
-                                                onGetChange={handleChangeFacebookSwitch}
-                                            />
+                                            <FacebookLogin
+                                                appId={process.env.REACT_APP_FACEBOOKID}
+                                                fields="name,email,picture"
+                                                scope=	'public_profile, email, user_birthday'
+                                                responseType='id_token'
+                                                accessType='online'
+                                                version={'3.2'}
+                                                isMobile={false}
+                                                cookie={true}
+                                                xfbml={true}                
+                                                callback={responseFacebook}
+                                                onFailure={handleErrorFacebook}
+                                                render={renderProps => (
+                                                    <CustomizedSwitch
+                                                        label='Facebook'
+                                                        strong={true}
+                                                        checked={facebookProvider}
+                                                        onGetChange={e=>{
+                                                            emitCustomEvent('openLoadingPage', true);
+                                                            if(e){
+                                                                renderProps.onClick();
+                                                            }else{
+                                                                handleDesvincularFacebook();
+                                                            }
+                                                        }}
+                                                    />    
+                                                )}                
+                                            />  
                                             {(providers.length === 1) && (facebookProvider) ? 
                                             <Chip size='small' color='info' label="único proveedor" sx={{fontSize:'11px', maxWidth: '100px'}}/>
                                             :null}
