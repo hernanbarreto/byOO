@@ -173,8 +173,6 @@ function Account() {
                             marginTop: '10px',
                             marginBottom: '50px',
                         }}
-
-
                     >
                     {!loading ?
                         <> 
@@ -210,7 +208,11 @@ function Account() {
                         </Typography>
                         </>
                     :
-                    <Skeleton variant="text" width="50%"/>
+                    <>
+                    <Skeleton variant="text" width="20%"/>
+                    <Skeleton variant="text" width="30%"/>
+                    <Skeleton variant="text" width="10%"/>
+                    </>
                     }
                     </Stack>
                     <Grid 
