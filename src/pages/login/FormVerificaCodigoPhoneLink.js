@@ -21,11 +21,8 @@ import {emitCustomEvent} from 'react-custom-events';
 import { getFirestore, 
     doc, 
     updateDoc,} from "firebase/firestore";
-import { getFunctions, httpsCallable } from "firebase/functions";
 
 const database = getFirestore();
-const functions = getFunctions();
-const updateUser = httpsCallable(functions, 'updateUser');
 
 function FormVerificaCodigoPhoneLink(props) {
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });

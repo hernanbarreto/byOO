@@ -248,7 +248,7 @@ function FormReautenticaConPassword(props) {
             <DialogTitle 
                 onClose={handleCloseIniciarSesion}
             >
-                <strong>Ingresa tu contraseña actual</strong>
+                <strong>Vamos a reautenticar tu cuenta</strong>
             </DialogTitle>
             <MuiDialogContent dividers style={{align: 'center'}}>
                 <Typography 

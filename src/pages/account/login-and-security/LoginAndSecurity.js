@@ -61,6 +61,7 @@ import InputEmail from '../../login/InputEmail';
 import InputPassword from '../../login/InputPassword';
 import FormReautenticaConPassword from './FormReautenticaConPassword';
 import FormRecoveryPassword from '../../login/FormRecoveryPassword';
+import FormReautenticaConGoogle from './FormReautenticaConGoogle';
 
 var recaptchaVerifier;
 var antTokenPhone;
@@ -135,6 +136,7 @@ function LoginAndSecurity(details) {
     const [openFormRecoveryPassword, setOpenFormRecoveryPassword] = useState(false);
     const [openFormReautenticaConPasswordDesvincular, setOpenFormReautenticaConPasswordDesvincular] = useState(false);
     const [openFormRecoveryPasswordDesvincular, setOpenFormRecoveryPasswordDesvincular] = useState(false);
+    const [openFormReautenticaConGoogle, setOpenFormReautenticaConGoogle] = useState(false);
 
     const handleUpdateProfile = useCallback(async () => {
         const infoUser = doc(database, "users", currentUser.uid);
@@ -991,7 +993,7 @@ function LoginAndSecurity(details) {
             }
             setVariableEstadoCargadoNewValuePhoneFormPrincipal(false);       
         }         
-    },[details, valueInputPhoneFormPrincipal, variableEstadoCargadoNewValuePhoneFormPrincipal]);
+    },[details, valueInputPhoneFormPrincipal, variableEstadoCargadoNewValuePhoneFormPrincipal, clearStates, handleUpdateProfile]);
     /*fin atencion del valor ingresado del componente CountrySelectPhone*/
 
     const handleLinkedPhone = async() => {
@@ -1241,6 +1243,11 @@ function LoginAndSecurity(details) {
                                             });                    
                                         }
                                     }).catch((error) => {
+
+
+
+
+
                                         console.log(error);
                                         emitCustomEvent('openLoadingPage', false);
                                         if (error.code === 'auth/provider-already-linked'){
@@ -1257,6 +1264,10 @@ function LoginAndSecurity(details) {
                                                 emitCustomEvent('openLoadingPage', false);                    
                                             }
                                         }
+
+
+
+
                                     });                                    
                             }else{
                                     //el mail esta asociado a alguna cuenta
@@ -1361,7 +1372,7 @@ function LoginAndSecurity(details) {
                                                         setOpenFormReautenticaConPassword(true);
                                                     }else{
                                                         if (googleProvider){
-
+                                                            setOpenFormReautenticaConGoogle(true);
                                                         }else{
                                                             if (facebookProvider){
 
@@ -1434,7 +1445,7 @@ function LoginAndSecurity(details) {
             }
             setVariableEstadoCargadoNewValueEmailFormPrincipal(false);       
         }       
-    },[userEmail, variableEstadoCargadoNewValueEmailFormPrincipal, variableEstadoCargadoNewValuePasswordFormRegistrate1]);
+    },[userEmail, variableEstadoCargadoNewValueEmailFormPrincipal, variableEstadoCargadoNewValuePasswordFormRegistrate1, clearStates, currentUser, details, facebookProvider, googleProvider, handleUpdateProfile, passwordProvider, phoneProvider, valueInputPasswordFormRegistrate1, valueInputPasswordFormRegistrate2, variableEstadoCargadoNewValuePasswordFormRegistrate2]);
     /*fin atencion del valor ingresado del componente Input Email del form principal*/    
 
     const handleVincularPassword = () => {
@@ -1534,6 +1545,7 @@ function LoginAndSecurity(details) {
 
     const handleCredentialOKPassword = () => {
         emitCustomEvent('openLoadingPage', true);
+        setOpenFormReautenticaConGoogle(false);
         setOpenFormReautenticaConPassword(false);
         const auth = getAuth();
         const antToken = auth.currentUser.accessToken;
@@ -1726,16 +1738,41 @@ function LoginAndSecurity(details) {
                     }).catch((error) => {
                         emitCustomEvent('openLoadingPage', false);
                         setMsg('Ha ocurrido un error al intentar desvincular el ingreso mediante contraseña de tu cuenta');
+                        setSeverityInfo('error');
+                        setOpenMsg(true);        
                     }); 
                 }).catch((error) => {
                     emitCustomEvent('openLoadingPage', false);
                     setMsg('Ha ocurrido un error al intentar desvincular el ingreso mediante contraseña de tu cuenta');
+                    setSeverityInfo('error');
+                    setOpenMsg(true);        
                 });
             }else{
                 emitCustomEvent('openLoadingPage', false);
                 setMsg('Ha ocurrido un error al intentar desvincular el ingreso mediante contraseña de tu cuenta');
+                setSeverityInfo('error');
+                setOpenMsg(true);        
             }
         }); 
+    }
+
+    const handleCloseReautenticaConGoogle = () => {
+        setOpenFormReautenticaConGoogle(false);
+        clearStates();
+        handleUpdateProfile();                    
+    }
+
+    const handleClickReautenticaConGoogle = () => {
+        emitCustomEvent('openLoadingPage', true);
+    }
+
+    const handleErrorReautenticaConGoogle = () => {
+        setOpenFormReautenticaConGoogle(false);
+        emitCustomEvent('openLoadingPage', false);
+    }
+
+    const handleCredentialOKGoogle = () => {
+        handleCredentialOKPassword();
     }
 
     return (
@@ -2334,6 +2371,16 @@ function LoginAndSecurity(details) {
                     onGetReturn={handleReturnFormRecoveryPasswordDesvincular}
                     email={userEmail}
                     open={openFormRecoveryPasswordDesvincular}
+                />
+            :null}
+            {openFormReautenticaConGoogle ?
+                <FormReautenticaConGoogle
+                    onGetReturn={handleCloseReautenticaConGoogle}
+                    onGetUpdateProfile={handleCredentialOKGoogle}
+                    onGetError={handleErrorReautenticaConGoogle}
+                    onGetClick={handleClickReautenticaConGoogle}
+                    details={details}
+                    open={openFormReautenticaConGoogle}
                 />
             :null}
         </div>
