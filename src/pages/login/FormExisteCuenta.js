@@ -210,6 +210,7 @@ function FormExisteCuenta(props) {
                 signInWithEmailAndPassword(auth, props.email, valueInputPasswordFormIniciarSesion)
                     .then((userCredential) => {
                         props.onGetClose(true);
+                        props.onGetUpdateProfile(true);
                         emitCustomEvent('openLoadingPage', false);
                     })
                     .catch((error) => {
@@ -246,6 +247,9 @@ function FormExisteCuenta(props) {
     },[valueInputPasswordFormIniciarSesion, variableEstadoCargadoNewValuePasswordFormIniciarSesion, props, email]);
     /*fin atencion del valor ingresado del componente InputPassword del form Inicias sesion*/
 
+    const handleUpdateProfile = () => {
+        props.onGetUpdateProfile(true);
+    }
 
     return (
         <div>
@@ -368,6 +372,7 @@ function FormExisteCuenta(props) {
                     onGetTerminarRegistrarte={handleTerminaRegistrarteFacebook}
                     onGetEmail={handleEmail}
                     onGetProviders={handleProviders}
+                    onGetUpdateProfile={handleUpdateProfile}
                 /> 
                 :null}
                 {googleProvider ?
@@ -378,6 +383,7 @@ function FormExisteCuenta(props) {
                     onGetTerminarRegistrarte={handleTerminaRegistrarteGoogle}
                     onGetEmail={handleEmail}
                     onGetProviders={handleProviders}
+                    onGetUpdateProfile={handleUpdateProfile}
                 />
                 :null}
                 <Box 

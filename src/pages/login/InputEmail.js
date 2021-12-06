@@ -6,7 +6,8 @@ function InputEmail(props) {
     const [helperTextEmail, sethelperTextEmail] = useState('');
     const [valueInputEmail, setValueInputEmail] = useState(props.email);
     
-    const handleEmail = () => {
+    const handleEmail = (e) => {
+        setValueInputEmail(e.target.value);
         setStateErrorEmail(false);
         sethelperTextEmail('');  
     }  
@@ -53,9 +54,8 @@ function InputEmail(props) {
             <TextField 
                 error={stateErrorEmail}
                 helperText={helperTextEmail}
-                onInput={e => setValueInputEmail(e.target.value)}
-                onChange={handleEmail} 
                 value={valueInputEmail}
+                onChange={handleEmail} 
                 required={true} 
                 label="Correo electrónico" 
                 variant="outlined" 

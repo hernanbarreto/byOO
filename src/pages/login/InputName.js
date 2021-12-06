@@ -10,13 +10,15 @@ function InputName(props) {
     const [stateErrorLastName, setStateErrorLastName] = useState(false);
     const [helperTextLastName, sethelperTextLastName] = useState('');
 
-    const handleName = () => {
+    const handleName = (e) => {
+        setValueInputName(e.target.value.replace(regExpress, ''));
         setStateErrorName(false);
         setStateErrorLastName(false);
         sethelperTextLastName('');  
     }  
 
-    const handleLastName = () => {
+    const handleLastName = (e) => {
+        setValueInputLastName(e.target.value.replace(regExpress, ''));
         setStateErrorName(false);
         setStateErrorLastName(false);
         sethelperTextLastName('');  
@@ -93,7 +95,6 @@ function InputName(props) {
         <div style={props.style}>
             <TextField 
                 error={stateErrorName}
-                onInput={e => setValueInputName(e.target.value.replace(regExpress, ''))}
                 value={valueInputName}
                 onChange={handleName} 
                 required={true} 
@@ -109,7 +110,6 @@ function InputName(props) {
             <TextField 
                 error={stateErrorLastName}
                 helperText={helperTextLastName}
-                onInput={e => setValueInputLastName(e.target.value.replace(regExpress, ''))}
                 value={valueInputLastName}
                 onChange={handleLastName} 
                 required={true} 

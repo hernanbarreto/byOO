@@ -90,73 +90,81 @@ function FormVerificaCodigoPhone(props) {
         setCodeVerification(value);
     }
 
+    const [pase, setPase] = useState(false);
     useEffect(() => {
         if (props.open){
             setValue('');
             setCodeVerification('');
+            setPase(false);
         }             
     }, [props]);
 
 
     useEffect(() => {
-        if (codeVerification !== ''){
-            if (props.confirmationResult !== null){
-                const auth = getAuth();
-                var credential = PhoneAuthProvider.credential(props.confirmationResult.verificationId, codeVerification);
-                signInWithCredential(auth, credential)
-                .then((result) =>{
-                    const user = result.user;
-                    if ((user.displayName === null)){
-                        if (props.name !== ''){
-                            let nombreOK ='';
-                            let nombre='';
-                            let apellido='';
-                            nombre = props.name.split('/')[0];
-                            apellido = props.name.split('/')[1];
-                            nombre = nombre + ' ' + apellido;
-                            nombre = nombre.toLowerCase();
-                            nombre = nombre.split(' ');
-                            for (var i=0; i<nombre.length; i++){
-                                nombreOK = nombreOK + nombre[i][0].toUpperCase() + nombre[i].slice(1) + ' ';
-                            }
-                            nombreOK = nombreOK.slice(0,-1);
-                            updateProfile(user, {
-                                displayName: nombreOK,
-                            }).then(() => {
-                                props.onGetRegistred(auth.currentUser);
+        if (!pase){
+            if (codeVerification !== ''){
+                if (props.confirmationResult !== null){
+                    setPase(true);
+                    const auth = getAuth();
+                    var credential = PhoneAuthProvider.credential(props.confirmationResult.verificationId, codeVerification);
+                    signInWithCredential(auth, credential)
+                    .then((result) =>{
+                        const user = result.user;
+                        if ((user.displayName === null)){
+                            if (props.name !== ''){
+                                let nombreOK ='';
+                                let nombre='';
+                                let apellido='';
+                                nombre = props.name.split('/')[0];
+                                apellido = props.name.split('/')[1];
+                                nombre = nombre + ' ' + apellido;
+                                nombre = nombre.toLowerCase();
+                                nombre = nombre.split(' ');
+                                for (var i=0; i<nombre.length; i++){
+                                    nombreOK = nombreOK + nombre[i][0].toUpperCase() + nombre[i].slice(1) + ' ';
+                                }
+                                nombreOK = nombreOK.slice(0,-1);
+                                updateProfile(user, {
+                                    displayName: nombreOK,
+                                }).then(() => {
+                                    props.onGetRegistred(auth.currentUser);
+                                    emitCustomEvent('openLoadingPage', false);
+                                }).catch((error) => {
+                                    emitCustomEvent('openLoadingPage', false);
+                                    setMsg('Error: ' + error.code);
+                                    setSeverityInfo('error');
+                                    setOpenMsg(true);
+                                });
+                            }        
+                        }else{
+                            console.log('1');
+                                console.log('2');
+                                props.onGetClose(true);
+                                props.onGetUpdateProfile(true);
                                 emitCustomEvent('openLoadingPage', false);
-                            }).catch((error) => {
-                                emitCustomEvent('openLoadingPage', false);
-                                setMsg('Error: ' + error.code.split('/')[1].replace(/-/g,' '));
-                                setSeverityInfo('error');
-                                setOpenMsg(true);
-                            });
-                        }        
-                    }else{
-                        props.onGetClose(true);
-                        emitCustomEvent('openLoadingPage', false);
-                    }
-                }).catch((error) => {
-                    if (error.code === 'auth/invalid-verification-code'){
-                        emitCustomEvent('openLoadingPage', false);
-                        setMsg('El código ingresado es incorrecto.');
-                        setSeverityInfo('error');
-                        setOpenMsg(true);                    
-                        setValue('');
-                        setCodeVerification('');
-                    }                    
-                    if (error.code === 'auth/provider-already-linked'){
-                        emitCustomEvent('openLoadingPage', false);
-                        setMsg('Ya tenes un telefono asociado a tu cuenta.');
-                        setSeverityInfo('error');
-                        setOpenMsg(true);                    
-                        setValue('');
-                        setCodeVerification('');
-                    }                    
-                });
+                        }
+                    }).catch((error) => {
+                        if (error.code === 'auth/invalid-verification-code'){
+                            emitCustomEvent('openLoadingPage', false);
+                            setMsg('El código ingresado es incorrecto.');
+                            setSeverityInfo('error');
+                            setOpenMsg(true);                    
+                            setValue('');
+                            setCodeVerification('');
+                        }                    
+                        if (error.code === 'auth/provider-already-linked'){
+                            emitCustomEvent('openLoadingPage', false);
+                            setMsg('Ya tenes un telefono asociado a tu cuenta.');
+                            setSeverityInfo('error');
+                            setOpenMsg(true);                    
+                            setValue('');
+                            setCodeVerification('');
+                        }                    
+                    });
+                }
             }
-        }                
-   }, [props, codeVerification]);
+        }
+   }, [props, codeVerification, pase]);
 
     return (
         <div>

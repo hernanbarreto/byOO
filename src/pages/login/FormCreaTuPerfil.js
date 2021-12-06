@@ -106,6 +106,9 @@ function FormCreaTuPerfil(props) {
 
     const [activeStep, setActiveStep] = useState(0);
     const [skipped, setSkipped] = useState(new Set());
+
+    const [loadingAvatarFacebook, setLoadingAvatarFacebook] = useState(true);
+    const [loadingAvatarGoogle, setLoadingAvatarGoogle] = useState(true);
   
     const [ openMsg, setOpenMsg] = useState(false);
     const [severityInfo, setSeverityInfo] = useState('success');
@@ -154,7 +157,6 @@ function FormCreaTuPerfil(props) {
     }
     
     const handleClickContinuar = () => {
-        setActiveStep(3);
         if (txtBtnContinuar === 'Continuar')
             setSubmitCountrySelectPhoneFormPrincipal(true);
         else{
@@ -171,11 +173,13 @@ function FormCreaTuPerfil(props) {
     const [valueInputPhoneFormPrincipal, setValueInputPhoneFormPrincipal] = useState('');
     const [submitCountrySelectPhoneFormPrincipal, setSubmitCountrySelectPhoneFormPrincipal] = useState(false);
     const [variableEstadoCargadoNewValuePhoneFormPrincipal, setVariableEstadoCargadoNewValuePhoneFormPrincipal] = useState(false);
+    const [countryCodeFormPrincipal, setCountryCodeFormPrincipal] = useState(null);
     const submitValuePhoneFormPicnipal = (value) => {
         setSubmitCountrySelectPhoneFormPrincipal(value);
     }
     const getValuePhoneCountrySelectPhoneFormPrincipal = (phone) => {
-        setValueInputPhoneFormPrincipal(phone);
+        setValueInputPhoneFormPrincipal(phone[0]);
+        setCountryCodeFormPrincipal(phone[1].code);
         setVariableEstadoCargadoNewValuePhoneFormPrincipal(true);
     }
     /*fin variables de componente CountrySelectPhone*/
@@ -241,7 +245,7 @@ function FormCreaTuPerfil(props) {
                 .catch((error) => {
                     //el usuario no existe
                     const auth = getAuth();
-                    auth.languageCode = 'es';
+                    auth.languageCode = props.lenguaje;
                     recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
                         type: 'image', // 'audio'
                         size: 'compact', // 'normal, invisible' or 'compact'
@@ -276,8 +280,6 @@ function FormCreaTuPerfil(props) {
                         emitCustomEvent('openLoadingPage', false);
                         setOpenMsg(true);                    
                     });                
-
-
                 });
              }
             setVariableEstadoCargadoNewValuePhoneFormPrincipal(false);       
@@ -392,6 +394,9 @@ function FormCreaTuPerfil(props) {
                 setFilePhoto(null);
                 setLoading(false);
                 emitCustomEvent('openLoadingPage', false);
+                setLoadingAvatarFacebook(true);
+                setLoadingAvatarGoogle(true);
+                setCountryCodeFormPrincipal(null);
                 props.onGetFinish(true);
             }else{
                 if (steps.length === 4){
@@ -853,7 +858,7 @@ function FormCreaTuPerfil(props) {
                     if (selectedPhotoAvatar){
                         if (photoUploaded === null){
                             await updateDoc(infoUser, {
-                                profilePhoto: null,
+                                profilePhoto: 'none',
                             })
                             .then(()=>{
                                 handleNext();
@@ -962,6 +967,14 @@ function FormCreaTuPerfil(props) {
         });        
     }
 
+    const handleLoadAvatarGoogle = () => {
+        setLoadingAvatarGoogle(false);
+    }
+
+    const handleLoadAvatarFacebook = () => {
+        setLoadingAvatarFacebook(false);
+    }
+
     return (
         <div>
             {mostrar ?
@@ -1055,9 +1068,10 @@ function FormCreaTuPerfil(props) {
                                 onGetValuePhone={getValuePhoneCountrySelectPhoneFormPrincipal} 
                                 verify={submitCountrySelectPhoneFormPrincipal} 
                                 onSubmitValuePhone={submitValuePhoneFormPicnipal} 
-                                close={!props.open}
                                 onGetEnter={handleEnter}
                                 country={props.country}
+                                code={null}
+                                close={!props.open}
                             />
                             <Typography 
                                 variant="caption"
@@ -1206,18 +1220,54 @@ function FormCreaTuPerfil(props) {
                                             justifyContent: 'center',
                                         }}
                                     >
-                                    {!selectedPhotoGoogle ?                                     
-                                    <Avatar
-                                        onClick={handleSelectPhotoGoogle}
-                                        src={googlePhotoState}
-                                        sx={{ width: 100, height: 100, cursor: 'pointer'}}
-                                    />
+                                    {!selectedPhotoGoogle ?
+                                        <Box sx={{ position: 'relative' }}>
+                                        {loadingAvatarGoogle ?
+                                            <CircularProgress
+                                                size={100}
+                                                sx={{
+                                                    color: '#5f5f5f',
+                                                    position: 'absolute',
+                                                    top: 0,
+                                                    left: 0,
+                                                    zIndex: 1,
+                                                }}
+                                                color="inherit"
+                                            />
+                                        :
+                                            null
+                                        }
+                                        <Avatar
+                                            onClick={handleSelectPhotoGoogle}
+                                            src={googlePhotoState}
+                                            sx={{ width: 100, height: 100, cursor: 'pointer'}}
+                                            onLoad={handleLoadAvatarGoogle}
+                                        />
+                                        </Box>
                                     :
+                                    <Box sx={{ position: 'relative' }}>
+                                    {loadingAvatarGoogle ?
+                                        <CircularProgress
+                                            size={100}
+                                            sx={{
+                                                color: '#5f5f5f',
+                                                position: 'absolute',
+                                                top: 0,
+                                                left: 0,
+                                                zIndex: 1,
+                                            }}
+                                            color="inherit"
+                                        />
+                                    :
+                                        null
+                                    }
                                     <Avatar
                                         onClick={handleSelectPhotoGoogle}
                                         src={googlePhotoState}
                                         sx={{ width: 100, height: 100, cursor: 'pointer', border: "3px solid #44b700", }}
+                                        onLoad={handleLoadAvatarGoogle}
                                     />
+                                    </Box>
                                     }
                                     <Chip label="google" sx={{fontSize:'14px', maxWidth: '100px'}}/>
                                     </Stack>
@@ -1231,17 +1281,53 @@ function FormCreaTuPerfil(props) {
                                         }}
                                     >
                                     {!selectedPhotoFacebook ?
-                                        <Avatar
-                                            onClick={handleSelectPhotoFacebook}
-                                            src={facebookPhotoState}
-                                            sx={{ width: 100, height: 100, cursor: 'pointer' }}
+                                    <Box sx={{ position: 'relative' }}>
+                                    {loadingAvatarFacebook ?
+                                        <CircularProgress
+                                            size={100}
+                                            sx={{
+                                                color: '#5f5f5f',
+                                                position: 'absolute',
+                                                top: 0,
+                                                left: 0,
+                                                zIndex: 1,
+                                            }}
+                                            color="inherit"
                                         />
                                     :
-                                        <Avatar
-                                            onClick={handleSelectPhotoFacebook}
-                                            src={facebookPhotoState}
-                                            sx={{ width: 100, height: 100, cursor: 'pointer', border: "3px solid #44b700", }}
+                                        null
+                                    }
+                                    <Avatar
+                                        onClick={handleSelectPhotoFacebook}
+                                        src={facebookPhotoState}
+                                        sx={{ width: 100, height: 100, cursor: 'pointer' }}
+                                        onLoad={handleLoadAvatarFacebook}
+                                    />
+                                    </Box>
+                                    :
+                                    <Box sx={{ position: 'relative' }}>
+                                    {loadingAvatarFacebook ?
+                                        <CircularProgress
+                                            size={100}
+                                            sx={{
+                                                color: '#5f5f5f',
+                                                position: 'absolute',
+                                                top: 0,
+                                                left: 0,
+                                                zIndex: 1,
+                                            }}
+                                            color="inherit"
                                         />
+                                    :
+                                        null
+                                    }
+                                    <Avatar
+                                        onClick={handleSelectPhotoFacebook}
+                                        src={facebookPhotoState}
+                                        sx={{ width: 100, height: 100, cursor: 'pointer', border: "3px solid #44b700", }}
+                                        onLoad={handleLoadAvatarFacebook}
+                                    />
+                                    </Box>
                                     }
                                     <Chip label="facebook" sx={{fontSize:'14px', maxWidth: '100px'}}/>
                                     </Stack>
@@ -1434,6 +1520,7 @@ function FormCreaTuPerfil(props) {
             {openFormVerificaCodigoPhone ?
                 <FormVerificaCodigoPhoneLink
                     phoneNumber={valueInputPhoneFormPrincipal}
+                    code={countryCodeFormPrincipal}
                     confirmationResult={confirmationResult}
                     onGetReturn={handleReturnFormVerificaCodigoPhone}
                     onGetLinked={handleNextPhone}

@@ -29,6 +29,7 @@ export const useInitPage = () => {
                     const filtered = docSnap.data().sessions.filter(function(element){
                         return element.id === currentUser.accessToken;
                     });
+
                     if (filtered.length !== 0){
                         if (isSubscribed){
                         setState(true);
@@ -39,12 +40,14 @@ export const useInitPage = () => {
                             if (isSubscribed){
                             setState(false);
                             }
+                            console.log('aca');
                             emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
                         })
                         .catch((error)=>{
                             if (isSubscribed){
                             setState(false);
                             }
+                            console.log('aca');
                             emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
                         });    
                     }
@@ -54,12 +57,14 @@ export const useInitPage = () => {
                         if (isSubscribed){
                         setState(false);
                         }
+                        console.log('aca');
                         emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
                     })
                     .catch((error)=>{
                         if (isSubscribed){
                         setState(false);
                         }
+                        console.log('aca');
                         emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
                     });    
                 }
@@ -70,12 +75,14 @@ export const useInitPage = () => {
                     if (isSubscribed){
                     setState(false);
                     }
+                    console.log('aca');
                     emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
                 })
                 .catch((error)=>{
                     if (isSubscribed){
                     setState(false);
                     }
+                    console.log('aca');
                     emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
                 });
             });

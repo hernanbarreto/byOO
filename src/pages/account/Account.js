@@ -70,9 +70,11 @@ function Account() {
                 logout()
                 .then(()=>{
                     emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/info');
+                    console.log('error')
                 })
                 .catch((error)=>{
                     emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/info');
+                    console.log('error')
                 });
             }
         }catch{
@@ -136,16 +138,28 @@ function Account() {
             logout()
             .then(()=>{
                 emitCustomEvent('openLoadingPage', false);
-                emitCustomEvent('showMsg', 'Hemos eliminado la cuenta ' + userEmail + '/info');
+                if (userEmail !==null ){
+                    emitCustomEvent('showMsg', 'Hemos eliminado la cuenta ' + userEmail + '/info');
+                }else{
+                    emitCustomEvent('showMsg', 'Hemos eliminado tu cuenta/info');
+                }
             })
             .catch((error)=>{
                 emitCustomEvent('openLoadingPage', false);
-                emitCustomEvent('showMsg', 'Hemos eliminado la cuenta ' + userEmail + '/info');
+                if (userEmail !==null ){
+                    emitCustomEvent('showMsg', 'Hemos eliminado la cuenta ' + userEmail + '/info');
+                }else{
+                    emitCustomEvent('showMsg', 'Hemos eliminado tu cuenta/info');
+                }
             });
         })
         .catch((error)=> {
             emitCustomEvent('openLoadingPage', false);
-            emitCustomEvent('showMsg', 'Ocurrió un error al eliminar la cuenta ' + userEmail + '. No te preocupes, nosotros nos encargaremos de eliminarla./info');
+            if (userEmail !==null ){
+                emitCustomEvent('showMsg', 'Ocurrió un error al eliminar la cuenta ' + userEmail + '. No te preocupes, nosotros nos encargaremos de eliminarla./error');
+            }else{
+                emitCustomEvent('showMsg', 'Ocurrió un error al eliminar tu cuenta. No te preocupes, nosotros nos encargaremos de eliminarla./error');
+            }
         })
     }
 

@@ -263,7 +263,12 @@ function InputCountrySelectPhone(props) {
     const [valuePhone, setValuePhone] = useState(String('+' + countries.find(elements => elements.code === props.country ).phone));
     const [stateErrorPhone, setStateErrorPhone] = useState(false);
     const [helperTextPhone, sethelperTextPhone] = useState('');
-    const [valueInputPhone, setValueInputPhone] = useState(props.phone);
+    const [valueInputPhone, setValueInputPhone] = useState(()=>{
+        if ((props.phone !== undefined) && (props.phone !== null)) 
+            return props.phone.replace(String('+' + countries.find(elements => elements.code === props.code).phone), '');
+        else
+            return '';
+    });
 
     const useStyles = makeStyles({
         option: {
@@ -276,16 +281,18 @@ function InputCountrySelectPhone(props) {
       });    
 
     const classes = useStyles();  
-    const handlerNumeroTelefonico = (e) => {
-        setValueInputPhone(e.target.value.replace(/[^ 0-9]/g, ''));
-    }
 
-    const handlerNumeroTelefonicoChange = () => {
+    const handlerNumeroTelefonicoChange = (e) => {
+        setValueInputPhone(e.target.value.replace(/[^ 0-9]/g, ''));
         setStateErrorPhone(false);
         sethelperTextPhone('');
     }
 
     useEffect(() => {
+        if(props.code){
+            setValuePhone(String('+' + countries.find(elements => elements.code === props.code).phone));
+            setValueCountri(countries.find(elements => elements.code === props.code ));
+        }
         if(props.close){
             setStateErrorPhone(false);
             sethelperTextPhone('');
@@ -299,19 +306,19 @@ function InputCountrySelectPhone(props) {
                     else
                         sethelperTextPhone('El número telefónico ingresado es demasiado corto');
                     setStateErrorPhone(true);
-                    props.onGetValuePhone('');
+                    props.onGetValuePhone(['','']);
                 }else{
                     setStateErrorPhone(false);
-                    props.onGetValuePhone(String(valuePhone) + String(valueInputPhone.replace(/[^ 0-9]/g, '')));
+                    props.onGetValuePhone([String(valuePhone) + String(valueInputPhone.replace(/[^ 0-9]/g, '')), valueCountri]);
                 }         
             }else{
                 sethelperTextPhone('Debes ingresar un número telefónico');
                 setStateErrorPhone(true);
-                props.onGetValuePhone('');
+                props.onGetValuePhone(['','']);
             }
             props.onSubmitValuePhone(false);
         }          
-    },[props, valueInputPhone, valuePhone]);
+    },[props]);
 
     const handleKey = (e) => {
         if (e.key === 'Enter') {
@@ -322,18 +329,23 @@ function InputCountrySelectPhone(props) {
 
     return (
         <div style={props.style}>
+            {!props.close ?
+            <>
             <Autocomplete
+                disabled={props.disabled}
                 disableClearable={true}
                 required={true} 
                 value={valueCountri}
                 getOptionLabel={(option) => option.label}
                 onChange={(event, newValueCountri) => {
                     setValueCountri(newValueCountri);
-                    if (newValueCountri != null)
+                    if (newValueCountri != null){
+                        setValueInputPhone('')
                         setValuePhone(String('+') + newValueCountri.phone);
-                    else
+                    }
+                    else{
                         setValuePhone('');
-
+                    }
                 }}
                 inputValue={inputValueCountri}
                 onInputChange={(event, newInputValueCountri) => {
@@ -372,23 +384,38 @@ function InputCountrySelectPhone(props) {
                 )}
             />
             <TextField
+                disabled={props.disabled}
                 error={stateErrorPhone}
                 helperText={helperTextPhone}
-                onInput={e => handlerNumeroTelefonico(e)}
-                onChange={handlerNumeroTelefonicoChange} 
                 value={valueInputPhone}
+                onChange={handlerNumeroTelefonicoChange} 
                 required={true} 
                 label="Número de teléfono" 
                 variant="outlined"
-                InputProps={{
-                    startAdornment: <InputAdornment position="start">{ valuePhone + String(' ')}</InputAdornment>,
-                }}                                
                 style={{
                     width: '100%',
                     marginTop: 6,
                 }}
+                autoComplete="new-password"
                 onKeyDown={e => handleKey(e) }
+                InputProps={{
+                    startAdornment: 
+                        <InputAdornment position="start">
+                            <img
+                                loading="lazy"
+                                width="20"
+                                src={`https://flagcdn.com/w20/${valueCountri.code.toLowerCase()}.png`}
+                                srcSet={`https://flagcdn.com/w40/${valueCountri.code.toLowerCase()}.png 2x`}
+                                alt=""
+                            />
+                            &nbsp;{valuePhone}&nbsp;    
+                        </InputAdornment>,
+                }}                                
             />
+        </>
+        :
+        null
+        }
         </div>         
     )
 }

@@ -28,6 +28,7 @@ function LoginWithGoogle(p) {
                             signInWithCredential(auth, credential)
                             .then((user) => {
                                 p.onGetTerminarRegistrarte(false);
+                                p.onGetUpdateProfile(true);
                             }) 
                             .catch((error) => {
                             });

@@ -41,16 +41,34 @@ import Chip from '@mui/material/Chip';
 import { useInitPage } from '../../useInitPage';
 import DesktopWindowsIcon from '@mui/icons-material/DesktopWindows';
 import CustomizedSwitch from '../../custom/CustomSwitch';
-import { getAuth, unlink, linkWithCredential, GoogleAuthProvider, FacebookAuthProvider, onAuthStateChanged } from "firebase/auth";
+import { RecaptchaVerifier, 
+         getAuth, 
+         unlink, 
+         linkWithCredential, 
+         GoogleAuthProvider, 
+         FacebookAuthProvider,
+         signInWithPhoneNumber,
+         fetchSignInMethodsForEmail,
+         EmailAuthProvider, 
+         onAuthStateChanged } from "firebase/auth";
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import FacebookLogin from 'react-facebook-login/dist/facebook-login-render-props';
 import GoogleLogin from 'react-google-login';
+import InputCountrySelectPhone from '../../login/InputCountrySelectPhone';
+import FormVerificaCodigoPhoneLink from '../../login/FormVerificaCodigoPhoneLink';
+import InputEmail from '../../login/InputEmail';
+import InputPassword from '../../login/InputPassword';
+import FormReautenticaConPassword from './FormReautenticaConPassword';
+import FormRecoveryPassword from '../../login/FormRecoveryPassword';
 
+var recaptchaVerifier;
+var antTokenPhone;
 const functions = getFunctions();
 const deleteUser = httpsCallable(functions, 'deleteUser');
 const revokeRefreshTokens = httpsCallable(functions, 'revokeRefreshTokens');
 const getUser = httpsCallable(functions, 'getUser');
+const getUserByPhoneNumber = httpsCallable(functions, 'getUserByPhoneNumber');
 
 const database = getFirestore();
 var sessions = [];
@@ -99,10 +117,24 @@ function LoginAndSecurity(details) {
     const [userEmail, setUserMail] = useState(null);
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }    
     const [listo, setListo] = useState(false);
+    const [txtBtnContinuar, setTxtBtnContinuar] = useState('Actualizar');
+    const [classNameBtnContinuar, setClassNameBtnContinuar] = useState('button__log__continuar');
     
     const [googleProvider, setGoogleProvider] = useState(false);
     const [facebookProvider, setFacebookProvider] = useState(false);
+    const [phoneProvider, setPhoneProvider] = useState(false);
+    const [passwordProvider, setPasswordProvider] = useState(false);
     const [providers, setProviders] = useState(null);
+    const [countryPhone, setCountryPhone] = useState(null);
+    const [phoneNumber, setPhoneNumber] = useState(null);
+    const [confirmationResult, setConfirmationResult] = useState(null);
+    const [openFormVerificaCodigoPhone, setOpenFormVerificaCodigoPhone] = useState(false);
+    const [actualizarPhone, setActualizarPhone] = useState(false);
+    const [cerrarProbar, setCerrarProbar] = useState(false);
+    const [openFormReautenticaConPassword, setOpenFormReautenticaConPassword] = useState(false);
+    const [openFormRecoveryPassword, setOpenFormRecoveryPassword] = useState(false);
+    const [openFormReautenticaConPasswordDesvincular, setOpenFormReautenticaConPasswordDesvincular] = useState(false);
+    const [openFormRecoveryPasswordDesvincular, setOpenFormRecoveryPasswordDesvincular] = useState(false);
 
     const handleUpdateProfile = useCallback(async () => {
         const infoUser = doc(database, "users", currentUser.uid);
@@ -112,6 +144,7 @@ function LoginAndSecurity(details) {
                 getUser(currentUser.uid)
                 .then((record) => {
                     if (isMounted){
+                        console.log(currentUser);
                         setProviders(record.data.providerData);
                         record.data.providerData.forEach((item) => {
                             if(item.providerId === 'google.com'){
@@ -120,7 +153,23 @@ function LoginAndSecurity(details) {
                             if(item.providerId === 'facebook.com'){
                                 setFacebookProvider(true);
                             }
-                        })
+                            if(item.providerId === 'phone'){
+                                setPhoneProvider(true);
+                                setPhoneNumber(currentUser.phoneNumber);
+                            }
+                            if(item.providerId === 'password'){
+                                setPasswordProvider(true);
+                            }
+                        });
+                        if (currentUser.providerData.length === 1){
+                            //tiene un solo proveedor
+                            if (currentUser.providerData[0].providerId === 'phone'){
+                                //tiene un solo proveedor y es phone
+                                if (currentUser.email !== null){
+                                    //tiene un solo proveedor, es phone y tiene un email asociado esta mal, hay que asignarle null a email
+                                }
+                            }
+                        }
                         setUserName(docSnap.data().name.split(' ')[0]);
                         setCreatedLenguaje(docSnap.data().account.created.location.lenguaje)
                         setCreatedOsName(docSnap.data().account.created.os.name);
@@ -131,6 +180,8 @@ function LoginAndSecurity(details) {
                         setCreatedBrowser(docSnap.data().account.created.browser);
                         setCreatedDate(docSnap.data().account.created.date);
                         setUserMail(currentUser.email);
+                        setCountryPhone(docSnap.data().countryCode);
+                        setValueInputPhoneFormPrincipal(currentUser.phoneNumber);
                         docSnap.data().sessions.forEach(e=>{
                             sessions.push(e);
                         });
@@ -142,18 +193,22 @@ function LoginAndSecurity(details) {
                     logout()
                     .then(()=>{
                         emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
+                        console.log('error')
                     })
                     .catch((error)=>{
                         emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
+                        console.log('error')
                     });    
                 })
             }else{
                 logout()
                 .then(()=>{
                     emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
+                    console.log('error')
                 })
                 .catch((error)=>{
                     emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
+                    console.log('error')
                 });
             }
         }catch{
@@ -165,6 +220,8 @@ function LoginAndSecurity(details) {
         setLoadingCreated(true);
         setGoogleProvider(false);
         setFacebookProvider(false);
+        setPhoneProvider(false);
+        setPasswordProvider(false);
         setProviders(null);
         listItems = null;
         setCreatedOsName(null);
@@ -177,6 +234,11 @@ function LoginAndSecurity(details) {
         setCreatedLenguaje(null);
         setUserMail(null);
         setUserName(null);
+        setCountryPhone(null);
+        setValueInputPhoneFormPrincipal('');
+        setCountryCode(null);
+        setPhoneNumber(null);
+        setCerrarProbar(false);
         sessions = [];
         }
     },[isMounted]);
@@ -211,16 +273,28 @@ function LoginAndSecurity(details) {
             logout()
             .then(()=>{
                 emitCustomEvent('openLoadingPage', false);
-                emitCustomEvent('showMsg', 'Hemos eliminado la cuenta ' + userEmail + '/info');
+                if (userEmail !==null ){
+                    emitCustomEvent('showMsg', 'Hemos eliminado la cuenta ' + userEmail + '/info');
+                }else{
+                    emitCustomEvent('showMsg', 'Hemos eliminado tu cuenta/info');
+                }
             })
             .catch((error)=>{
                 emitCustomEvent('openLoadingPage', false);
-                emitCustomEvent('showMsg', 'Hemos eliminado la cuenta ' + userEmail + '/info');
+                if (userEmail !==null ){
+                    emitCustomEvent('showMsg', 'Hemos eliminado la cuenta ' + userEmail + '/info');
+                }else{
+                    emitCustomEvent('showMsg', 'Hemos eliminado tu cuenta/info');
+                }
             });
         })
         .catch((error)=> {
             emitCustomEvent('openLoadingPage', false);
-            emitCustomEvent('showMsg', 'Ocurrió un error al eliminar la cuenta ' + userEmail + '. No te preocupes, nosotros nos encargaremos de eliminarla./error');
+            if (userEmail !==null ){
+                emitCustomEvent('showMsg', 'Ocurrió un error al eliminar la cuenta ' + userEmail + '. No te preocupes, nosotros nos encargaremos de eliminarla./error');
+            }else{
+                emitCustomEvent('showMsg', 'Ocurrió un error al eliminar tu cuenta. No te preocupes, nosotros nos encargaremos de eliminarla./error');
+            }
         })
     }
 
@@ -426,12 +500,12 @@ function LoginAndSecurity(details) {
                 emitCustomEvent('openLoadingPage', false);
                 clearStates();
                 handleUpdateProfile();                    
-                setMsg('Se ha desvinculado el ingreso por Facebook');
+                setMsg('Se ha desvinculado el ingreso mediante Facebook');
                 setSeverityInfo('info');
                 setOpenMsg(true);  
             }).catch((error) => {
                 emitCustomEvent('openLoadingPage', false);
-                setMsg('Ha ocurrido un error al intentar desvincular Facebook de tu cuenta');
+                setMsg('Ha ocurrido un error al intentar desvincular el ingreso mediante Facebook de tu cuenta');
                 setSeverityInfo('error');
                 setOpenMsg(true);                      
             });
@@ -490,7 +564,7 @@ function LoginAndSecurity(details) {
                                     emitCustomEvent('openLoadingPage', false);
                                     clearStates();
                                     handleUpdateProfile();                    
-                                    setMsg('Se ha vinculado el ingreso por Facebook');
+                                    setMsg('Se ha vinculado el ingreso mediante Facebook');
                                     setSeverityInfo('success');
                                     setOpenMsg(true);        
                                 })
@@ -535,7 +609,7 @@ function LoginAndSecurity(details) {
                     emitCustomEvent('openLoadingPage', false);
                     clearStates();
                     handleUpdateProfile();                    
-                    setMsg('No se hemos podido vincular el acceso por Fecebook a tu cuenta. Prueba con otra cuenta de Fecebook');
+                    setMsg('No se hemos podido vincular el acceso mediante Fecebook a tu cuenta. Prueba con otra cuenta de Fecebook');
                     setSeverityInfo('error');
                     setOpenMsg(true);        
                 });
@@ -543,7 +617,7 @@ function LoginAndSecurity(details) {
                 emitCustomEvent('openLoadingPage', false);
                 clearStates();
                 handleUpdateProfile();                    
-                setMsg('No se hemos podido vincular el acceso por Fecebook a tu cuenta.');
+                setMsg('No se hemos podido vincular el acceso mediante Fecebook a tu cuenta.');
                 setSeverityInfo('error');
                 setOpenMsg(true);        
             }
@@ -568,7 +642,7 @@ function LoginAndSecurity(details) {
         emitCustomEvent('openLoadingPage', false);
         clearStates();
         handleUpdateProfile();                    
-        setMsg('No se hemos podido vincular el acceso por Fecebook a tu cuenta.');
+        setMsg('No se hemos podido vincular el acceso mediante Fecebook a tu cuenta.');
         setSeverityInfo('error');
         setOpenMsg(true);        
     }
@@ -595,12 +669,12 @@ function LoginAndSecurity(details) {
                 emitCustomEvent('openLoadingPage', false);
                 clearStates();
                 handleUpdateProfile();                    
-                setMsg('Se ha desvinculado el ingreso por Google');
+                setMsg('Se ha desvinculado el ingreso mediante Google');
                 setSeverityInfo('info');
                 setOpenMsg(true);  
             }).catch((error) => {
                 emitCustomEvent('openLoadingPage', false);
-                setMsg('Ha ocurrido un error al intentar desvincular Google de tu cuenta');
+                setMsg('Ha ocurrido un error al intentar desvincular el ingreso mediante Google de tu cuenta');
                 setSeverityInfo('error');
                 setOpenMsg(true);                      
             });
@@ -611,7 +685,7 @@ function LoginAndSecurity(details) {
         emitCustomEvent('openLoadingPage', false);
         clearStates();
         handleUpdateProfile();                    
-        setMsg('No se hemos podido vincular el acceso por Google a tu cuenta.');
+        setMsg('No se hemos podido vincular el acceso mediante Google a tu cuenta.');
         setSeverityInfo('error');
         setOpenMsg(true);        
     }
@@ -668,7 +742,7 @@ function LoginAndSecurity(details) {
                                     emitCustomEvent('openLoadingPage', false);
                                     clearStates();
                                     handleUpdateProfile();                    
-                                    setMsg('Se ha vinculado el ingreso por Google');
+                                    setMsg('Se ha vinculado el ingreso mediante Google');
                                     setSeverityInfo('success');
                                     setOpenMsg(true);        
                                 })
@@ -713,7 +787,7 @@ function LoginAndSecurity(details) {
                     emitCustomEvent('openLoadingPage', false);
                     clearStates();
                     handleUpdateProfile();                    
-                    setMsg('No se hemos podido vincular el acceso por Google a tu cuenta. Prueba con otra cuenta de Google');
+                    setMsg('No se hemos podido vincular el acceso mediante Google a tu cuenta. Prueba con otra cuenta de Google');
                     setSeverityInfo('error');
                     setOpenMsg(true);        
                 });
@@ -721,7 +795,7 @@ function LoginAndSecurity(details) {
                 emitCustomEvent('openLoadingPage', false);
                 clearStates();
                 handleUpdateProfile();                    
-                setMsg('No se hemos podido vincular el acceso por Google a tu cuenta.');
+                setMsg('No se hemos podido vincular el acceso mediante Google a tu cuenta.');
                 setSeverityInfo('error');
                 setOpenMsg(true);        
             }
@@ -740,6 +814,928 @@ function LoginAndSecurity(details) {
           }
         }
         return false;
+    }
+
+    const handleVincularPhone = () => {
+        setActualizarPhone(false);
+        setSubmitCountrySelectPhoneFormPrincipal(true);
+    }
+
+    const handleDesvincularPhone = () => {
+        //esta desvinculando
+        if (providers.length === 1){
+            //esta desvinculando a su unico proveedor
+            if (providers[0].providerId === 'phone'){
+                emitCustomEvent('openLoadingPage', false);
+                handleEliminarCuenta();                    
+            }else{
+                //hay algun error
+                emitCustomEvent('openLoadingPage', false);
+                clearStates();
+                handleUpdateProfile();                    
+            }
+        }else{
+            //esta desvinculando pero tiene mas proveedores de ingreso
+            const auth = getAuth();
+            unlink(auth.currentUser, 'phone')
+            .then(async() => {
+                const infoUser = doc(database, "users", auth.currentUser.uid);  
+                await updateDoc(infoUser, {
+                    countryCode: null,
+                })
+                .then(()=>{
+                    emitCustomEvent('openLoadingPage', false);
+                    clearStates();
+                    handleUpdateProfile();                    
+                    setMsg('Se ha desvinculado el ingreso mediante número telefónico');
+                    setSeverityInfo('info');
+                    setOpenMsg(true);      
+                })
+                .catch(()=>{
+                    emitCustomEvent('openLoadingPage', false);
+                    clearStates();
+                    handleUpdateProfile();                    
+                    setMsg('Se ha desvinculado el ingreso mediante número telefónico');
+                    setSeverityInfo('info');
+                    setOpenMsg(true);      
+                });
+            }).catch((error) => {
+                emitCustomEvent('openLoadingPage', false);
+                setMsg('Ha ocurrido un error al intentar desvincular el ingreso mediante número telefónico de tu cuenta');
+                setSeverityInfo('error');
+                setOpenMsg(true);                      
+            });
+        }
+    }
+
+    /*variables del componente CountrySelectPhone*/
+    const styleSelectCountryPhoneFormPrincipal = { marginTop: "10px", marginBottom: '10px' };
+    const [valueInputPhoneFormPrincipal, setValueInputPhoneFormPrincipal] = useState('');
+    const [submitCountrySelectPhoneFormPrincipal, setSubmitCountrySelectPhoneFormPrincipal] = useState(false);
+    const [variableEstadoCargadoNewValuePhoneFormPrincipal, setVariableEstadoCargadoNewValuePhoneFormPrincipal] = useState(false);
+    const [countryCode, setCountryCode] = useState(null);
+    const submitValuePhoneFormPicnipal = (value) => {
+        setSubmitCountrySelectPhoneFormPrincipal(value);
+    }
+    const getValuePhoneCountrySelectPhoneFormPrincipal = (phone) => {
+        setValueInputPhoneFormPrincipal(phone[0]);
+        setCountryCode(phone[1].code);
+        setVariableEstadoCargadoNewValuePhoneFormPrincipal(true);
+    }
+    /*fin variables de componente CountrySelectPhone*/
+
+    const handleEnter = () => {
+        if (txtBtnContinuar === 'Actualizar'){
+            if (phoneProvider){
+                setCerrarProbar(true);
+                setActualizarPhone(true);
+            }else{
+                setActualizarPhone(false);
+            }
+            setSubmitCountrySelectPhoneFormPrincipal(true);
+        }else{
+            setCerrarProbar(false);
+            if (recaptchaVerifier !== undefined)
+                if (!recaptchaVerifier.destroyed) 
+                    recaptchaVerifier.clear();
+            clearStates();
+            handleUpdateProfile();                                
+            setTxtBtnContinuar('Actualizar');
+            setClassNameBtnContinuar('button__log__continuar');
+        }
+    }
+
+    const handleClickContinuar = () => {
+        if (txtBtnContinuar === 'Actualizar'){
+            if (phoneProvider){
+                setCerrarProbar(true);
+                setActualizarPhone(true);
+            }else{
+                setActualizarPhone(false);
+            }
+            setSubmitCountrySelectPhoneFormPrincipal(true);
+        }else{
+            setCerrarProbar(false);
+            if (recaptchaVerifier !== undefined)
+                if (!recaptchaVerifier.destroyed) 
+                    recaptchaVerifier.clear();
+            clearStates();
+            handleUpdateProfile();                                
+            setTxtBtnContinuar('Actualizar');
+            setClassNameBtnContinuar('button__log__continuar');
+        }
+    }
+
+    /*atencion del valor ingresado del componente CountrySelectPhone*/
+    useEffect(() => {
+        if (variableEstadoCargadoNewValuePhoneFormPrincipal){
+            if ((valueInputPhoneFormPrincipal !== '')) {
+                emitCustomEvent('openLoadingPage', true);
+                getUserByPhoneNumber(valueInputPhoneFormPrincipal)  
+                .then((userRecord) => {
+                    //el usuario existe
+                    emitCustomEvent('openLoadingPage', false);
+                    if (recaptchaVerifier !== undefined)
+                        if (!recaptchaVerifier.destroyed) 
+                            recaptchaVerifier.clear();
+                    clearStates();
+                    handleUpdateProfile();                                                
+                    setTxtBtnContinuar('Actualizar');
+                    setClassNameBtnContinuar('button__log__continuar');        
+                    setMsg('El número ' + String(valueInputPhoneFormPrincipal) + ' ya se encuentra asociado a otra cuenta.');
+                    setSeverityInfo('error');
+                    setOpenMsg(true);
+                })
+                .catch((error) => {
+                    const auth = getAuth();
+                    auth.languageCode = details.user[0].languages.split(',')[0];
+                    recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
+                        type: 'image', // 'audio'
+                        size: 'compact', // 'normal, invisible' or 'compact'
+                        badge: 'inline' //' bottomright' or 'inline' applies to invisible.                    
+                    }, auth);                    
+                    antTokenPhone = auth.currentUser.accessToken;
+                    setTxtBtnContinuar('Cancelar');
+                    setClassNameBtnContinuar('button__log__BW');
+                    emitCustomEvent('openLoadingPage', false);                    
+                    signInWithPhoneNumber(auth, valueInputPhoneFormPrincipal, recaptchaVerifier)
+                    .then((result) => {
+                        emitCustomEvent('openLoadingPage', true);
+                        if (recaptchaVerifier !== undefined)
+                            if (!recaptchaVerifier.destroyed) 
+                                recaptchaVerifier.clear();
+                        setConfirmationResult(result);
+                        setOpenFormVerificaCodigoPhone(true);
+                        emitCustomEvent('openLoadingPage', false);
+                    }).catch((error) => {
+                        // Error; SMS not sent
+                        // ...
+                        if (recaptchaVerifier !== undefined)
+                            if (!recaptchaVerifier.destroyed) 
+                                recaptchaVerifier.clear();
+                        clearStates();
+                        handleUpdateProfile();                                                
+                        setTxtBtnContinuar('Actualizar');
+                        setClassNameBtnContinuar('button__log__continuar');
+                        setMsg('No pudimos enviar el SMS al número de teléfono ' + String(valueInputPhoneFormPrincipal));
+                        setSeverityInfo('error');
+                        emitCustomEvent('openLoadingPage', false);
+                        setOpenMsg(true);                    
+                    });
+                });
+             }else{
+                emitCustomEvent('openLoadingPage', false);
+                setMsg('No ingresaste un número de teléfono válido');
+                setSeverityInfo('error');
+                setOpenMsg(true);                    
+            }
+            setVariableEstadoCargadoNewValuePhoneFormPrincipal(false);       
+        }         
+    },[details, valueInputPhoneFormPrincipal, variableEstadoCargadoNewValuePhoneFormPrincipal]);
+    /*fin atencion del valor ingresado del componente CountrySelectPhone*/
+
+    const handleLinkedPhone = async() => {
+        setTxtBtnContinuar('Actualizar');
+        setClassNameBtnContinuar('button__log__continuar');
+        const auth = getAuth();
+        const newToken = auth.currentUser.accessToken;
+        const database = getFirestore();
+        const infoUser = doc(database, "users", currentUser.uid);
+        const docSnap = await getDoc(infoUser);
+        if (docSnap.exists()) {
+            const filtered = docSnap.data().sessions.filter(function(element){
+              return element.id === antTokenPhone;
+            });
+            if (filtered.length !== 0){
+                await updateDoc(infoUser, {
+                    sessions: arrayRemove(filtered[0])
+                })
+                .then(async()=>{
+                    await updateDoc(infoUser, {
+                        sessions: arrayUnion(                
+                            {
+                                id: newToken,
+                                date: Timestamp.now().toMillis(),
+                                ip: details.user[0].ip, 
+                                browser: details.user[1].browser.name,
+                                os:{
+                                    name: details.user[1].os.name,
+                                    version: details.user[1].os.version,
+                                },
+                                location:{
+                                    city: details.user[0].city,//tigre
+                                    country: details.user[0].country_name, //argentina
+                                    region: details.user[0].region,
+                                    country_code: details.user[0].country_code,
+                                    currency_name: details.user[0].currency_name,
+                                    currency: details.user[0].currency,
+                                    lenguaje: details.user[0].languages.split(',')[0],
+                                    country_tld: details.user[0].country_tld,
+                                },
+                            }
+                        )
+                    }
+                    )
+                    .then(()=>{
+                        setOpenFormVerificaCodigoPhone(false);
+                        clearStates();
+                        handleUpdateProfile();                    
+                        emitCustomEvent('openLoadingPage', false);
+                        setMsg('Ya podés ingresar a byOO con ' + String(valueInputPhoneFormPrincipal));
+                        setSeverityInfo('success');
+                        setOpenMsg(true);                    
+                    })
+                    .catch((error)=>{
+                        logout()
+                        .then(()=>{
+                            emitCustomEvent('openLoadingPage', false);
+                        })
+                        .catch((error)=>{
+                            emitCustomEvent('openLoadingPage', false);
+                        });                                
+                    });
+            })
+            .catch((error)=>{ 
+                logout()
+                .then(()=>{
+                    emitCustomEvent('openLoadingPage', false);
+                })
+                .catch((error)=>{
+                    emitCustomEvent('openLoadingPage', false);
+                });                        
+            });
+          }else{ 
+            logout()
+            .then(()=>{
+                emitCustomEvent('openLoadingPage', false);
+            })
+            .catch((error)=>{
+                emitCustomEvent('openLoadingPage', false);
+            });                    
+          }
+        }else{
+            logout()
+            .then(()=>{
+                emitCustomEvent('openLoadingPage', false);
+            })
+            .catch((error)=>{
+                emitCustomEvent('openLoadingPage', false);
+            });                    
+        }
+    }
+
+    const handleReturnFormVerificaCodigoPhone =() => {
+        clearStates();
+        handleUpdateProfile();                    
+        setTxtBtnContinuar('Actualizar');
+        setClassNameBtnContinuar('button__log__continuar');
+        setOpenFormVerificaCodigoPhone(false);
+    }
+
+    /*variables del componente InputEmail Form Principal*/
+    const styleInputEmailFormPrincipal = { marginTop: "10px" };
+    const [submitEmailFormPrincipal, setSubmitEmailFormPrincipal] = useState(false);
+    const [variableEstadoCargadoNewValueEmailFormPrincipal, setVariableEstadoCargadoNewValueEmailFormPrincipal] = useState(false);
+    const submitValueEmailFormPrincipal = (value) => {
+        setSubmitEmailFormPrincipal(value);
+    }
+    const getValueEmailFormPrincipal = (email) => {
+        setUserMail(email);
+        setVariableEstadoCargadoNewValueEmailFormPrincipal(true);
+    }
+    /*fin variables del componente InputEmail Form Principal*/
+
+    /*variables del componente InputPassword del form Registrate*/
+    const styleInputPasswordFormRegistrate1 = { marginTop: "10px" };
+    const [valueInputPasswordFormRegistrate1, setValueInputPasswordFormRegistrate1] = useState('');
+    const [submitPasswordFormRegistrate1, setSubmitInputPasswordFormRegistrate1] = useState(false);
+    const [variableEstadoCargadoNewValuePasswordFormRegistrate1, setVariableEstadoCargadoNewValuePasswordFormRegistrate1] = useState(false);
+    const submitValuePasswordFormRegistrate1 = (value) => {
+        setSubmitInputPasswordFormRegistrate1(value);
+    }
+    const getValuePasswordFormRegistrate1 = (password) => {
+        setValueInputPasswordFormRegistrate1(password);
+        setVariableEstadoCargadoNewValuePasswordFormRegistrate1(true);
+    }
+    /*fin variables de componente InputPassword del form Registrate*/
+
+    /*variables del componente InputPassword del form Registrate*/
+    const styleInputPasswordFormRegistrate2 = { marginTop: "10px", marginBottom: '10px' };
+    const [valueInputPasswordFormRegistrate2, setValueInputPasswordFormRegistrate2] = useState('');
+    const [submitPasswordFormRegistrate2, setSubmitInputPasswordFormRegistrate2] = useState(false);
+    const [variableEstadoCargadoNewValuePasswordFormRegistrate2, setVariableEstadoCargadoNewValuePasswordFormRegistrate2] = useState(false);
+    const submitValuePasswordFormRegistrate2 = (value) => {
+        setSubmitInputPasswordFormRegistrate2(value);
+    }
+    const getValuePasswordFormRegistrate2 = (password) => {
+        setValueInputPasswordFormRegistrate2(password);
+        setVariableEstadoCargadoNewValuePasswordFormRegistrate2(true);
+    }
+    /*fin variables de componente InputPassword del form Registrate*/
+    
+    /*atencion del valor ingresado del componente Input Email del form principal*/
+    useEffect(() => {    
+        if (variableEstadoCargadoNewValuePasswordFormRegistrate1){        
+            setVariableEstadoCargadoNewValuePasswordFormRegistrate1(false);       
+        }         
+
+        if (variableEstadoCargadoNewValuePasswordFormRegistrate2){        
+            setVariableEstadoCargadoNewValuePasswordFormRegistrate2(false);       
+        }                 
+
+        if (variableEstadoCargadoNewValueEmailFormPrincipal){
+            if (valueInputPasswordFormRegistrate1 !== '') {
+                if (valueInputPasswordFormRegistrate2 !== '') {
+                    if ((userEmail !== '')&&(userEmail !== null)) {
+                        if (valueInputPasswordFormRegistrate1 === valueInputPasswordFormRegistrate2){
+                            const auth = getAuth();
+                            const antToken = auth.currentUser.accessToken;
+                            fetchSignInMethodsForEmail(auth, userEmail)
+                            .then(providers => {
+                                if (providers.length === 0){
+                                    //el mail no esta asociado a ninguna cuenta
+                                    const credential = EmailAuthProvider.credential(userEmail, valueInputPasswordFormRegistrate1);
+                                    linkWithCredential(auth.currentUser, credential)
+                                    .then(async() => {
+                                        const newToken = auth.currentUser.accessToken;
+                                        const database = getFirestore();
+                                        const infoUser = doc(database, "users", currentUser.uid);
+                                        const docSnap = await getDoc(infoUser);
+                                        if (docSnap.exists()) {
+                                          const filtered = docSnap.data().sessions.filter(function(element){
+                                              return element.id === antToken;
+                                        });
+                                          if (filtered.length !== 0){
+                                            await updateDoc(infoUser, {
+                                                sessions: arrayRemove(filtered[0])
+                                            })
+                                            .then(async()=>{
+                                                    await updateDoc(infoUser, {
+                                                        sessions: arrayUnion(                
+                                                            {
+                                                                id: newToken,
+                                                                date: Timestamp.now().toMillis(),
+                                                                ip: details.user[0].ip, 
+                                                                browser: details.user[1].browser.name,
+                                                                os:{
+                                                                    name: details.user[1].os.name,
+                                                                    version: details.user[1].os.version,
+                                                                },
+                                                                location:{
+                                                                    city: details.user[0].city,//tigre
+                                                                    country: details.user[0].country_name, //argentina
+                                                                    region: details.user[0].region,
+                                                                    country_code: details.user[0].country_code,
+                                                                    currency_name: details.user[0].currency_name,
+                                                                    currency: details.user[0].currency,
+                                                                    lenguaje: details.user[0].languages.split(',')[0],
+                                                                    country_tld: details.user[0].country_tld,
+                                                                },
+                                                            }
+                                                        )
+                                                    }
+                                                    )
+                                                    .then(()=>{
+                                                        emitCustomEvent('openLoadingPage', false);
+                                                        clearStates();
+                                                        handleUpdateProfile();                    
+                                                        setMsg('Se han actualizado los datos de tu cuenta');
+                                                        setSeverityInfo('success');
+                                                        setOpenMsg(true);        
+                                                    })
+                                                    .catch((error)=>{
+                                                        logout()
+                                                        .then(()=>{
+                                                            emitCustomEvent('openLoadingPage', false);
+                                                        })
+                                                        .catch((error)=>{
+                                                            emitCustomEvent('openLoadingPage', false);
+                                                        });                                
+                                                    });
+                                            })
+                                            .catch((error)=>{ 
+                                                logout()
+                                                .then(()=>{
+                                                    emitCustomEvent('openLoadingPage', false);
+                                                })
+                                                .catch((error)=>{
+                                                    emitCustomEvent('openLoadingPage', false);
+                                                });                        
+                                            });
+                                          }else{ 
+                                            logout()
+                                            .then(()=>{
+                                                emitCustomEvent('openLoadingPage', false);
+                                            })
+                                            .catch((error)=>{
+                                                emitCustomEvent('openLoadingPage', false);
+                                            });                    
+                                          }
+                                        }else{
+                                            logout()
+                                            .then(()=>{
+                                                emitCustomEvent('openLoadingPage', false);
+                                            })
+                                            .catch((error)=>{
+                                                emitCustomEvent('openLoadingPage', false);
+                                            });                    
+                                        }
+                                    }).catch((error) => {
+                                        console.log(error);
+                                        emitCustomEvent('openLoadingPage', false);
+                                        if (error.code === 'auth/provider-already-linked'){
+                                            //esta actualizando el password
+                                            console.log('actualizar password');
+                                        }else{
+                                            if (error.code === 'auth/requires-recent-login'){
+                                                //requiere actualizar las credenciales
+                                                console.log('actualizar credenciales');
+                                            }else{
+                                                setMsg('Ha ocurrido un error al intentar actualizar los datos de tu cuenta.');
+                                                setSeverityInfo('error');
+                                                setOpenMsg(true);
+                                                emitCustomEvent('openLoadingPage', false);                    
+                                            }
+                                        }
+                                    });                                    
+                            }else{
+                                    //el mail esta asociado a alguna cuenta
+                                    if (auth.currentUser.email === userEmail){
+                                        //el mail es el mismo del usuario actual
+                                        const credential = EmailAuthProvider.credential(userEmail, valueInputPasswordFormRegistrate1);
+                                        linkWithCredential(auth.currentUser, credential)
+                                        .then(async() => {
+                                            const newToken = auth.currentUser.accessToken;
+                                            const database = getFirestore();
+                                            const infoUser = doc(database, "users", currentUser.uid);
+                                            const docSnap = await getDoc(infoUser);
+                                            if (docSnap.exists()) {
+                                              const filtered = docSnap.data().sessions.filter(function(element){
+                                                  return element.id === antToken;
+                                            });
+                                              if (filtered.length !== 0){
+                                                await updateDoc(infoUser, {
+                                                    sessions: arrayRemove(filtered[0])
+                                                })
+                                                .then(async()=>{
+                                                        await updateDoc(infoUser, {
+                                                            sessions: arrayUnion(                
+                                                                {
+                                                                    id: newToken,
+                                                                    date: Timestamp.now().toMillis(),
+                                                                    ip: details.user[0].ip, 
+                                                                    browser: details.user[1].browser.name,
+                                                                    os:{
+                                                                        name: details.user[1].os.name,
+                                                                        version: details.user[1].os.version,
+                                                                    },
+                                                                    location:{
+                                                                        city: details.user[0].city,//tigre
+                                                                        country: details.user[0].country_name, //argentina
+                                                                        region: details.user[0].region,
+                                                                        country_code: details.user[0].country_code,
+                                                                        currency_name: details.user[0].currency_name,
+                                                                        currency: details.user[0].currency,
+                                                                        lenguaje: details.user[0].languages.split(',')[0],
+                                                                        country_tld: details.user[0].country_tld,
+                                                                    },
+                                                                }
+                                                            )
+                                                        }
+                                                        )
+                                                        .then(()=>{
+                                                            emitCustomEvent('openLoadingPage', false);
+                                                            clearStates();
+                                                            handleUpdateProfile();                    
+                                                            setMsg('Se han actualizado los datos de tu cuenta');
+                                                            setSeverityInfo('success');
+                                                            setOpenMsg(true);        
+                                                        })
+                                                        .catch((error)=>{
+                                                            logout()
+                                                            .then(()=>{
+                                                                emitCustomEvent('openLoadingPage', false);
+                                                            })
+                                                            .catch((error)=>{
+                                                                emitCustomEvent('openLoadingPage', false);
+                                                            });                                
+                                                        });
+                                                })
+                                                .catch((error)=>{ 
+                                                    logout()
+                                                    .then(()=>{
+                                                        emitCustomEvent('openLoadingPage', false);
+                                                    })
+                                                    .catch((error)=>{
+                                                        emitCustomEvent('openLoadingPage', false);
+                                                    });                        
+                                                });
+                                              }else{ 
+                                                logout()
+                                                .then(()=>{
+                                                    emitCustomEvent('openLoadingPage', false);
+                                                })
+                                                .catch((error)=>{
+                                                    emitCustomEvent('openLoadingPage', false);
+                                                });                    
+                                              }
+                                            }else{
+                                                logout()
+                                                .then(()=>{
+                                                    emitCustomEvent('openLoadingPage', false);
+                                                })
+                                                .catch((error)=>{
+                                                    emitCustomEvent('openLoadingPage', false);
+                                                });                    
+                                            }
+                                        }).catch((error) => {
+                                            console.log(error);
+                                            emitCustomEvent('openLoadingPage', false);
+                                            if (error.code === 'auth/provider-already-linked'){
+                                                //esta actualizando el password
+                                                setOpenFormReautenticaConPassword(true);
+                                            }else{
+                                                if (error.code === 'auth/requires-recent-login'){
+                                                    //requiere actualizar las credenciales
+                                                    if (passwordProvider){
+                                                        setOpenFormReautenticaConPassword(true);
+                                                    }else{
+                                                        if (googleProvider){
+
+                                                        }else{
+                                                            if (facebookProvider){
+
+                                                            }else{
+                                                                if (phoneProvider){
+
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }else{
+                                                    setMsg('Ha ocurrido un error al intentar actualizar los datos de tu cuenta.');
+                                                    setSeverityInfo('error');
+                                                    setOpenMsg(true);
+                                                    emitCustomEvent('openLoadingPage', false);                    
+                                                }
+                                            }
+                                        });                                    
+                                    }else{
+                                        //el mail no es el del usuario actual
+                                        setMsg('No podemos asociar el correo ' + userEmail + ' porque ya se encuentra asociado a otra cuenta.');
+                                        setSeverityInfo('error');
+                                        setOpenMsg(true); 
+                                        emitCustomEvent('openLoadingPage', false);
+                                    }
+                                }
+                            })
+                            .catch((error) => {
+                                // Some error occurred, you can inspect the code: error.code
+                                setMsg('Ha ocurrido un error al intentar asociar el correo ' + userEmail + ' a tu cuenta.');
+                                setSeverityInfo('error');
+                                setOpenMsg(true);
+                                emitCustomEvent('openLoadingPage', false);
+                            });
+
+
+
+
+
+
+
+
+
+
+
+
+                        }else{
+                            emitCustomEvent('openLoadingPage', false);
+                            setMsg('Las contraseñas ingresadas deben ser iguales. Revisá las contraseñas ingresadas y probá nuevamente.');
+                            setSeverityInfo('error');
+                            setOpenMsg(true);                    
+                        }                
+                    }else{
+                        emitCustomEvent('openLoadingPage', false);
+                        setMsg('Revisá los datos ingresados.');
+                        setSeverityInfo('error');
+                        setOpenMsg(true);                            
+                    }
+                }else{
+                    emitCustomEvent('openLoadingPage', false);
+                    setMsg('Revisá los datos ingresados.');
+                    setSeverityInfo('error');
+                    setOpenMsg(true);                        
+                }
+            }else{
+                emitCustomEvent('openLoadingPage', false);
+                setMsg('Revisá los datos ingresados.');
+                setSeverityInfo('error');
+                setOpenMsg(true);                    
+            }
+            setVariableEstadoCargadoNewValueEmailFormPrincipal(false);       
+        }       
+    },[userEmail, variableEstadoCargadoNewValueEmailFormPrincipal, variableEstadoCargadoNewValuePasswordFormRegistrate1]);
+    /*fin atencion del valor ingresado del componente Input Email del form principal*/    
+
+    const handleVincularPassword = () => {
+        handleEnterEmail();
+    }
+
+    const handleDesvincularPassword = () => {
+        //esta desvinculando
+        if (providers.length === 1){
+            //esta desvinculando a su unico proveedor
+            if (providers[0].providerId === 'password'){
+                emitCustomEvent('openLoadingPage', false);
+                handleEliminarCuenta();                    
+            }else{
+                //hay algun error
+                emitCustomEvent('openLoadingPage', false);
+                clearStates();
+                handleUpdateProfile();                    
+            }
+        }else{
+            //esta desvinculando pero tiene mas proveedores de ingreso
+            setOpenFormReautenticaConPasswordDesvincular(true);
+            emitCustomEvent('openLoadingPage', false);
+        }
+    }
+
+    const handleEnterEmail = () => {
+        emitCustomEvent('openLoadingPage', true);
+        setSubmitInputPasswordFormRegistrate1(true);
+        setSubmitInputPasswordFormRegistrate2(true);
+        setSubmitEmailFormPrincipal(true);
+    }
+
+    const handleClickActualizarPassword = () => {
+        handleEnterEmail();        
+    }
+
+    const handleRecoveryPassReautenticaConPassword = () => {
+        setOpenFormReautenticaConPassword(false);
+        setOpenFormRecoveryPassword(true);
+    }
+
+    const handleRecoveryPassReautenticaConPasswordDesvincular = () => {
+        setOpenFormReautenticaConPasswordDesvincular(false);
+        setOpenFormRecoveryPasswordDesvincular(true);
+    }
+
+    const handleReturnFormRecoveryPassword = () =>{
+        setOpenFormRecoveryPassword(false);
+        setOpenFormReautenticaConPassword(true);
+    }
+
+    const handleReturnFormRecoveryPasswordDesvincular = () =>{
+        setOpenFormRecoveryPasswordDesvincular(false);
+        setOpenFormReautenticaConPasswordDesvincular(true);
+    }
+
+    const handleCloseFormRecoveryPassword = () => {
+        setOpenFormRecoveryPassword(false);
+    }
+
+    const handleCloseFormRecoveryPasswordDesvincular = () => {
+        setOpenFormRecoveryPasswordDesvincular(false);
+    }
+
+    const handleCloseReautenticaConPassword = () => {
+        setOpenFormReautenticaConPassword(false);
+        clearStates();
+        handleUpdateProfile();                    
+    }
+
+    const handleCloseReautenticaConPasswordDesvincular = () => {
+        setOpenFormReautenticaConPasswordDesvincular(false);
+        clearStates();
+        handleUpdateProfile();                    
+    }
+
+    const handleCredentialOKPasswordDesvincular = () => {
+        emitCustomEvent('openLoadingPage', true);
+        setOpenFormReautenticaConPasswordDesvincular(false);
+        const auth = getAuth();
+        unlink(auth.currentUser, 'password')
+        .then(() => {
+            emitCustomEvent('openLoadingPage', false);
+            clearStates();
+            handleUpdateProfile();                    
+            setMsg('Se ha desvinculado el ingreso mediante contraseña');
+            setSeverityInfo('info');
+            setOpenMsg(true);      
+        }).catch((error) => {
+            emitCustomEvent('openLoadingPage', false);
+            setMsg('Ha ocurrido un error al intentar desvincular el ingreso mediante contraseña de tu cuenta');
+            setSeverityInfo('error');
+            setOpenMsg(true);                      
+        });
+    }
+
+    const handleCredentialOKPassword = () => {
+        emitCustomEvent('openLoadingPage', true);
+        setOpenFormReautenticaConPassword(false);
+        const auth = getAuth();
+        const antToken = auth.currentUser.accessToken;
+        const credential = EmailAuthProvider.credential(userEmail, valueInputPasswordFormRegistrate1);
+        linkWithCredential(auth.currentUser, credential)
+        .then(async() => {
+            emitCustomEvent('openLoadingPage', true);
+            const newToken = auth.currentUser.accessToken;
+            const database = getFirestore();
+            const infoUser = doc(database, "users", currentUser.uid);
+            const docSnap = await getDoc(infoUser);
+            if (docSnap.exists()) {
+              const filtered = docSnap.data().sessions.filter(function(element){
+                  return element.id === antToken;
+            });
+              if (filtered.length !== 0){
+                await updateDoc(infoUser, {
+                    sessions: arrayRemove(filtered[0])
+                })
+                .then(async()=>{
+                        await updateDoc(infoUser, {
+                            sessions: arrayUnion(                
+                                {
+                                    id: newToken,
+                                    date: Timestamp.now().toMillis(),
+                                    ip: details.user[0].ip, 
+                                    browser: details.user[1].browser.name,
+                                    os:{
+                                        name: details.user[1].os.name,
+                                        version: details.user[1].os.version,
+                                    },
+                                    location:{
+                                        city: details.user[0].city,//tigre
+                                        country: details.user[0].country_name, //argentina
+                                        region: details.user[0].region,
+                                        country_code: details.user[0].country_code,
+                                        currency_name: details.user[0].currency_name,
+                                        currency: details.user[0].currency,
+                                        lenguaje: details.user[0].languages.split(',')[0],
+                                        country_tld: details.user[0].country_tld,
+                                    },
+                                }
+                            )
+                        }
+                        )
+                        .then(()=>{
+                            emitCustomEvent('openLoadingPage', false);
+                            clearStates();
+                            handleUpdateProfile();                    
+                            setMsg('Se han actualizado los datos de tu cuenta');
+                            setSeverityInfo('success');
+                            setOpenMsg(true);        
+                        })
+                        .catch((error)=>{
+                            logout()
+                            .then(()=>{
+                                emitCustomEvent('openLoadingPage', false);
+                            })
+                            .catch((error)=>{
+                                emitCustomEvent('openLoadingPage', false);
+                            });                                
+                        });
+                })
+                .catch((error)=>{ 
+                    logout()
+                    .then(()=>{
+                        emitCustomEvent('openLoadingPage', false);
+                    })
+                    .catch((error)=>{
+                        emitCustomEvent('openLoadingPage', false);
+                    });                        
+                });
+              }else{ 
+                logout()
+                .then(()=>{
+                    emitCustomEvent('openLoadingPage', false);
+                })
+                .catch((error)=>{
+                    emitCustomEvent('openLoadingPage', false);
+                });                    
+              }
+            }else{
+                logout()
+                .then(()=>{
+                    emitCustomEvent('openLoadingPage', false);
+                })
+                .catch((error)=>{
+                    console.log(error);
+                    emitCustomEvent('openLoadingPage', false);
+                });                    
+            }
+        }).catch((error) => {
+            console.log(error);
+            if (error.code === 'auth/provider-already-linked'){
+                emitCustomEvent('openLoadingPage', true);
+                const auth = getAuth();
+                unlink(auth.currentUser, 'password')
+                .then(() => {
+                    const antToken = auth.currentUser.accessToken;
+                    linkWithCredential(auth.currentUser, credential)
+                    .then(async() => {
+                        emitCustomEvent('openLoadingPage', true);
+                        const newToken = auth.currentUser.accessToken;
+                        const database = getFirestore();
+                        const infoUser = doc(database, "users", currentUser.uid);
+                        const docSnap = await getDoc(infoUser);
+                        if (docSnap.exists()) {
+                          const filtered = docSnap.data().sessions.filter(function(element){
+                              return element.id === antToken;
+                        });
+                          if (filtered.length !== 0){
+                            await updateDoc(infoUser, {
+                                sessions: arrayRemove(filtered[0])
+                            })
+                            .then(async()=>{
+                                    await updateDoc(infoUser, {
+                                        sessions: arrayUnion(                
+                                            {
+                                                id: newToken,
+                                                date: Timestamp.now().toMillis(),
+                                                ip: details.user[0].ip, 
+                                                browser: details.user[1].browser.name,
+                                                os:{
+                                                    name: details.user[1].os.name,
+                                                    version: details.user[1].os.version,
+                                                },
+                                                location:{
+                                                    city: details.user[0].city,//tigre
+                                                    country: details.user[0].country_name, //argentina
+                                                    region: details.user[0].region,
+                                                    country_code: details.user[0].country_code,
+                                                    currency_name: details.user[0].currency_name,
+                                                    currency: details.user[0].currency,
+                                                    lenguaje: details.user[0].languages.split(',')[0],
+                                                    country_tld: details.user[0].country_tld,
+                                                },
+                                            }
+                                        )
+                                    }
+                                    )
+                                    .then(()=>{
+                                        emitCustomEvent('openLoadingPage', false);
+                                        clearStates();
+                                        handleUpdateProfile();                    
+                                        setMsg('Se han actualizado los datos de tu cuenta');
+                                        setSeverityInfo('success');
+                                        setOpenMsg(true);        
+                                    })
+                                    .catch((error)=>{
+                                        console.log(error);
+                                        logout()
+                                        .then(()=>{
+                                            emitCustomEvent('openLoadingPage', false);
+                                        })
+                                        .catch((error)=>{
+                                            emitCustomEvent('openLoadingPage', false);
+                                        });                                
+                                    });
+                            })
+                            .catch((error)=>{ 
+                                console.log(error);
+                                logout()
+                                .then(()=>{
+                                    emitCustomEvent('openLoadingPage', false);
+                                })
+                                .catch((error)=>{
+                                    emitCustomEvent('openLoadingPage', false);
+                                });                        
+                            });
+                          }else{ 
+                            console.log('por aca');
+                            logout()
+                            .then(()=>{
+                                emitCustomEvent('openLoadingPage', false);
+                            })
+                            .catch((error)=>{
+                                emitCustomEvent('openLoadingPage', false);
+                            });                    
+                          }
+                        }else{
+                            console.log('por aca');
+                            logout()
+                            .then(()=>{
+                                emitCustomEvent('openLoadingPage', false);
+                            })
+                            .catch((error)=>{
+                                emitCustomEvent('openLoadingPage', false);
+                            });                    
+                        }
+                    }).catch((error) => {
+                        emitCustomEvent('openLoadingPage', false);
+                        setMsg('Ha ocurrido un error al intentar desvincular el ingreso mediante contraseña de tu cuenta');
+                    }); 
+                }).catch((error) => {
+                    emitCustomEvent('openLoadingPage', false);
+                    setMsg('Ha ocurrido un error al intentar desvincular el ingreso mediante contraseña de tu cuenta');
+                });
+            }else{
+                emitCustomEvent('openLoadingPage', false);
+                setMsg('Ha ocurrido un error al intentar desvincular el ingreso mediante contraseña de tu cuenta');
+            }
+        }); 
     }
 
     return (
@@ -782,7 +1778,7 @@ function LoginAndSecurity(details) {
                                         onClick={handleCuenta}
                                         sx={{
                                             color: '#000000 !important',
-                                            fontSize: '14px',
+                                            fontSize: '25px',
                                         }} 
                                     />
                                     }
@@ -818,9 +1814,119 @@ function LoginAndSecurity(details) {
                                         <Typography><strong>Contraseña</strong></Typography>
                                         </AccordionSummary>
                                         <AccordionDetails>
-                                        <Typography>
-                                            Datos de la contraseña
-                                        </Typography>
+                                        <Divider/>
+                                            {!loadingCreated ?
+                                            <Stack
+                                                direction='column'
+                                                style={{
+                                                    marginTop: '10px',
+                                                    marginBottom: '10px'
+                                                }}
+                                            >
+                                            <CustomizedSwitch
+                                                label='Correo electrónico y contraseña'
+                                                strong={true}
+                                                checked={passwordProvider}
+                                                onGetChange={e=>{
+                                                    emitCustomEvent('openLoadingPage', true);
+                                                    if(e){
+                                                        handleVincularPassword();
+                                                    }else{
+                                                        handleDesvincularPassword();
+                                                    }
+                                                }}
+                                            />
+                                            {(providers.length === 1) && (passwordProvider) ? 
+                                            <Chip size='small' color='info' label="único proveedor" sx={{fontSize:'11px', maxWidth: '100px'}}/>
+                                            :null}
+                                            </Stack>
+                                            :
+                                            <Skeleton variant="text" width="100%"/>
+                                            }
+                                            <Divider/>
+                                            {!loadingCreated ? 
+                                            <>
+                                                <Typography 
+                                                    variant="caption"
+                                                    display="block"
+                                                    gutterBottom
+                                                    style={{
+                                                        width: '100%',
+                                                        marginTop: 10,
+                                                    }}
+                                                >
+                                                    En éste correo electrónico recibirás toda la información de la comunidad byOO.
+                                                </Typography>
+                                                <InputEmail 
+                                                    style={styleInputEmailFormPrincipal}
+                                                    email={userEmail}
+                                                    onGetValueEmail={getValueEmailFormPrincipal} 
+                                                    verify={submitEmailFormPrincipal} 
+                                                    onSubmitValueEmail={submitValueEmailFormPrincipal} 
+                                                    close={false}
+                                                    onGetEnter={handleEnterEmail}
+                                                />
+                                                <Typography 
+                                                    variant="caption"
+                                                    display="block"
+                                                    gutterBottom
+                                                    style={{
+                                                        width: '100%',
+                                                        marginTop: 10,
+                                                    }}
+                                                >
+                                                    Ingresá una contraseña. Recordá que debe tener al menos 8 carateres, un número y una mayúscula.
+                                                </Typography>
+                                                <InputPassword 
+                                                    onGetValuePassword={getValuePasswordFormRegistrate1} 
+                                                    onSubmitValuePassword={submitValuePasswordFormRegistrate1} 
+                                                    onGetEnter={handleEnterEmail}
+                                                    password=''
+                                                    verify={submitPasswordFormRegistrate1} 
+                                                    style={styleInputPasswordFormRegistrate1}
+                                                    close={false}
+                                                />
+                                                <Typography 
+                                                    variant="caption"
+                                                    display="block"
+                                                    gutterBottom
+                                                    style={{
+                                                        width: '100%',
+                                                        marginTop: 10,
+                                                    }}
+                                                >
+                                                    Repetí la contraseña que ingresaste anteriormente.
+                                                </Typography>
+                                                <InputPassword 
+                                                    onGetValuePassword={getValuePasswordFormRegistrate2} 
+                                                    onSubmitValuePassword={submitValuePasswordFormRegistrate2} 
+                                                    onGetEnter={handleEnterEmail}
+                                                    password=''
+                                                    verify={submitPasswordFormRegistrate2} 
+                                                    style={styleInputPasswordFormRegistrate2}
+                                                    close={false}
+                                                />
+                                            </>
+                                            :
+                                             null
+                                            }
+                                            {!loadingCreated && passwordProvider ?
+                                            <>
+                                                <Button 
+                                                    variant='outlined'
+                                                    className='button__log__continuar'
+                                                    onClick={handleClickActualizarPassword}
+                                                    style={{
+                                                        marginBottom: 10,
+                                                    }}
+                                                >
+                                                Actualizar
+                                                </Button>
+                                            </> 
+                                            :
+                                            null
+                                            }
+                                            <Divider/>
                                         </AccordionDetails>
                                     </Accordion>
                                     <Accordion
@@ -840,9 +1946,81 @@ function LoginAndSecurity(details) {
                                         <Typography><strong>Número de teléfono</strong></Typography>
                                         </AccordionSummary>
                                         <AccordionDetails>
-                                        <Typography>
-                                            Datos del teléfono
-                                        </Typography>
+                                        <Divider/>
+                                            {!loadingCreated ?
+                                            <Stack
+                                                direction='column'
+                                                style={{
+                                                    marginTop: '10px',
+                                                    marginBottom: '10px'
+                                                }}
+                                            >
+                                            <CustomizedSwitch
+                                                label='Número telefónico'
+                                                strong={true}
+                                                checked={phoneProvider}
+                                                onGetChange={e=>{
+                                                    emitCustomEvent('openLoadingPage', true);
+                                                    if(e){
+                                                        handleVincularPhone();
+                                                    }else{
+                                                        handleDesvincularPhone();
+                                                    }
+                                                }}
+                                            />
+                                            {(providers.length === 1) && (phoneProvider) ? 
+                                            <Chip size='small' color='info' label="único proveedor" sx={{fontSize:'11px', maxWidth: '100px'}}/>
+                                            :null}
+                                            </Stack>
+                                            :
+                                            <Skeleton variant="text" width="100%"/>
+                                            }
+                                            <Divider/>
+                                            {!loadingCreated ? 
+                                            <>
+                                            <InputCountrySelectPhone 
+                                                style={styleSelectCountryPhoneFormPrincipal} 
+                                                onGetValuePhone={getValuePhoneCountrySelectPhoneFormPrincipal} 
+                                                verify={submitCountrySelectPhoneFormPrincipal} 
+                                                onSubmitValuePhone={submitValuePhoneFormPicnipal} 
+                                                onGetEnter={handleEnter}
+                                                country={details.user[0].country_code}
+                                                disabled={false}
+                                                phone={phoneNumber}
+                                                code={countryPhone}
+                                                close={cerrarProbar}
+                                            />
+                                            <Typography 
+                                                variant="caption"
+                                                display="block"
+                                                gutterBottom
+                                                style={{
+                                                    width: '100%',
+                                                    marginTop: 10,
+                                                }}
+                                            >
+                                                Vamos a enviarte un mensaje para confirmar el número. Se aplican tarifas estándar para mensajes y uso de datos.
+                                            </Typography>
+                                            </>
+                                            :
+                                             null
+                                            }
+                                            <div align='center' id="recaptcha-container"></div>
+                                            {!loadingCreated && phoneProvider ? 
+                                            <Button 
+                                                variant='outlined'
+                                                className={classNameBtnContinuar}
+                                                onClick={handleClickContinuar}
+                                                style={{
+                                                    marginBottom: 10,
+                                                }}
+                                            >
+                                            {txtBtnContinuar}
+                                            </Button>
+                                            :
+                                            null
+                                            }
+                                            <Divider/>
                                         </AccordionDetails>
                                     </Accordion>
                                     <Accordion
@@ -1109,6 +2287,55 @@ function LoginAndSecurity(details) {
                     <Alert onClose={handleCloseMsg} severity={severityInfo}>{msg}</Alert>
                 </Snackbar>            
             </Container>
+            {openFormVerificaCodigoPhone ?
+                <FormVerificaCodigoPhoneLink
+                    phoneNumber={valueInputPhoneFormPrincipal}
+                    code={countryCode}
+                    confirmationResult={confirmationResult}
+                    onGetReturn={handleReturnFormVerificaCodigoPhone}
+                    onGetLinked={handleLinkedPhone}
+                    actualizar={actualizarPhone}
+                    open={openFormVerificaCodigoPhone}
+                />
+            :null}
+            {openFormReautenticaConPassword ?
+                <FormReautenticaConPassword
+                    email={userEmail}
+                    onGetClose={handleCloseReautenticaConPassword}
+                    onGetReturn={handleCloseReautenticaConPassword}
+                    onGetRecoveryPass={handleRecoveryPassReautenticaConPassword}
+                    onGetUpdateProfile={handleCredentialOKPassword}
+                    open={openFormReautenticaConPassword}
+                    details={details}
+                />
+            :null}
+            {openFormReautenticaConPasswordDesvincular ?
+                <FormReautenticaConPassword
+                    email={userEmail}
+                    onGetClose={handleCloseReautenticaConPasswordDesvincular}
+                    onGetReturn={handleCloseReautenticaConPasswordDesvincular}
+                    onGetRecoveryPass={handleRecoveryPassReautenticaConPasswordDesvincular}
+                    onGetUpdateProfile={handleCredentialOKPasswordDesvincular}
+                    open={openFormReautenticaConPasswordDesvincular}
+                    details={details}
+                />
+            :null}
+            {openFormRecoveryPassword ?
+                <FormRecoveryPassword
+                    onGetClose={handleCloseFormRecoveryPassword}
+                    onGetReturn={handleReturnFormRecoveryPassword}
+                    email={userEmail}
+                    open={openFormRecoveryPassword}
+                />
+            :null}
+            {openFormRecoveryPasswordDesvincular ?
+                <FormRecoveryPassword
+                    onGetClose={handleCloseFormRecoveryPasswordDesvincular}
+                    onGetReturn={handleReturnFormRecoveryPasswordDesvincular}
+                    email={userEmail}
+                    open={openFormRecoveryPasswordDesvincular}
+                />
+            :null}
         </div>
     )
 }

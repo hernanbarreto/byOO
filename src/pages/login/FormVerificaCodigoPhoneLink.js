@@ -11,11 +11,21 @@ import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import { getAuth, 
          PhoneAuthProvider, 
-         linkWithCredential } from "firebase/auth";
+         linkWithCredential,
+         unlink, 
+        } from "firebase/auth";
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import { PinInput, PinInputField } from '@chakra-ui/react';
 import {emitCustomEvent} from 'react-custom-events';
+import { getFirestore, 
+    doc, 
+    updateDoc,} from "firebase/firestore";
+import { getFunctions, httpsCallable } from "firebase/functions";
+
+const database = getFirestore();
+const functions = getFunctions();
+const updateUser = httpsCallable(functions, 'updateUser');
 
 function FormVerificaCodigoPhoneLink(props) {
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
@@ -96,33 +106,121 @@ function FormVerificaCodigoPhoneLink(props) {
         }             
     }, [props]);
 
-
     useEffect(() => {
         if (codeVerification !== ''){
             if (props.confirmationResult !== null){
+                setCodeVerification('');
                 const auth = getAuth();
                 var credential = PhoneAuthProvider.credential(props.confirmationResult.verificationId, codeVerification);
-                linkWithCredential(auth.currentUser, credential)
-                .then((result) =>{
-                    props.onGetLinked(true);
-                }).catch((error) => {
-                    if (error.code === 'auth/invalid-verification-code'){
-                        emitCustomEvent('openLoadingPage', false);
-                        setMsg('El código ingresado es incorrecto.');
-                        setSeverityInfo('error');
-                        setOpenMsg(true);                    
-                        setValue('');
-                        setCodeVerification('');
-                    }                    
-                    if (error.code === 'auth/provider-already-linked'){
-                        emitCustomEvent('openLoadingPage', false);
-                        setMsg('Ya tenes un telefono asociado a tu cuenta.');
-                        setSeverityInfo('error');
-                        setOpenMsg(true);                    
-                        setValue('');
-                        setCodeVerification('');
-                    }                    
-                });
+                if (props.actualizar === true){
+                    unlink(auth.currentUser, 'phone')
+                    .then(() => {
+                        linkWithCredential(auth.currentUser, credential)
+                        .then(async (result) =>{
+                            const auth = getAuth();
+                            const infoUser = doc(database, "users", auth.currentUser.uid);  
+                            await updateDoc(infoUser, {
+                                countryCode: props.code,
+                            })
+                            .then(()=>{
+                                props.onGetLinked(true);
+                                emitCustomEvent('openLoadingPage', false);
+                            })
+                            .catch(()=>{
+                                props.onGetReturn(true);
+                                emitCustomEvent('openLoadingPage', false);
+                            });
+                        }).catch((error) => {
+                            console.log(error);
+                            if (error.code === 'auth/invalid-verification-code'){
+                                emitCustomEvent('openLoadingPage', false);
+                                setMsg('El código ingresado es incorrecto.');
+                                setSeverityInfo('error');
+                                setOpenMsg(true);                    
+                                setValue('');
+                                setCodeVerification('');
+                            }                    
+                            if (error.code === 'auth/provider-already-linked'){
+                                emitCustomEvent('openLoadingPage', false);
+                                setMsg('Ya tenes un telefono asociado a tu cuenta.');
+                                setSeverityInfo('error');
+                                setOpenMsg(true);                    
+                                setValue('');
+                                setCodeVerification('');
+                            }                    
+                        });    
+                    }).catch((error) => {
+                        linkWithCredential(auth.currentUser, credential)
+                        .then(async (result) =>{
+                            const auth = getAuth();
+                            const infoUser = doc(database, "users", auth.currentUser.uid);  
+                            await updateDoc(infoUser, {
+                                countryCode: props.code,
+                            })
+                            .then(()=>{
+                                props.onGetLinked(true);
+                                emitCustomEvent('openLoadingPage', false);
+                            })
+                            .catch(()=>{
+                                props.onGetReturn(true);
+                                emitCustomEvent('openLoadingPage', false);
+                            });
+                        }).catch((error) => {
+                            console.log(error);
+                            if (error.code === 'auth/invalid-verification-code'){
+                                emitCustomEvent('openLoadingPage', false);
+                                setMsg('El código ingresado es incorrecto.');
+                                setSeverityInfo('error');
+                                setOpenMsg(true);                    
+                                setValue('');
+                                setCodeVerification('');
+                            }                    
+                            if (error.code === 'auth/provider-already-linked'){
+                                emitCustomEvent('openLoadingPage', false);
+                                setMsg('Ya tenes un telefono asociado a tu cuenta.');
+                                setSeverityInfo('error');
+                                setOpenMsg(true);                    
+                                setValue('');
+                                setCodeVerification('');
+                            }                    
+                        });    
+                    });
+                }else{
+                    linkWithCredential(auth.currentUser, credential)
+                    .then(async (result) =>{
+                        const auth = getAuth();
+                        const infoUser = doc(database, "users", auth.currentUser.uid);  
+                        await updateDoc(infoUser, {
+                            countryCode: props.code,
+                        })
+                        .then(()=>{
+                            props.onGetLinked(true);
+                            emitCustomEvent('openLoadingPage', false);
+                        })
+                        .catch(()=>{
+                            props.onGetReturn(true);
+                            emitCustomEvent('openLoadingPage', false);
+                        });
+                    }).catch((error) => {
+                        console.log(error);
+                        if (error.code === 'auth/invalid-verification-code'){
+                            emitCustomEvent('openLoadingPage', false);
+                            setMsg('El código ingresado es incorrecto.');
+                            setSeverityInfo('error');
+                            setOpenMsg(true);                    
+                            setValue('');
+                            setCodeVerification('');
+                        }                    
+                        if (error.code === 'auth/provider-already-linked'){
+                            emitCustomEvent('openLoadingPage', false);
+                            setMsg('Ya tenes un telefono asociado a tu cuenta.');
+                            setSeverityInfo('error');
+                            setOpenMsg(true);                    
+                            setValue('');
+                            setCodeVerification('');
+                        }                    
+                    });    
+                }
             }
         }                
    }, [props, codeVerification]);

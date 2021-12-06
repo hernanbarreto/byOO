@@ -44,6 +44,7 @@ function Login(props) {
     const [openFormRecoveryPasswordFromExisteCuenta, setOpenFormRecoveryPasswordFromExisteCuenta] = useState(false);
     const [openFormCreaTuPerfil, setOpenFormCreaTuPerfil] = useState(false);
     const [promotions, setPromotions] = useState(false);
+    const [countryCodeFormLogin, setCountryCodeFormLogin] = useState(null);
 
 
     const handleCloseFormRecoveryPassword = (value) => {
@@ -62,6 +63,7 @@ function Login(props) {
     const handleReturnFormIniciarSesion = (value) => {
         setOpenFormIniciarSesion(!value);
         setOpenFormLogin(true);
+        props.onGetClose(false);
     }
 
     const handleRecoveryPassFormIniciarSesion = () => {
@@ -91,6 +93,7 @@ function Login(props) {
     const handleReturnFormRegistrate = () => {
         setopenFormRegistrate (false);
         setOpenFormLogin(true);
+        props.onGetClose(false);
     }
 
     const handleCloseFormRegistrate = () => {
@@ -111,7 +114,8 @@ function Login(props) {
 
     const handleReturnFormTerminaDeRegistrarte = () => {
         setOpenFormTerminaDeRegistrarte(false);
-        setOpenFormLogin(true);        
+        setOpenFormLogin(true);
+        props.onGetClose(false);        
     }
 
     const handleCloseFormTerminaDeRegistrarte = () => {
@@ -130,16 +134,19 @@ function Login(props) {
 
     const handleOpenFormRegistrate = () => {
         setOpenFormLogin(false);
+        props.onGetClose(true);
         setopenFormRegistrate(true);
     }
 
     const handleOpenFormIniciarSesion = () => {
         setOpenFormLogin(false);
+        props.onGetClose(true);
         setOpenFormIniciarSesion(true);
     }
 
     const handleOpenFormTerminaDeRegistrarte = () => {
         setOpenFormLogin(false);
+        props.onGetClose(true);
         setOpenFormTerminaDeRegistrarte(true);
     }
 
@@ -165,7 +172,8 @@ function Login(props) {
 
     const handleReturnFormTerminaDeRegistrartePhone = () => {
         setOpenFormTerminaDeRegistrartePhone(false);
-        setOpenFormLogin(true);        
+        setOpenFormLogin(true);
+        props.onGetClose(false);        
     }
 
     const handleCloseFormTerminaDeRegistrartePhone = () => {
@@ -183,6 +191,7 @@ function Login(props) {
     const handleReturnFormVerificaCodigoPhone = () => {
         setOpenFormVerificaCodigoPhone(false);
         setOpenFormLogin(true);
+        props.onGetClose(false);
     }
 
     const handleReturnFormVerificaCodigoPhoneRegistro = () => {
@@ -192,6 +201,7 @@ function Login(props) {
 
     const handleOpenFormVerificaCodigoPhone = () => {
         setOpenFormLogin(false);
+        props.onGetClose(true);
         setOpenFormVerificaCodigoPhone(true);
     }
 
@@ -201,7 +211,8 @@ function Login(props) {
     }
 
     const handlePhoneNumberFormLogin = (phone) =>{
-        setPhoneNumberFormLogin(phone);
+        setPhoneNumberFormLogin(phone[0]);
+        setCountryCodeFormLogin(phone[1]);
     }
 
     const handleConfirmationResultFormLogin = (result) => {
@@ -210,6 +221,7 @@ function Login(props) {
 
     const handleOpenFormTerminaDeRegistrartePhone = () => {
         setOpenFormLogin(false);
+        props.onGetClose(true);
         setOpenFormTerminaDeRegistrartePhone(true);
     }
 
@@ -220,8 +232,7 @@ function Login(props) {
     const handleCloseFormVerificaCodigoPhoneRegistro = () => {
     }
 
-    const handleRegistred1 = () => {
-
+    const handleRegistred1 = (user) => {
     }
 
     const handleAgeFormTerminaDeRegistrartePhone = (age) => {
@@ -255,6 +266,7 @@ function Login(props) {
         await setDoc(doc(database, "users", profile.uid), {
             userId: profile.uid,
             name: nombre,
+            countryCode: countryCodeFormLogin,
             lastName: apellido,
             age: valueAgeFormRegistrate,
             profilePhoto: null,
@@ -282,28 +294,7 @@ function Login(props) {
                     },
                 },
             },
-            sessions:[
-//                {
-//                    id: auth.currentUser.accessToken,
-//                    date: auth.currentUser.metadata.lastLoginAt,
-//                    ip: props.userDetails.user[0].ip, 
-//                    browser: props.userDetails.user[1].browser.name,
-//                    os:{
-//                        name: props.userDetails.user[1].os.name,
-//                        version: props.userDetails.user[1].os.version,
-//                    },
-//                    location:{
-//                        city: props.userDetails.user[0].city,//tigre
-//                        country: props.userDetails.user[0].country_name, //argentina
-//                        region: props.userDetails.user[0].region,
-//                        country_code: props.userDetails.user[0].country_code,
-//                        currency_name: props.userDetails.user[0].currency_name,
-//                        currency: props.userDetails.user[0].currency,
-//                        lenguaje: props.userDetails.user[0].languages.split(',')[0],
-//                        country_tld: props.userDetails.user[0].country_tld,
-//                    },
-//                }
-            ],
+            sessions:[],
         })
         .then(()=>{
             setOpenFormUniteComunidad(false);
@@ -317,6 +308,7 @@ function Login(props) {
     const handleExisteCuenta = (providers) => {
         setProviders(providers);
         setOpenFormLogin(false);
+        props.onGetClose(true);
         setOpenFormExisteCuenta(true);
     }
 
@@ -327,6 +319,7 @@ function Login(props) {
     const handleReturnFormExisteCuenta = () => {
         setOpenFormExisteCuenta(false);
         setOpenFormLogin(true);
+        props.onGetClose(false);
     }
 
     const handleCloseFormExisteCuenta = () => {
@@ -352,13 +345,47 @@ function Login(props) {
         props.onGetUpdateProfile();
     }
 
+    const handleUpdateProfile = () => {
+        props.onGetUpdateProfile();
+    }
+
     const handlePromotions = (value) => {
         setPromotions(value);
     }
 
     useEffect(() => {
+        if (props.open){
+            setOpenFormRecoveryPassword(false);
+            setOpenFormIniciarSesion(false);
+            setOpenFormUniteComunidad(false);
+            setOpenFormBienvenidos(false);
+            setopenFormRegistrate(false);
+            setValueInputPasswordFormRegistrate('');
+            setValueInputNameFormRegistrate('');
+            setOpenFormTerminaDeRegistrarte(false); 
+            setPhoneUser(null);
+            setGoogleUser(null);
+            setFacebookUser(null);
+            setNameFormTerminaDeRegistrarte('');
+            setApellidoFormTerminaDeRegistrarte('');
+            setEmailFormTerminaDeRegistrarte('');
+            setValueInputEmailFormPrincipal('');
+            setOpenFormTerminaDeRegistrartePhone(false); 
+            setOpenFormVerificaCodigoPhone(false);
+            setPhoneNumberFormLogin('');
+            setConfirmationResultFormLogin(null);
+            setOpenFormVerificaCodigoPhoneRegistro(false);
+            setValueAgeFormRegistrate(null);
+            setProviders(null);
+            setOpenFormExisteCuenta(false);
+            setEmailFormExisteCuenta(null);
+            setOpenFormRecoveryPasswordFromExisteCuenta(false);
+            setOpenFormCreaTuPerfil(false);
+            setPromotions(false);
+            setCountryCodeFormLogin(null);
+        }
         setOpenFormLogin(props.open);        
-    }, [props]);
+    }, [props.open]);
 
     return (
         <div>
@@ -380,7 +407,9 @@ function Login(props) {
             onGetConfirmationResult={handleConfirmationResultFormLogin}
             onGetExisteCuenta={handleExisteCuenta}
             onGetEmail={handleEmailExisteCuenta}
+            onGetUpdateProfile={handleUpdateProfile}
             country={props.userDetails.user[0].country}
+            lenguaje={props.userDetails.user[0].languages.split(',')[0]}
             open={openFormLogin}
         />
         :null}
@@ -417,6 +446,7 @@ function Login(props) {
             onGetReturn={handleReturnFormVerificaCodigoPhone}
             onGetClose={handleCloseFormVerificaCodigoPhone}
             onGetRegistred={handleRegistred1}
+            onGetUpdateProfile={handleUpdateProfile}
             open={openFormVerificaCodigoPhone}
         />
         :null}
@@ -455,6 +485,7 @@ function Login(props) {
             onGetRegistred={handleRegistred}
             onGetConfirmationResult={handleConfirmationResultFormLogin}
             onGetOpenFormVerificaCodigoPhone={handleOpenFormVerificaCodigoPhoneUnite}
+            lenguaje={props.userDetails.user[0].languages.split(',')[0]}
             open={openFormUniteComunidad}
         />
         :null}
@@ -471,6 +502,7 @@ function Login(props) {
             onGetClose={handleCloseFormIniciarSesion}
             onGetReturn={handleReturnFormIniciarSesion}
             onGetRecoveryPass={handleRecoveryPassFormIniciarSesion}
+            onGetUpdateProfile={handleUpdateProfile}
             open={openFormIniciarSesion}
         />
         :null}
@@ -496,6 +528,7 @@ function Login(props) {
             onGetNameFormTerminaDeRegistrarte={handleNameFormTerminaDeRegistrarte}
             onGetApellidoFormTerminaDeRegistrarte={handleApellidoFormTerminaDeRegistrarte}
             onGetEmailFormTerminaDeRegistrarte={handleEmailFormTerminaDeRegistrarte}
+            onGetUpdateProfile={handleUpdateProfile}
         />
         :null}
         {openFormRecoveryPasswordFromExisteCuenta ?
@@ -517,6 +550,7 @@ function Login(props) {
             phoneUser={phoneUser}
             name={valueInputNameFormRegistrate.split('/')[0].split(' ')[0][0].toUpperCase() + valueInputNameFormRegistrate.split('/')[0].split(' ')[0].slice(1)}
             country={props.userDetails.user[0].country}
+            lenguaje={props.userDetails.user[0].languages.split(',')[0]}
         />
         :null}
         </div>

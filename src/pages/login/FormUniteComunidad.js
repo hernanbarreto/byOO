@@ -192,7 +192,7 @@ function FormUniteComunidad(props) {
                 if (props.phoneUser !== null){
                     setCancel(true);
                 //Hay que crear usuario con phone
-                    auth.languageCode = 'es';
+                    auth.languageCode = props.lenguaje;
                     recaptchaVerifier = new RecaptchaVerifier('recaptcha', {
                         type: 'image', // 'audio'
                         size: 'compact', // 'normal, invisible' or 'compact'

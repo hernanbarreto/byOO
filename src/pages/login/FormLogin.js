@@ -32,7 +32,7 @@ const getUserByEmail = httpsCallable(functions, 'getUserByEmail');
 
 const Transition = React.forwardRef(function Transition(props, ref) {
     return <Slide direction="up" ref={ref} {...props} />;
-  });
+});
 
 var recaptchaVerifier;
 function FormLogin(props) {
@@ -164,13 +164,16 @@ function FormLogin(props) {
     const [valueInputPhoneFormPrincipal, setValueInputPhoneFormPrincipal] = useState('');
     const [submitCountrySelectPhoneFormPrincipal, setSubmitCountrySelectPhoneFormPrincipal] = useState(false);
     const [variableEstadoCargadoNewValuePhoneFormPrincipal, setVariableEstadoCargadoNewValuePhoneFormPrincipal] = useState(false);
+    const [countryCode, setCountryCode] = useState(null);
     const submitValuePhoneFormPicnipal = (value) => {
         setSubmitCountrySelectPhoneFormPrincipal(value);
     }
     const getValuePhoneCountrySelectPhoneFormPrincipal = (phone) => {
-        setValueInputPhoneFormPrincipal(phone);
+        setValueInputPhoneFormPrincipal(phone[0]);
+        setCountryCode(phone[1].code);
         setVariableEstadoCargadoNewValuePhoneFormPrincipal(true);
     }
+
     /*fin variables de componente CountrySelectPhone*/
 
     /*atencion del valor ingresado del componente CountrySelectPhone*/
@@ -182,7 +185,7 @@ function FormLogin(props) {
                 .then((userRecord) => {
                     //el usuario existe
                     const auth = getAuth();
-                    auth.languageCode = 'es';
+                    auth.languageCode = props.lenguaje;
                     recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
                         type: 'image', // 'audio'
                         size: 'compact', // 'normal, invisible' or 'compact'
@@ -200,7 +203,8 @@ function FormLogin(props) {
                                 recaptchaVerifier.clear();
                         setTxtBtnContinuar('Continuar');
                         setClassNameBtnContinuar('button__log__continuar');
-                        props.onGetPhoneNumber(valueInputPhoneFormPrincipal);
+                        console.log([valueInputPhoneFormPrincipal, countryCode]);
+                        props.onGetPhoneNumber([valueInputPhoneFormPrincipal, countryCode]);
                         props.onGetConfirmationResult(confirmationResult);
                         props.onGetOpenFormVerificaCodigoPhone(true);
                         emitCustomEvent('openLoadingPage', false);
@@ -220,14 +224,14 @@ function FormLogin(props) {
                 })
                 .catch((error) => {
                     //el usuario no existe
-                    props.onGetPhoneNumber(valueInputPhoneFormPrincipal);
+                    props.onGetPhoneNumber([valueInputPhoneFormPrincipal, countryCode]);
                     props.onGetOpenFormTerminaDeRegistrartePhone(true);
                     emitCustomEvent('openLoadingPage', false);
                 });
              }
             setVariableEstadoCargadoNewValuePhoneFormPrincipal(false);       
         }         
-    },[props, valueInputPhoneFormPrincipal, variableEstadoCargadoNewValuePhoneFormPrincipal]);
+    },[props, valueInputPhoneFormPrincipal, variableEstadoCargadoNewValuePhoneFormPrincipal, countryCode]);
     /*fin atencion del valor ingresado del componente CountrySelectPhone*/
 
     /*variables del componente InputEmail Form Principal*/
@@ -383,6 +387,10 @@ function FormLogin(props) {
 
     }
 
+    const handleUpdateProfile = () => {
+        props.onGetUpdateProfile(true);
+    } 
+
     return (
         <div>
             <Dialog 
@@ -408,12 +416,13 @@ function FormLogin(props) {
                 { showPhone ? 
                     <InputCountrySelectPhone 
                         style={styleSelectCountryPhoneFormPrincipal} 
-                        onGetValuePhone={getValuePhoneCountrySelectPhoneFormPrincipal} 
+                        onGetValuePhone={getValuePhoneCountrySelectPhoneFormPrincipal}
                         verify={submitCountrySelectPhoneFormPrincipal} 
                         onSubmitValuePhone={submitValuePhoneFormPicnipal} 
                         close={!props.open}
                         onGetEnter={handleEnter}
                         country={props.country}
+                        code={null}
                     />
                     : null 
                 }
@@ -494,6 +503,7 @@ function FormLogin(props) {
                     onGetError={handleErrorFacebook}
                     onGetTerminarRegistrarte={handleTerminaRegistrarteFacebook}
                     onGetEmail={handleEmail}
+                    onGetUpdateProfile={handleUpdateProfile}
                 /> 
                 <LoginWithGoogle
                     onGetGoogleUser={handleGoogleUser}
@@ -502,6 +512,7 @@ function FormLogin(props) {
                     onGetError={handleErrorGoogle}
                     onGetTerminarRegistrarte={handleTerminaRegistrarteGoogle}
                     onGetEmail={handleEmail}
+                    onGetUpdateProfile={handleUpdateProfile}
                 />
                 { showPhone ? 
                     <Button 

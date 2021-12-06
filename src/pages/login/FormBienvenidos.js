@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import './Login.css';
 import Dialog from '@material-ui/core/Dialog';
 import MuiDialogTitle from '@material-ui/core/DialogTitle';
@@ -38,10 +38,17 @@ function FormBienvenidos(props) {
         );
     });
 
+    useEffect(() => {
+        emitCustomEvent('openLoadingPage', true);
+    }, []);   
+
     const handleClickContinuar = () => {
-        emitCustomEvent('openLoadingPage', false);
         props.onGetContinuar(true);
     } 
+
+    const handleLoaded = () => {
+        emitCustomEvent('openLoadingPage', false);        
+    }
 
     return (
         <div>
@@ -61,6 +68,7 @@ function FormBienvenidos(props) {
             </DialogTitle>
             <MuiDialogContent dividers>
                 <img
+                    onLoad={handleLoaded}
                     style={{
                         transform: 'scale(2)',
                         display: 'block',

@@ -1,16 +1,16 @@
 import React, { useState, useEffect }from 'react';
-import InputPassword from './InputPassword';
+import InputPassword from '../../login/InputPassword';
 import Dialog from '@material-ui/core/Dialog';
 import MuiDialogTitle from '@material-ui/core/DialogTitle';
 import MuiDialogContent from '@material-ui/core/DialogContent';
-import './Login.css'
+import '../../login/Login.css'
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { getAuth, 
-         sendPasswordResetEmail, 
-         signInWithEmailAndPassword } from "firebase/auth";
+import { getAuth,  
+         reauthenticateWithCredential, 
+         EmailAuthProvider } from "firebase/auth";
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import { withStyles } from '@material-ui/core/styles';
@@ -19,8 +19,19 @@ import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
 import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import { Divider } from '@material-ui/core';
+import { logout } from '../../../services/firebase';
+import { getFirestore, 
+    doc, 
+    getDoc,
+    updateDoc,
+    arrayRemove,
+    Timestamp, 
+    arrayUnion, 
+        } from "firebase/firestore";
+import { useAuth } from '../../../services/firebase';
 
-function FormIniciarSesion(props) {
+function FormReautenticaConPassword(props) {
+    const {currentUser} = useAuth();
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
 
     const[ openMsg, setOpenMsg] = useState(false);
@@ -113,44 +124,111 @@ function FormIniciarSesion(props) {
             if ((valueInputPasswordFormIniciarSesion !== '')) {
                 emitCustomEvent('openLoadingPage', true);
                 const auth = getAuth();
-                signInWithEmailAndPassword(auth, props.email, valueInputPasswordFormIniciarSesion)
-                    .then((userCredential) => {
-                        props.onGetClose(true);
-                        props.onGetUpdateProfile(true);
-                        emitCustomEvent('openLoadingPage', false);
+                const antToken = auth.currentUser.accessToken;
+                const credential = EmailAuthProvider.credential(props.email, valueInputPasswordFormIniciarSesion);
+                reauthenticateWithCredential(auth.currentUser, credential)
+                    .then(async() => {
+                        const newToken = auth.currentUser.accessToken;
+                        const database = getFirestore();
+                        const infoUser = doc(database, "users", currentUser.uid);
+                        const docSnap = await getDoc(infoUser);
+                        if (docSnap.exists()) {
+                          const filtered = docSnap.data().sessions.filter(function(element){
+                              return element.id === antToken;
+                        });
+                          if (filtered.length !== 0){
+                            await updateDoc(infoUser, {
+                                sessions: arrayRemove(filtered[0])
+                            })
+                            .then(async()=>{
+                                    await updateDoc(infoUser, {
+                                        sessions: arrayUnion(                
+                                            {
+                                                id: newToken,
+                                                date: Timestamp.now().toMillis(),
+                                                ip: props.details.user[0].ip, 
+                                                browser: props.details.user[1].browser.name,
+                                                os:{
+                                                    name: props.details.user[1].os.name,
+                                                    version: props.details.user[1].os.version,
+                                                },
+                                                location:{
+                                                    city: props.details.user[0].city,//tigre
+                                                    country: props.details.user[0].country_name, //argentina
+                                                    region: props.details.user[0].region,
+                                                    country_code: props.details.user[0].country_code,
+                                                    currency_name: props.details.user[0].currency_name,
+                                                    currency: props.details.user[0].currency,
+                                                    lenguaje: props.details.user[0].languages.split(',')[0],
+                                                    country_tld: props.details.user[0].country_tld,
+                                                },
+                                            }
+                                        )
+                                    }
+                                    )
+                                    .then(()=>{
+                                        props.onGetUpdateProfile(true);
+                                        emitCustomEvent('openLoadingPage', false);
+                                    })
+                                    .catch((error)=>{
+                                        console.log(error);
+                                        logout()
+                                        .then(()=>{
+                                            emitCustomEvent('openLoadingPage', false);
+                                        })
+                                        .catch((error)=>{
+                                            emitCustomEvent('openLoadingPage', false);
+                                        });                                
+                                    });
+                            })
+                            .catch((error)=>{ 
+                                console.log(error);
+                                logout()
+                                .then(()=>{
+                                    emitCustomEvent('openLoadingPage', false);
+                                })
+                                .catch((error)=>{
+                                    emitCustomEvent('openLoadingPage', false);
+                                });                        
+                            });
+                          }else{ 
+                            console.log('por aca');
+                            logout()
+                            .then(()=>{
+                                emitCustomEvent('openLoadingPage', false);
+                            })
+                            .catch((error)=>{
+                                emitCustomEvent('openLoadingPage', false);
+                            });                    
+                          }
+                        }else{
+                            console.log('por aca');
+                            logout()
+                            .then(()=>{
+                                emitCustomEvent('openLoadingPage', false);
+                            })
+                            .catch((error)=>{
+                                emitCustomEvent('openLoadingPage', false);
+                            });                    
+                        }
                     })
                     .catch((error) => {
+                        console.log(error);
+                        emitCustomEvent('openLoadingPage', false);
                         if (error.code === 'auth/wrong-password'){
-                            emitCustomEvent('openLoadingPage', false);
                             setMsg('El password ingresado es incorrecto, no te preocupes volvé a intentarlo')
                             setSeverityInfo('error')
                             setOpenMsg(true);
                         }
-                        if (error.code === 'auth/too-many-requests'){
-                            const auth = getAuth();
-                            sendPasswordResetEmail(auth, props.email)
-                              .then(() => {
-                                emitCustomEvent('showMsg', String('Demasiados intentos fallidos, te hemos enviado un enlace para restablecer tu contraseña a la dirección ') + String(props.email) + String('/') + String('info'));
-                                props.onGetClose(true);
-                                emitCustomEvent('openLoadingPage', false);
-                            })
-                              .catch((error) => {
-                                emitCustomEvent('openLoadingPage', false);
-                                setMsg(error.code.split('/')[1].replace(/-/g,' '));
-                                setSeverityInfo('error');
-                                setOpenMsg(true);                    
-                              });                                
-                        } 
                         if (error.code === 'auth/invalid-email'){
                             emitCustomEvent('showMsg', String('No existe una cuenta asociada a ') + String(props.email) + String('/') + String('error'));
                             props.onGetClose(true);
-                            emitCustomEvent('openLoadingPage', false);
                         }
                     });
             }
             setVariableEstadoCargadoNewValuePasswordFormIniciarSesion(false);       
         }         
-    },[valueInputPasswordFormIniciarSesion, variableEstadoCargadoNewValuePasswordFormIniciarSesion, props]);
+    },[valueInputPasswordFormIniciarSesion, variableEstadoCargadoNewValuePasswordFormIniciarSesion, props, currentUser]);
     /*fin atencion del valor ingresado del componente InputPassword del form Inicias sesion*/
 
 
@@ -170,7 +248,7 @@ function FormIniciarSesion(props) {
             <DialogTitle 
                 onClose={handleCloseIniciarSesion}
             >
-                <strong>Iniciar sesión</strong>
+                <strong>Ingresa tu contraseña actual</strong>
             </DialogTitle>
             <MuiDialogContent dividers style={{align: 'center'}}>
                 <Typography 
@@ -198,7 +276,7 @@ function FormIniciarSesion(props) {
                     className='button__log__continuar'
                     onClick={handleClickIniciarSesion}
                 >
-                    Iniciá sesión
+                    Continuar
                 </Button>
                 <Box 
                     sx={{
@@ -228,4 +306,4 @@ function FormIniciarSesion(props) {
     )
 }
 
-export default FormIniciarSesion
+export default FormReautenticaConPassword

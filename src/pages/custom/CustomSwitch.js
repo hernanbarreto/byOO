@@ -74,7 +74,7 @@ return (
             <strong>{props.label}</strong>
             }
         </Typography>
-        <MaterialUISwitch sx={{ m: 1 }} onChange={handleChange} defaultChecked={props.checked}/>
+        <MaterialUISwitch sx={{ m: 1 }} onChange={handleChange} checked={props.checked}/>
     </Stack>
 );
 }
