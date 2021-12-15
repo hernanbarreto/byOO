@@ -24,7 +24,7 @@ function Info() {
 
     return (
         <div>
-            <Snackbar open={openMsg} autoHideDuration={15000} onClose={handleCloseMsg} anchorOrigin={{ vertical: 'top', horizontal: 'center' }} sx={{width: '100%'}}>
+            <Snackbar open={openMsg} autoHideDuration={35000} onClose={handleCloseMsg} anchorOrigin={{ vertical: 'top', horizontal: 'center' }} sx={{width: '100%'}}>
                 <Alert onClose={handleCloseMsg} severity={severityInfo}>{msg}</Alert>
             </Snackbar>           
         </div>

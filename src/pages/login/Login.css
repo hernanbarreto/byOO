@@ -54,3 +54,12 @@
     position: relative !important;
 
 }
+
+.recaptchaClass{
+    align-items: center !important;
+    align-self: center !important;
+    transform:scale(0.80);
+    -webkit-transform:scale(0.80);
+    transform-origin:50% 50%;
+    -webkit-transform-origin:50% 50%;
+}

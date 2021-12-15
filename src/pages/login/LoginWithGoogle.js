@@ -8,6 +8,10 @@ import { getAuth,
          GoogleAuthProvider, 
          fetchSignInMethodsForEmail } from "firebase/auth";
 import { Button } from '@material-ui/core'
+import { getFunctions, httpsCallable } from "firebase/functions";
+
+const functions = getFunctions();
+const getUserByEmail = httpsCallable(functions, 'getUserByEmail');
 
 function LoginWithGoogle(p) {
     const auth = getAuth();
@@ -15,9 +19,17 @@ function LoginWithGoogle(p) {
         fetchSignInMethodsForEmail(auth, googleUser.profileObj.email)
         .then(providers => {
             if (providers.length === 0){
-                //el usuario no existe, puede entrar por google.com pero se debe terminar de registrar
-                p.onGetTerminarRegistrarte(true);
-                p.onGetGoogleUser(googleUser);
+                getUserByEmail(googleUser.profileObj.email)
+                .then(()=>{
+                    //el usuario existe pero debe logearse por cualquiera de estos proveedores
+                    p.onGetProviders(['phone']);
+                    p.onGetEmail(googleUser.profileObj.email);
+                })
+                .catch(()=>{
+                    //el usuario no existe, puede entrar por google.com pero se debe terminar de registrar
+                    p.onGetTerminarRegistrarte(true);
+                    p.onGetGoogleUser(googleUser);
+                });
             }else{
                 //el usuario existe, verifico si google.com es un proveedor asociado
                 if (providers.includes('google.com')){

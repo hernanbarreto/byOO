@@ -517,6 +517,7 @@ function Login(props) {
         {openFormExisteCuenta ?
         <FormExisteCuenta
             providers={providers}
+            lenguaje={props.userDetails.user[0].languages.split(',')[0]}
             open={openFormExisteCuenta}
             email={emailFormExisteCuenta}
             onGetReturn={handleReturnFormExisteCuenta}

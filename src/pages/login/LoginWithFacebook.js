@@ -9,6 +9,10 @@ import { getAuth,
 import { Button } from '@material-ui/core';
 import FacebookLogin from 'react-facebook-login/dist/facebook-login-render-props';
 import FacebookIcon from '@mui/icons-material/Facebook';
+import { getFunctions, httpsCallable } from "firebase/functions";
+
+const functions = getFunctions();
+const getUserByEmail = httpsCallable(functions, 'getUserByEmail');
 
 function LoginWithFacebook(p) {
     const handleError = (error) => {
@@ -21,8 +25,17 @@ function LoginWithFacebook(p) {
             fetchSignInMethodsForEmail(auth, response.email)
             .then(providers => {
                 if (providers.length === 0){
-                    p.onGetTerminarRegistrarte(true);
-                    p.onGetFacebookUser(response);
+                    getUserByEmail(response.email)
+                    .then(()=>{
+                        //el usuario existe pero debe logearse por cualquiera de estos proveedores
+                        p.onGetProviders(['phone']);
+                        p.onGetEmail(response.email);
+                    })
+                    .catch(()=>{
+                        //el usuario no existe, puede entrar por google.com pero se debe terminar de registrar
+                        p.onGetTerminarRegistrarte(true);
+                        p.onGetFacebookUser(response);
+                    });
                 }else{
                     if (providers.includes('facebook.com')){
                         const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {

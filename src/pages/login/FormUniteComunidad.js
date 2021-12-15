@@ -193,9 +193,9 @@ function FormUniteComunidad(props) {
                     setCancel(true);
                 //Hay que crear usuario con phone
                     auth.languageCode = props.lenguaje;
-                    recaptchaVerifier = new RecaptchaVerifier('recaptcha', {
+                    recaptchaVerifier = new RecaptchaVerifier('recaptcha-container2', {
                         type: 'image', // 'audio'
-                        size: 'compact', // 'normal, invisible' or 'compact'
+                        size: 'normal', // 'normal, invisible' or 'compact'
                         badge: 'inline' //' bottomright' or 'inline' applies to invisible.                    
                     }, auth);
                     signInWithPhoneNumber(auth, props.phoneNumber, recaptchaVerifier)
@@ -349,7 +349,7 @@ function FormUniteComunidad(props) {
                     <strong>Más información</strong>
                 </Link>
                 <Divider style={{width: '100%', marginTop:'20px', marginBottom:'5px'}}/>
-                <div align='center' id="recaptcha"></div>
+                <div align='center' id="recaptcha-container2" className='recaptchaClass'></div>
                 {!cancel ?
                     <Button
                         variant='outlined'

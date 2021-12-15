@@ -119,19 +119,23 @@ function Header(details) {
         const infoUser = doc(database, "users", currentUser1.uid);
         try{                                  
             const docSnap = await getDoc(infoUser);
-            console.log(docSnap.exists());
             if (docSnap.exists()) {
                 docSnap.data().sessions.forEach(function(element) {
+                    console.log(element)
                     verifyIdToken(element.id)
-                    .then(() => {
+                    .then((result) => {
+                        console.log(result);
                     })
                     .catch(async (error) => {
+                        console.log(error);
                         await updateDoc(infoUser, {
                             sessions: arrayRemove(element)
                         })
-                        .then(()=>{
+                        .then((result)=>{
+                            console.log(result);
                         })
-                        .catch(()=>{
+                        .catch((error)=>{
+                            console.log(error);
                         });
                     });                        
                 })                    

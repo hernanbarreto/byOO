@@ -62,6 +62,8 @@ import InputPassword from '../../login/InputPassword';
 import FormReautenticaConPassword from './FormReautenticaConPassword';
 import FormRecoveryPassword from '../../login/FormRecoveryPassword';
 import FormReautenticaConGoogle from './FormReautenticaConGoogle';
+import FormReautenticaConFacebook from './FormReautenticaConFacebook';
+import FormReautenticaConPhone from './FormReautenticaConPhone';
 
 var recaptchaVerifier;
 var antTokenPhone;
@@ -137,6 +139,8 @@ function LoginAndSecurity(details) {
     const [openFormReautenticaConPasswordDesvincular, setOpenFormReautenticaConPasswordDesvincular] = useState(false);
     const [openFormRecoveryPasswordDesvincular, setOpenFormRecoveryPasswordDesvincular] = useState(false);
     const [openFormReautenticaConGoogle, setOpenFormReautenticaConGoogle] = useState(false);
+    const [openFormReautenticaConFacebook, setOpenFormReautenticaConFacebook] = useState(false);
+    const [openFormReautenticaConPhone, setOpenFormReautenticaConPhone] = useState(false);
 
     const handleUpdateProfile = useCallback(async () => {
         const infoUser = doc(database, "users", currentUser.uid);
@@ -146,7 +150,6 @@ function LoginAndSecurity(details) {
                 getUser(currentUser.uid)
                 .then((record) => {
                     if (isMounted){
-                        console.log(currentUser);
                         setProviders(record.data.providerData);
                         record.data.providerData.forEach((item) => {
                             if(item.providerId === 'google.com'){
@@ -935,7 +938,6 @@ function LoginAndSecurity(details) {
                 emitCustomEvent('openLoadingPage', true);
                 getUserByPhoneNumber(valueInputPhoneFormPrincipal)  
                 .then((userRecord) => {
-                    //el usuario existe
                     emitCustomEvent('openLoadingPage', false);
                     if (recaptchaVerifier !== undefined)
                         if (!recaptchaVerifier.destroyed) 
@@ -944,16 +946,22 @@ function LoginAndSecurity(details) {
                     handleUpdateProfile();                                                
                     setTxtBtnContinuar('Actualizar');
                     setClassNameBtnContinuar('button__log__continuar');        
-                    setMsg('El número ' + String(valueInputPhoneFormPrincipal) + ' ya se encuentra asociado a otra cuenta.');
+                    if (userRecord.data.uid === currentUser.uid){
+                        //el usuario existe
+                        setMsg('El número ' + String(valueInputPhoneFormPrincipal) + ' ya se encuentra asociado a tu cuenta.');
+                    }else{
+                        //el usuario existe
+                        setMsg('El número ' + String(valueInputPhoneFormPrincipal) + ' ya se encuentra asociado a otra cuenta.');
+                    }
                     setSeverityInfo('error');
                     setOpenMsg(true);
                 })
                 .catch((error) => {
                     const auth = getAuth();
                     auth.languageCode = details.user[0].languages.split(',')[0];
-                    recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
+                    recaptchaVerifier = new RecaptchaVerifier('recaptcha-container4', {
                         type: 'image', // 'audio'
-                        size: 'compact', // 'normal, invisible' or 'compact'
+                        size: 'normal', // 'normal, invisible' or 'compact'
                         badge: 'inline' //' bottomright' or 'inline' applies to invisible.                    
                     }, auth);                    
                     antTokenPhone = auth.currentUser.accessToken;
@@ -993,7 +1001,7 @@ function LoginAndSecurity(details) {
             }
             setVariableEstadoCargadoNewValuePhoneFormPrincipal(false);       
         }         
-    },[details, valueInputPhoneFormPrincipal, variableEstadoCargadoNewValuePhoneFormPrincipal, clearStates, handleUpdateProfile]);
+    },[details, currentUser, valueInputPhoneFormPrincipal, variableEstadoCargadoNewValuePhoneFormPrincipal, clearStates, handleUpdateProfile]);
     /*fin atencion del valor ingresado del componente CountrySelectPhone*/
 
     const handleLinkedPhone = async() => {
@@ -1243,20 +1251,29 @@ function LoginAndSecurity(details) {
                                             });                    
                                         }
                                     }).catch((error) => {
-
-
-
-
-
                                         console.log(error);
                                         emitCustomEvent('openLoadingPage', false);
                                         if (error.code === 'auth/provider-already-linked'){
                                             //esta actualizando el password
-                                            console.log('actualizar password');
+                                            setOpenFormReautenticaConPassword(true);
                                         }else{
                                             if (error.code === 'auth/requires-recent-login'){
                                                 //requiere actualizar las credenciales
-                                                console.log('actualizar credenciales');
+                                                if (passwordProvider){
+                                                    setOpenFormReautenticaConPassword(true);
+                                                }else{
+                                                    if (googleProvider){
+                                                        setOpenFormReautenticaConGoogle(true);
+                                                    }else{
+                                                        if (facebookProvider){
+                                                            setOpenFormReautenticaConFacebook(true);
+                                                        }else{
+                                                            if (phoneProvider){
+                                                                setOpenFormReautenticaConPhone(true);
+                                                            }
+                                                        }
+                                                    }
+                                                }
                                             }else{
                                                 setMsg('Ha ocurrido un error al intentar actualizar los datos de tu cuenta.');
                                                 setSeverityInfo('error');
@@ -1264,14 +1281,16 @@ function LoginAndSecurity(details) {
                                                 emitCustomEvent('openLoadingPage', false);                    
                                             }
                                         }
-
-
-
-
-                                    });                                    
-                            }else{
+                                    });                                  
+                                }else{
+                                    let emailProvider = false;
+                                    currentUser.providerData.forEach((item)=>{
+                                        if (item.email === userEmail){
+                                            emailProvider = true;
+                                        }
+                                    });
                                     //el mail esta asociado a alguna cuenta
-                                    if (auth.currentUser.email === userEmail){
+                                    if ((auth.currentUser.email === userEmail)||(emailProvider)){
                                         //el mail es el mismo del usuario actual
                                         const credential = EmailAuthProvider.credential(userEmail, valueInputPasswordFormRegistrate1);
                                         linkWithCredential(auth.currentUser, credential)
@@ -1375,10 +1394,10 @@ function LoginAndSecurity(details) {
                                                             setOpenFormReautenticaConGoogle(true);
                                                         }else{
                                                             if (facebookProvider){
-
+                                                                setOpenFormReautenticaConFacebook(true);
                                                             }else{
                                                                 if (phoneProvider){
-
+                                                                    setOpenFormReautenticaConPhone(true);
                                                                 }
                                                             }
                                                         }
@@ -1407,18 +1426,6 @@ function LoginAndSecurity(details) {
                                 setOpenMsg(true);
                                 emitCustomEvent('openLoadingPage', false);
                             });
-
-
-
-
-
-
-
-
-
-
-
-
                         }else{
                             emitCustomEvent('openLoadingPage', false);
                             setMsg('Las contraseñas ingresadas deben ser iguales. Revisá las contraseñas ingresadas y probá nuevamente.');
@@ -1546,7 +1553,9 @@ function LoginAndSecurity(details) {
     const handleCredentialOKPassword = () => {
         emitCustomEvent('openLoadingPage', true);
         setOpenFormReautenticaConGoogle(false);
+        setOpenFormReautenticaConFacebook(false);
         setOpenFormReautenticaConPassword(false);
+        setOpenFormReautenticaConPhone(false);
         const auth = getAuth();
         const antToken = auth.currentUser.accessToken;
         const credential = EmailAuthProvider.credential(userEmail, valueInputPasswordFormRegistrate1);
@@ -1773,6 +1782,31 @@ function LoginAndSecurity(details) {
 
     const handleCredentialOKGoogle = () => {
         handleCredentialOKPassword();
+    }
+
+    const handleCloseReautenticaConFacebook = () => {
+        setOpenFormReautenticaConFacebook(false);
+        clearStates();
+        handleUpdateProfile();                    
+    }
+
+    const handleClickReautenticaConFacebook = () => {
+        emitCustomEvent('openLoadingPage', true);
+    }
+
+    const handleErrorReautenticaConFacebook = () => {
+        setOpenFormReautenticaConFacebook(false);
+        emitCustomEvent('openLoadingPage', false);
+    }
+
+    const handleCredentialOKFacebook = () => {
+        handleCredentialOKPassword();
+    }    
+    
+    const handleCloseReautenticaConPhone = () => {
+        setOpenFormReautenticaConPhone(false);
+        clearStates();
+        handleUpdateProfile();                    
     }
 
     return (
@@ -2042,7 +2076,7 @@ function LoginAndSecurity(details) {
                                             :
                                              null
                                             }
-                                            <div align='center' id="recaptcha-container"></div>
+                                            <div align='center' id="recaptcha-container4" className='recaptchaClass'></div>
                                             {!loadingCreated && phoneProvider ? 
                                             <Button 
                                                 variant='outlined'
@@ -2381,6 +2415,26 @@ function LoginAndSecurity(details) {
                     onGetClick={handleClickReautenticaConGoogle}
                     details={details}
                     open={openFormReautenticaConGoogle}
+                />
+            :null}
+            {openFormReautenticaConFacebook ?
+                <FormReautenticaConFacebook
+                    onGetReturn={handleCloseReautenticaConFacebook}
+                    onGetUpdateProfile={handleCredentialOKFacebook}
+                    onGetError={handleErrorReautenticaConFacebook}
+                    onGetClick={handleClickReautenticaConFacebook}
+                    details={details}
+                    open={openFormReautenticaConFacebook}
+                />
+            :null}
+            {openFormReautenticaConPhone ?
+                <FormReautenticaConPhone
+                    onGetReturn={handleCloseReautenticaConPhone}
+                    onGetReautenticatedPhone={handleCredentialOKPassword}
+                    phoneNumber={phoneNumber}
+                    countryPhone={countryPhone}
+                    details={details}
+                    open={openFormReautenticaConPhone}
                 />
             :null}
         </div>

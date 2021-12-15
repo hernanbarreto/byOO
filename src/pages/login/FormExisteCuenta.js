@@ -16,13 +16,22 @@ import LoginWithGoogle from './LoginWithGoogle';
 import LoginWithFacebook from './LoginWithFacebook';
 import { getAuth, 
     sendPasswordResetEmail, 
-    signInWithEmailAndPassword } from "firebase/auth";
+    signInWithEmailAndPassword,
+    RecaptchaVerifier,
+    signInWithPhoneNumber } from "firebase/auth";
 import { emitCustomEvent } from 'react-custom-events';
 import Link from '@mui/material/Link';
 import Box from '@mui/material/Box';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { Divider } from '@material-ui/core';
+import FormVerificaCodigoPhone from './FormVerificaCodigoPhone';
 
+const functions = getFunctions();
+const getUserByEmail = httpsCallable(functions, 'getUserByEmail');
+
+var recaptchaVerifier;
 function FormExisteCuenta(props) {
     const[ openMsg, setOpenMsg] = useState(false);
     const [severityInfo, setSeverityInfo] = useState('success');
@@ -39,6 +48,12 @@ function FormExisteCuenta(props) {
     const [googleProvider, setGoogleProvider] = useState(false);
     const [facebookProvider, setFacebookProvider] = useState(false);
     const [passwordProvider, setPasswordProvider] = useState(false);
+    const [phoneProvider, setPhoneProvider] = useState(false);
+    const [phoneNumber, setPhoneNumber] = useState(null);
+    const [txtBtnContinuar, setTxtBtnContinuar] = useState('Continuar');
+    const [classNameBtnContinuar, setClassNameBtnContinuar] = useState('button__log__continuar');
+    const [openFormVerificaCodigoPhone, setOpenFormVerificaCodigoPhone] = useState(false);
+    const [confirmationResult, setConfirmationResult] = useState(null);
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
 
     const styles = (theme) => ({});
@@ -80,26 +95,55 @@ function FormExisteCuenta(props) {
     });
 
     const handleCloseExisteCuenta = () => {
+        if (recaptchaVerifier !== undefined)
+            if (!recaptchaVerifier.destroyed) 
+                recaptchaVerifier.clear();
+        setTxtBtnContinuar('Continuar');
+        setClassNameBtnContinuar('button__log__continuar');
         emitCustomEvent('openLoadingPage', false);
         props.onGetReturn(true);
     }
 
     /*submit Iniciar sesion*/
-    const handleClickIniciarSesion = () => {      
+    const handleClickIniciarSesion = () => {
+        if (recaptchaVerifier !== undefined)
+            if (!recaptchaVerifier.destroyed) 
+                recaptchaVerifier.clear();
+        setTxtBtnContinuar('Continuar');
+        setClassNameBtnContinuar('button__log__continuar');
+
         setSubmitInputPasswordFormIniciarSesion(true);        
     }
     /*fin submit iniciar sesion*/ 
     
     const handleEnter = () => {
+        if (recaptchaVerifier !== undefined)
+            if (!recaptchaVerifier.destroyed) 
+                recaptchaVerifier.clear();
+        setTxtBtnContinuar('Continuar');
+        setClassNameBtnContinuar('button__log__continuar');
+
         setSubmitInputPasswordFormIniciarSesion(true);        
     }
 
     const handleRecuperarPassword = () => {
+        if (recaptchaVerifier !== undefined)
+            if (!recaptchaVerifier.destroyed) 
+                recaptchaVerifier.clear();
+        setTxtBtnContinuar('Continuar');
+        setClassNameBtnContinuar('button__log__continuar');
+
         props.onGetRecoveryPass(true);
         emitCustomEvent('openLoadingPage', false);
     }
 
     const handleErrorFacebook = () => {
+        if (recaptchaVerifier !== undefined)
+            if (!recaptchaVerifier.destroyed) 
+                recaptchaVerifier.clear();
+        setTxtBtnContinuar('Continuar');
+        setClassNameBtnContinuar('button__log__continuar');
+
         emitCustomEvent('openLoadingPage', false);
     }
 
@@ -108,18 +152,42 @@ function FormExisteCuenta(props) {
     }
 
     const handleClickGoogle = () => {
+        if (recaptchaVerifier !== undefined)
+            if (!recaptchaVerifier.destroyed) 
+                recaptchaVerifier.clear();
+        setTxtBtnContinuar('Continuar');
+        setClassNameBtnContinuar('button__log__continuar');        
+
         emitCustomEvent('openLoadingPage', true);
     }
 
     const handleClickFacebook = () => {
+        if (recaptchaVerifier !== undefined)
+            if (!recaptchaVerifier.destroyed) 
+                recaptchaVerifier.clear();
+        setTxtBtnContinuar('Continuar');
+        setClassNameBtnContinuar('button__log__continuar');
+
         emitCustomEvent('openLoadingPage', true);
     }
 
     const handleEmail = (email) => {
+        if (recaptchaVerifier !== undefined)
+            if (!recaptchaVerifier.destroyed) 
+                recaptchaVerifier.clear();
+        setTxtBtnContinuar('Continuar');
+        setClassNameBtnContinuar('button__log__continuar');
+
         props.onGetEmail(email);
     }
 
     const handleTerminaRegistrarteGoogle = (value) => {
+        if (recaptchaVerifier !== undefined)
+            if (!recaptchaVerifier.destroyed) 
+                recaptchaVerifier.clear();
+        setTxtBtnContinuar('Continuar');
+        setClassNameBtnContinuar('button__log__continuar');
+
         if (value){
             props.onGetOpenFormTerminaDeRegistrarte(true);
         }
@@ -128,6 +196,12 @@ function FormExisteCuenta(props) {
     }
     
     const handleTerminaRegistrarteFacebook = (value) => {
+        if (recaptchaVerifier !== undefined)
+            if (!recaptchaVerifier.destroyed) 
+                recaptchaVerifier.clear();
+        setTxtBtnContinuar('Continuar');
+        setClassNameBtnContinuar('button__log__continuar');
+
         if (value){
             props.onGetOpenFormTerminaDeRegistrarte(true);
         }
@@ -136,6 +210,12 @@ function FormExisteCuenta(props) {
     }
 
     const handleGoogleUser = (value) => {
+        if (recaptchaVerifier !== undefined)
+            if (!recaptchaVerifier.destroyed) 
+                recaptchaVerifier.clear();
+        setTxtBtnContinuar('Continuar');
+        setClassNameBtnContinuar('button__log__continuar');
+
         emitCustomEvent('openLoadingPage', false);
         props.onGetNameFormTerminaDeRegistrarte(value.profileObj.givenName);
         props.onGetApellidoFormTerminaDeRegistrarte(value.profileObj.familyName);
@@ -145,6 +225,12 @@ function FormExisteCuenta(props) {
     }
 
     const handleFacebookUser = (value) => {
+        if (recaptchaVerifier !== undefined)
+            if (!recaptchaVerifier.destroyed) 
+                recaptchaVerifier.clear();
+        setTxtBtnContinuar('Continuar');
+        setClassNameBtnContinuar('button__log__continuar');
+
         emitCustomEvent('openLoadingPage', false);
         props.onGetNameFormTerminaDeRegistrarte(value.name.split(' ')[0]);
         props.onGetApellidoFormTerminaDeRegistrarte(value.name.split(' ')[1]);
@@ -201,6 +287,24 @@ function FormExisteCuenta(props) {
             }else{
                 setPasswordProvider(false);
             }
+            if (props.providers.includes('phone')){
+                if (props.email !== null){
+                    getUserByEmail(props.email)
+                    .then((userRecord) => {
+                        setPhoneNumber(userRecord.data.phoneNumber);
+                        setPhoneProvider(true);
+                    })
+                    .catch((error)=>{
+                        console.log(error);
+                        setPhoneNumber(null);
+                        setPhoneProvider(false);
+                    });
+                }else{
+                    setPhoneProvider(false);
+                }
+            }else{
+                setPhoneProvider(false);
+            }
         }
 
         if (variableEstadoCargadoNewValuePasswordFormIniciarSesion){
@@ -249,6 +353,63 @@ function FormExisteCuenta(props) {
 
     const handleUpdateProfile = () => {
         props.onGetUpdateProfile(true);
+    }
+
+    const handleSubmit = () => {
+        if (txtBtnContinuar === 'Continuar'){
+            const auth = getAuth();
+            auth.languageCode = props.lenguaje;
+            recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
+                type: 'image', // 'audio'
+                size: 'normal', // 'normal, invisible' or 'compact'
+                badge: 'inline' //' bottomright' or 'inline' applies to invisible.                    
+            }, auth);
+            setTxtBtnContinuar('Cancelar');
+            setClassNameBtnContinuar('button__log__BW');
+            emitCustomEvent('openLoadingPage', false);
+            signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier)
+            .then((confirmationResult) => {
+                emitCustomEvent('openLoadingPage', true);
+                if (recaptchaVerifier !== undefined)
+                    if (!recaptchaVerifier.destroyed) 
+                        recaptchaVerifier.clear();
+                setTxtBtnContinuar('Continuar');
+                setClassNameBtnContinuar('button__log__continuar');
+                setConfirmationResult(confirmationResult);
+                setOpenFormVerificaCodigoPhone(true);
+                emitCustomEvent('openLoadingPage', false);
+            }).catch((error) => {
+                // Error; SMS not sent
+                // ...
+                emitCustomEvent('openLoadingPage', false);
+                if (recaptchaVerifier !== undefined)
+                    if (!recaptchaVerifier.destroyed) 
+                        recaptchaVerifier.clear();
+                setTxtBtnContinuar('Continuar');
+                setClassNameBtnContinuar('button__log__continuar');
+                setMsg('No pudimos enviar el SMS al número de teléfono ' + String(phoneNumber));
+                setSeverityInfo('error');
+                setOpenMsg(true);                    
+            });                
+         }else{
+            if (recaptchaVerifier !== undefined)
+                if (!recaptchaVerifier.destroyed) 
+                    recaptchaVerifier.clear();
+            setTxtBtnContinuar('Continuar');
+            setClassNameBtnContinuar('button__log__continuar');
+        }
+    }
+
+    const handleRegistred1 = (user) => {
+    }
+
+    const handleReturnFormVerificaCodigoPhone = () => {
+        setOpenFormVerificaCodigoPhone(false);
+    }
+
+    const handleCloseFormVerificaCodigoPhone = () => {
+        setOpenFormVerificaCodigoPhone(false);
+        props.onGetClose(true);
     }
 
     return (
@@ -325,7 +486,9 @@ function FormExisteCuenta(props) {
                     >
                     Podés ingresar por cualquiera de los siguientes proveedores.
                 </Typography>
+                <Divider style={{width: '100%', marginTop:'10px', marginBottom:'5px'}}/>
                 {passwordProvider ?
+                <>
                 <InputPassword 
                     style={styleInputPasswordFormIniciarSesion}
                     onGetValuePassword={getValuePasswordFormIniciarSesion} 
@@ -334,8 +497,6 @@ function FormExisteCuenta(props) {
                     close={!props.open}
                     onGetEnter={handleEnter}
                 />
-                :null}
-                {passwordProvider ?
                 <Button 
                     variant='outlined'
                     className='button__log__continuar'
@@ -343,8 +504,6 @@ function FormExisteCuenta(props) {
                 >
                     Iniciá sesión
                 </Button>
-                :null}
-                {passwordProvider ?
                 <Box 
                     sx={{
                         width: '100%',
@@ -363,8 +522,11 @@ function FormExisteCuenta(props) {
                         ¿Te olvidaste la contraseña?
                     </Link>            
                 </Box>
+                <Divider style={{width: '100%', marginTop:'10px', marginBottom:'5px'}}/>
+                </>
                 :null}
                 {facebookProvider ?
+                <>
                 <LoginWithFacebook
                     onGetFacebookUser={handleFacebookUser}
                     onGetClick={handleClickFacebook}
@@ -374,8 +536,11 @@ function FormExisteCuenta(props) {
                     onGetProviders={handleProviders}
                     onGetUpdateProfile={handleUpdateProfile}
                 /> 
+                <Divider style={{width: '100%', marginTop:'10px', marginBottom:'5px'}}/>
+                </>
                 :null}
                 {googleProvider ?
+                <>
                 <LoginWithGoogle
                     onGetGoogleUser={handleGoogleUser}
                     onGetClick={handleClickGoogle}
@@ -385,6 +550,35 @@ function FormExisteCuenta(props) {
                     onGetProviders={handleProviders}
                     onGetUpdateProfile={handleUpdateProfile}
                 />
+                <Divider style={{width: '100%', marginTop:'10px', marginBottom:'5px'}}/>
+                </>
+                :null}
+                {phoneProvider ?
+                <>
+                <Typography 
+                    variant="caption"
+                    gutterBottom
+                    style={{
+                        width: '100%',
+                        marginTop: 10,
+                        color: 'gray',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}
+                    >
+                    Enviar un código de verificación al número <strong>{phoneNumber}</strong>. Se aplican tarifas estándar para mensajes y uso de datos.
+                </Typography>
+                <div align='center' id="recaptcha-container" className='recaptchaClass'></div>
+                <Button 
+                    variant='outlined'
+                    className={classNameBtnContinuar}
+                    disableElevation
+                    onClick={handleSubmit}
+                >
+                {txtBtnContinuar}
+                </Button>                
+                <Divider style={{width: '100%', marginTop:'10px', marginBottom:'5px'}}/>
+                </>
                 :null}
                 <Box 
                     sx={{
@@ -408,7 +602,19 @@ function FormExisteCuenta(props) {
             <Snackbar open={openMsg} autoHideDuration={6000} onClose={handleCloseMsg} anchorOrigin={{ vertical: 'top', horizontal: 'center' }} sx={{width: '100%'}}>
                 <Alert onClose={handleCloseMsg} severity={severityInfo}>{msg}</Alert>
             </Snackbar>
-            </Dialog>                          
+            </Dialog>
+            {openFormVerificaCodigoPhone ?
+            <FormVerificaCodigoPhone
+                phoneNumber={phoneNumber}
+                name={null}
+                confirmationResult={confirmationResult}
+                onGetReturn={handleReturnFormVerificaCodigoPhone}
+                onGetClose={handleCloseFormVerificaCodigoPhone}
+                onGetRegistred={handleRegistred1}
+                onGetUpdateProfile={handleUpdateProfile}
+                open={openFormVerificaCodigoPhone}
+            />
+            :null}
         </div>
     )
 }

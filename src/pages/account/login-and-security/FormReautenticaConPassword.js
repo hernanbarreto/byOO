@@ -125,7 +125,7 @@ function FormReautenticaConPassword(props) {
                 emitCustomEvent('openLoadingPage', true);
                 const auth = getAuth();
                 const antToken = auth.currentUser.accessToken;
-                const credential = EmailAuthProvider.credential(props.email, valueInputPasswordFormIniciarSesion);
+                const credential = EmailAuthProvider.credential(auth.currentUser.email, valueInputPasswordFormIniciarSesion);
                 reauthenticateWithCredential(auth.currentUser, credential)
                     .then(async() => {
                         const newToken = auth.currentUser.accessToken;
@@ -222,6 +222,10 @@ function FormReautenticaConPassword(props) {
                         }
                         if (error.code === 'auth/invalid-email'){
                             emitCustomEvent('showMsg', String('No existe una cuenta asociada a ') + String(props.email) + String('/') + String('error'));
+                            props.onGetClose(true);
+                        }
+                        if (error.code === 'auth/user-mismatch'){
+                            emitCustomEvent('showMsg', String('El correo electrónico debe coincidir con tu direccion de correo actual.') + String('/') + String('error'));
                             props.onGetClose(true);
                         }
                     });

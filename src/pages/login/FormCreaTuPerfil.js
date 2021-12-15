@@ -77,6 +77,7 @@ var textSteps = [
 var recaptchaVerifier;
 const functions = getFunctions();
 const getUserByPhoneNumber = httpsCallable(functions, 'getUserByPhoneNumber');
+const getUserByEmail = httpsCallable(functions, 'getUserByEmail');      
 const sendMail = httpsCallable(functions, 'sendMail');
 
 const database = getFirestore();
@@ -246,9 +247,9 @@ function FormCreaTuPerfil(props) {
                     //el usuario no existe
                     const auth = getAuth();
                     auth.languageCode = props.lenguaje;
-                    recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
+                    recaptchaVerifier = new RecaptchaVerifier('recaptcha-container3', {
                         type: 'image', // 'audio'
-                        size: 'compact', // 'normal, invisible' or 'compact'
+                        size: 'normal', // 'normal, invisible' or 'compact'
                         badge: 'inline' //' bottomright' or 'inline' applies to invisible.                    
                     }, auth);
                     setTxtBtnContinuar('Cancelar');
@@ -515,22 +516,49 @@ function FormCreaTuPerfil(props) {
                     fetchSignInMethodsForEmail(auth, valueInputEmailFormPrincipal)
                         .then(providers => {
                             if (providers.length === 0){
-                                //el mail no esta asociado a ninguna cuenta
-                                const credential = EmailAuthProvider.credential(valueInputEmailFormPrincipal, valueInputPasswordFormRegistrate);
-                                linkWithCredential(auth.currentUser, credential)
-                                .then((usercred) => {
-                                    handleNext();
-                                    emitCustomEvent('openLoadingPage', false);
-                                }).catch((error) => {
-                                    try{
-                                        setMsg(error.code.split('/')[1].replace(/-/g,' '));
-                                    }catch{
-                                        setMsg('Ha ocurrido un error');
-                                    }                            
-                                    setSeverityInfo('error');
-                                    setOpenMsg(true);
-                                    emitCustomEvent('openLoadingPage', false);
-                                });                                
+                                getUserByEmail(valueInputEmailFormPrincipal)
+                                .then((result)=>{
+                                    if (result.data.uid === auth.currentUser.uid){
+                                        //el mail no esta asociado a ninguna cuenta
+                                        const credential = EmailAuthProvider.credential(valueInputEmailFormPrincipal, valueInputPasswordFormRegistrate);
+                                        linkWithCredential(auth.currentUser, credential)
+                                        .then((usercred) => {
+                                            handleNext();
+                                            emitCustomEvent('openLoadingPage', false);
+                                        }).catch((error) => {
+                                            try{
+                                                setMsg(error.code.split('/')[1].replace(/-/g,' '));
+                                            }catch{
+                                                setMsg('Ha ocurrido un error');
+                                            }                            
+                                            setSeverityInfo('error');
+                                            setOpenMsg(true);
+                                            emitCustomEvent('openLoadingPage', false);
+                                        });                                
+                                    }else{
+                                        setMsg('No podemos asociar el correo ' + valueInputEmailFormPrincipal + ' porque ya se encuentra asociado a otra cuenta.');
+                                        setSeverityInfo('error');
+                                        setOpenMsg(true); 
+                                        emitCustomEvent('openLoadingPage', false);
+                                    }
+                                })
+                                .catch(()=>{
+                                    const credential = EmailAuthProvider.credential(valueInputEmailFormPrincipal, valueInputPasswordFormRegistrate);
+                                    linkWithCredential(auth.currentUser, credential)
+                                    .then((usercred) => {
+                                        handleNext();
+                                        emitCustomEvent('openLoadingPage', false);
+                                    }).catch((error) => {
+                                        try{
+                                            setMsg(error.code.split('/')[1].replace(/-/g,' '));
+                                        }catch{
+                                            setMsg('Ha ocurrido un error');
+                                        }                            
+                                        setSeverityInfo('error');
+                                        setOpenMsg(true);
+                                        emitCustomEvent('openLoadingPage', false);
+                                    });                                
+                                });
                             }else{
                                 //el mail esta asociado a alguna cuenta
                                 if (auth.currentUser.email === valueInputEmailFormPrincipal){
@@ -1084,7 +1112,7 @@ function FormCreaTuPerfil(props) {
                             >
                                 Vamos a enviarte un mensaje para confirmar el número. Se aplican tarifas estándar para mensajes y uso de datos.
                             </Typography>
-                            <div align='center' id="recaptcha-container"></div>
+                            <div align='center' id="recaptcha-container3" className='recaptchaClass'></div>
                             <Button 
                                 variant='outlined'
                                 className={classNameBtnContinuar}

@@ -6,6 +6,7 @@ import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import Privacity from './pages/privacity/Privacity';
 import Account from './pages/account/Account';
 import LoginAndSecurity from './pages/account/login-and-security/LoginAndSecurity';
+import PersonalInfo from './pages/account/personal-info/PersonalInfo';
 import Footer from './pages/footer/Footer';
 import { AuthProvider } from './services/firebase'; 
 import PrivateRoute from './pages/PrivateRoute';
@@ -43,6 +44,9 @@ function App() {
             </PrivateRoute>
             <PrivateRoute exact path='/account-settings/login-and-security'>
                 <LoginAndSecurity user={userDetails}/>
+            </PrivateRoute>
+            <PrivateRoute exact path='/account-settings/personal-info'>
+                <PersonalInfo user={userDetails}/>
             </PrivateRoute>
             <Route exact path='/'>
                 <Home />
