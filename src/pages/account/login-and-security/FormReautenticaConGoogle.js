@@ -100,7 +100,7 @@ function FormReautenticaConGoogle(props) {
                 if (docSnap.exists()) {
                   const filtered = docSnap.data().sessions.filter(function(element){
                       return element.id === antToken;
-                });
+                  });
                   if (filtered.length !== 0){
                     await updateDoc(infoUser, {
                         sessions: arrayRemove(filtered[0])

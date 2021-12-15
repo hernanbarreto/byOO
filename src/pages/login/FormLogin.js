@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import './Login.css'
 import InputCountrySelectPhone from './InputCountrySelectPhone';
 import InputEmail from './InputEmail';
 import Dialog from '@material-ui/core/Dialog';
@@ -186,15 +187,14 @@ function FormLogin(props) {
                     //el usuario existe
                     const auth = getAuth();
                     auth.languageCode = props.lenguaje;
-                    recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
+                    recaptchaVerifier = new RecaptchaVerifier('recaptcha-container1', {
                         type: 'image', // 'audio'
-                        size: 'compact', // 'normal, invisible' or 'compact'
+                        size: 'normal', // 'normal, invisible' or 'compact'
                         badge: 'inline' //' bottomright' or 'inline' applies to invisible.                    
                     }, auth);
                     setTxtBtnContinuar('Cancelar');
                     setClassNameBtnContinuar('button__log__BW');
                     emitCustomEvent('openLoadingPage', false);
-                    
                     signInWithPhoneNumber(auth, valueInputPhoneFormPrincipal, recaptchaVerifier)
                     .then((confirmationResult) => {
                         emitCustomEvent('openLoadingPage', true);
@@ -267,11 +267,17 @@ function FormLogin(props) {
                     }else{
                         fetchSignInMethodsForEmail(auth, valueInputEmailFormPrincipal)
                         .then(providers => {
-                            var i = providers.indexOf('password');
-                            i !== -1 && providers.splice( i, 1 );
-                            emitCustomEvent('openLoadingPage', false);
-                            props.onGetExisteCuenta(providers);
-                            props.onGetEmail(valueInputEmailFormPrincipal);
+                            if (providers.length !== 0){
+                                var i = providers.indexOf('password');
+                                i !== -1 && providers.splice( i, 1 );
+                                emitCustomEvent('openLoadingPage', false);
+                                props.onGetExisteCuenta(providers);
+                                props.onGetEmail(valueInputEmailFormPrincipal);
+                            }else{
+                                emitCustomEvent('openLoadingPage', false);
+                                props.onGetExisteCuenta(['phone']);
+                                props.onGetEmail(valueInputEmailFormPrincipal);
+                            }
                         })
                         .catch((error) => {
                             emitCustomEvent('openLoadingPage', false);
@@ -291,11 +297,17 @@ function FormLogin(props) {
                             props.onGetOpenFormRegistrate (true);
                             props.onGetClose(true);
                         } else {
-                            var i = providers.indexOf('password');
-                            i !== -1 && providers.splice( i, 1 );
-                            emitCustomEvent('openLoadingPage', false);
-                            props.onGetExisteCuenta(providers);
-                            props.onGetEmail(valueInputEmailFormPrincipal);
+                            if (providers.length !== 0){
+                                var i = providers.indexOf('password');
+                                i !== -1 && providers.splice( i, 1 );
+                                emitCustomEvent('openLoadingPage', false);
+                                props.onGetExisteCuenta(providers);
+                                props.onGetEmail(valueInputEmailFormPrincipal);
+                            }else{
+                                emitCustomEvent('openLoadingPage', false);
+                                props.onGetExisteCuenta(['phone']);
+                                props.onGetEmail(valueInputEmailFormPrincipal);
+                            }
                         }
                     })
                     .catch((error) => {
@@ -486,8 +498,8 @@ function FormLogin(props) {
                         Es importante que puedas tener acceso a la direccion de correo electrónico indicada ya que te enviaremos información importante de tu cuenta.
                     </Typography>
                 }
-                <div align='center' id="recaptcha-container"></div>
-                <Divider style={{width: '100%', marginTop:'20px', marginBottom:'5px'}}/>
+                <div align='center' id="recaptcha-container1" className='recaptchaClass'></div>
+                <Divider style={{width: '100%', marginTop:'10px', marginBottom:'5px'}}/>
                 <Button 
                     variant='outlined'
                     className={classNameBtnContinuar}
