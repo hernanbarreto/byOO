@@ -1,14 +1,21 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import CircularProgress from '@mui/material/CircularProgress';
 import Backdrop from '@mui/material/Backdrop';
 import Box from '@mui/material/Box';
 import { useCustomEventListener } from 'react-custom-events';
 
 function LoadingPage() {
+    const [isMounted, setIsMounted] = useState(true);
     const [open, setOpen] = useState(false);
 
+    useEffect(() => {
+        setIsMounted(true);
+        return () => {setIsMounted(false)}
+    }, []);
+
     useCustomEventListener('openLoadingPage', data => {
-        setOpen(data);
+        if (isMounted)
+            setOpen(data);
     });
     
 

@@ -18,6 +18,7 @@ import IconButton from '@mui/material/IconButton';
 import { useAuth } from '../../../services/firebase';
 import { getFunctions, httpsCallable } from "firebase/functions";
 import FormReautenticaCodigoPhone from './FormReautenticaCodigoPhone';
+import { useInitPage } from '../../useInitPage';
 
 var recaptchaVerifier;
 
@@ -27,6 +28,9 @@ const getUserByPhoneNumber = httpsCallable(functions, 'getUserByPhoneNumber');
 function FormReautenticaConPhone(props) {
     const {currentUser} = useAuth();
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
+
+    const {state} = useInitPage();
+    const [isMounted, setIsMounted] = useState(true);
 
     const[ openMsg, setOpenMsg] = useState(false);
     const [severityInfo, setSeverityInfo] = useState('success');
@@ -78,6 +82,16 @@ function FormReautenticaConPhone(props) {
         );
     });
 
+    useEffect(() => {
+        setIsMounted(true);
+        if (state !== null){
+            if (state){
+            }
+        }
+        return () => {setIsMounted(false)}
+    }, [state]);
+
+
     const handleCloseIniciarSesion = () => {
         props.onGetReturn(true);
         emitCustomEvent('openLoadingPage', false);
@@ -95,13 +109,17 @@ function FormReautenticaConPhone(props) {
 
     const handleClickContinuar = () => {
         if (txtBtnContinuar === 'Continuar'){
-            setVariableEstadoCargadoNewValuePhoneFormPrincipal(true);
+            if (isMounted){
+                setVariableEstadoCargadoNewValuePhoneFormPrincipal(true);
+            }
         }else{
             if (recaptchaVerifier !== undefined)
                 if (!recaptchaVerifier.destroyed) 
                     recaptchaVerifier.clear();
-            setTxtBtnContinuar('Continuar');
-            setClassNameBtnContinuar('button__log__continuar');
+            if (isMounted){
+                setTxtBtnContinuar('Continuar');
+                setClassNameBtnContinuar('button__log__continuar');
+            }
         }
     }
 
@@ -119,18 +137,22 @@ function FormReautenticaConPhone(props) {
                             type: 'image', // 'audio'
                             size: 'normal', // 'normal, invisible' or 'compact'
                             badge: 'inline' //' bottomright' or 'inline' applies to invisible.                    
-                        }, auth);                    
-                        setTxtBtnContinuar('Cancelar');
-                        setClassNameBtnContinuar('button__log__BW');
-                        emitCustomEvent('openLoadingPage', false);                    
+                        }, auth);
+                        if (isMounted){                    
+                            setTxtBtnContinuar('Cancelar');
+                            setClassNameBtnContinuar('button__log__BW');
+                            emitCustomEvent('openLoadingPage', false);
+                        }                    
                         signInWithPhoneNumber(auth, valueInputPhoneFormPrincipal[0], recaptchaVerifier)
                         .then((result) => {
                             emitCustomEvent('openLoadingPage', true);
                             if (recaptchaVerifier !== undefined)
                                 if (!recaptchaVerifier.destroyed) 
                                     recaptchaVerifier.clear();
-                            setConfirmationResult(result);
-                            setOpenFormVerificaCodigoPhone(true);
+                            if (isMounted){
+                                setConfirmationResult(result);
+                                setOpenFormVerificaCodigoPhone(true);
+                            }
                             emitCustomEvent('openLoadingPage', false);
                         }).catch((error) => {
                             // Error; SMS not sent
@@ -138,12 +160,14 @@ function FormReautenticaConPhone(props) {
                             if (recaptchaVerifier !== undefined)
                                 if (!recaptchaVerifier.destroyed) 
                                     recaptchaVerifier.clear();
-                            setTxtBtnContinuar('Continuar');
-                            setClassNameBtnContinuar('button__log__continuar');
-                            setMsg('No pudimos enviar el SMS al número de teléfono ' + String(valueInputPhoneFormPrincipal[0]));
-                            setSeverityInfo('error');
+                            if (isMounted){
+                                setTxtBtnContinuar('Continuar');
+                                setClassNameBtnContinuar('button__log__continuar');
+                                setMsg('No pudimos enviar el SMS al número de teléfono ' + String(valueInputPhoneFormPrincipal[0]));
+                                setSeverityInfo('error');
+                                setOpenMsg(true);
+                            }                    
                             emitCustomEvent('openLoadingPage', false);
-                            setOpenMsg(true);                    
                         });    
                     }else{
                         //el usuario existe
@@ -151,11 +175,13 @@ function FormReautenticaConPhone(props) {
                         if (recaptchaVerifier !== undefined)
                             if (!recaptchaVerifier.destroyed) 
                                 recaptchaVerifier.clear();
-                        setTxtBtnContinuar('Continuar');
-                        setClassNameBtnContinuar('button__log__continuar');        
-                        setMsg('El número ' + String(valueInputPhoneFormPrincipal[0]) + ' no se encuentra asociado a tu cuenta.');
-                        setSeverityInfo('error');
-                        setOpenMsg(true);
+                        if (isMounted){
+                            setTxtBtnContinuar('Continuar');
+                            setClassNameBtnContinuar('button__log__continuar');        
+                            setMsg('El número ' + String(valueInputPhoneFormPrincipal[0]) + ' no se encuentra asociado a tu cuenta.');
+                            setSeverityInfo('error');
+                            setOpenMsg(true);
+                        }
                     }
                 })
                 .catch((error) => {
@@ -164,25 +190,33 @@ function FormReautenticaConPhone(props) {
                         if (recaptchaVerifier !== undefined)
                             if (!recaptchaVerifier.destroyed) 
                                 recaptchaVerifier.clear();
-                        setTxtBtnContinuar('Continuar');
-                        setClassNameBtnContinuar('button__log__continuar');        
-                        setMsg('El número ' + String(valueInputPhoneFormPrincipal[0]) + ' no se encuentra asociado a ninguna cuenta.');
-                        setSeverityInfo('error');
-                        setOpenMsg(true);
+                        if (isMounted){
+                            setTxtBtnContinuar('Continuar');
+                            setClassNameBtnContinuar('button__log__continuar');        
+                            setMsg('El número ' + String(valueInputPhoneFormPrincipal[0]) + ' no se encuentra asociado a ninguna cuenta.');
+                            setSeverityInfo('error');
+                            setOpenMsg(true);
+                        }
                 });
              }else{
                 emitCustomEvent('openLoadingPage', false);
-                setMsg('No ingresaste un número de teléfono válido');
-                setSeverityInfo('error');
-                setOpenMsg(true);                    
+                if (isMounted){
+                    setMsg('No ingresaste un número de teléfono válido');
+                    setSeverityInfo('error');
+                    setOpenMsg(true);
+                }                    
             }
-            setVariableEstadoCargadoNewValuePhoneFormPrincipal(false);       
+            if (isMounted){
+                setVariableEstadoCargadoNewValuePhoneFormPrincipal(false);
+            }       
         }         
-    },[props, valueInputPhoneFormPrincipal, variableEstadoCargadoNewValuePhoneFormPrincipal, currentUser]);
+    },[props, isMounted, valueInputPhoneFormPrincipal, variableEstadoCargadoNewValuePhoneFormPrincipal, currentUser]);
     /*fin atencion del valor ingresado del componente CountrySelectPhone*/
 
     const handleReturnFormVerificaCodigoPhone = () => {
-        setOpenFormVerificaCodigoPhone(false);
+        if (isMounted){
+            setOpenFormVerificaCodigoPhone(false);
+        }
     }
 
     const handleLinkedPhone = () => {

@@ -16,6 +16,7 @@ import { doc, setDoc } from "firebase/firestore";
 import {auth} from '../../services/firebase';
 
 function Login(props) {
+    const [isMounted, setIsMounted] = useState(true);
     const [openFormLogin, setOpenFormLogin] = useState(false);
     const [openFormRecoveryPassword, setOpenFormRecoveryPassword] = useState(false);
     const [openFormIniciarSesion, setOpenFormIniciarSesion] = useState(false);
@@ -46,32 +47,45 @@ function Login(props) {
     const [promotions, setPromotions] = useState(false);
     const [countryCodeFormLogin, setCountryCodeFormLogin] = useState(null);
 
+    useEffect(() => {
+        setIsMounted(true);
+        return () => {setIsMounted(false)}
+    }, []);
 
     const handleCloseFormRecoveryPassword = (value) => {
+        if (isMounted)
         setOpenFormRecoveryPassword(!value);
     }
 
     const handleReturnFormRecoveryPassword = (value) => {
+        if (isMounted){
         setOpenFormRecoveryPassword(!value);
         setOpenFormIniciarSesion(true);
+        }
     }
 
     const handleCloseFormIniciarSesion = (value) => {
+        if (isMounted)
         setOpenFormIniciarSesion(!value);
     }
 
     const handleReturnFormIniciarSesion = (value) => {
+        if (isMounted){
         setOpenFormIniciarSesion(!value);
         setOpenFormLogin(true);
+        }
         props.onGetClose(false);
     }
 
     const handleRecoveryPassFormIniciarSesion = () => {
+        if (isMounted){
         setOpenFormIniciarSesion(false);
         setOpenFormRecoveryPassword(true);
+        }
     }
 
     const handleCloseUniteComunidad = () => {
+        if (isMounted)
         setOpenFormUniteComunidad(false);
     }
 
@@ -80,152 +94,198 @@ function Login(props) {
     }
 
     const handleRegistredRegistro = (profile) => {
+        if (isMounted){
         setOpenFormVerificaCodigoPhoneRegistro(false);
         setOpenFormBienvenidos(true);
+        }
         handleCreateDatabase(profile);
     }
 
     const handleContinuarFormBienvenidos = () => {
+        if (isMounted){
         setOpenFormBienvenidos(false);        
         setOpenFormCreaTuPerfil(true);
+        }
     }
 
     const handleReturnFormRegistrate = () => {
+        if (isMounted){
         setopenFormRegistrate (false);
         setOpenFormLogin(true);
+        }
         props.onGetClose(false);
     }
 
     const handleCloseFormRegistrate = () => {
+        if (isMounted){
         setGoogleUser(null);
         setFacebookUser(null);
         setPhoneUser(null);
         setopenFormRegistrate (false);
         setOpenFormUniteComunidad(true);
+        }
     }
 
     const handlePasswordFormRegistrate = (password) => {
+        if (isMounted)
         setValueInputPasswordFormRegistrate(password);
     }
     
     const handleNameFormRegistrate = (name) => {
+        if (isMounted)
         setValueInputNameFormRegistrate(name);
     }
 
     const handleReturnFormTerminaDeRegistrarte = () => {
+        if (isMounted){
         setOpenFormTerminaDeRegistrarte(false);
         setOpenFormLogin(true);
+        }
         props.onGetClose(false);        
     }
 
     const handleCloseFormTerminaDeRegistrarte = () => {
+        if (isMounted){
         setOpenFormTerminaDeRegistrarte(false);
-        setOpenFormUniteComunidad(true);        
+        setOpenFormUniteComunidad(true);   
+        }     
     }
         
     const handleCloseFormLogin = () => {
+        if (isMounted)
         setOpenFormLogin(false);
         props.onGetClose(true);
     }
 
     const handleValueEmailFormPrincipal = (email) => {
+        if (isMounted)
         setValueInputEmailFormPrincipal(email);
     }
 
     const handleOpenFormRegistrate = () => {
+        if (isMounted)
         setOpenFormLogin(false);
         props.onGetClose(true);
+        if (isMounted)
         setopenFormRegistrate(true);
     }
 
     const handleOpenFormIniciarSesion = () => {
+        if (isMounted)
         setOpenFormLogin(false);
         props.onGetClose(true);
+        if (isMounted)
         setOpenFormIniciarSesion(true);
     }
 
     const handleOpenFormTerminaDeRegistrarte = () => {
+        if (isMounted)
         setOpenFormLogin(false);
         props.onGetClose(true);
+        if (isMounted)
         setOpenFormTerminaDeRegistrarte(true);
     }
 
     const handleFacebookUser = (user) => {
+        if (isMounted)
         setFacebookUser(user);
     }
 
     const handleGoogleUser = (user) => {
+        if (isMounted)
         setGoogleUser(user);
     }
 
     const handleNameFormTerminaDeRegistrarte = (name) => {
+        if (isMounted)
         setNameFormTerminaDeRegistrarte(name);
     }
 
     const handleApellidoFormTerminaDeRegistrarte = (lastName) => {
+        if (isMounted)
         setApellidoFormTerminaDeRegistrarte(lastName);
     }
 
     const handleEmailFormTerminaDeRegistrarte = (email) => {
+        if (isMounted)
         setEmailFormTerminaDeRegistrarte(email);
     }
 
     const handleReturnFormTerminaDeRegistrartePhone = () => {
+        if (isMounted){
         setOpenFormTerminaDeRegistrartePhone(false);
         setOpenFormLogin(true);
+        }
         props.onGetClose(false);        
     }
 
     const handleCloseFormTerminaDeRegistrartePhone = () => {
+        if (isMounted){
         setGoogleUser(null);
         setFacebookUser(null);
         setPhoneUser(true);
         setOpenFormTerminaDeRegistrartePhone(false);        
         setOpenFormUniteComunidad(true);
+        }
     }    
 
     const handleNameFormTerminaDeRegistrartePhone = (name) => {
+        if (isMounted)
         setValueInputNameFormRegistrate(name);
     }
 
     const handleReturnFormVerificaCodigoPhone = () => {
+        if (isMounted){
         setOpenFormVerificaCodigoPhone(false);
         setOpenFormLogin(true);
+        }
         props.onGetClose(false);
     }
 
     const handleReturnFormVerificaCodigoPhoneRegistro = () => {
+        if (isMounted){
         setOpenFormVerificaCodigoPhoneRegistro(false);
         setOpenFormUniteComunidad(true);
+        }
     }    
 
     const handleOpenFormVerificaCodigoPhone = () => {
+        if (isMounted)
         setOpenFormLogin(false);
         props.onGetClose(true);
+        if (isMounted)
         setOpenFormVerificaCodigoPhone(true);
     }
 
     const handleOpenFormVerificaCodigoPhoneUnite = () => {
+        if (isMounted){
         setOpenFormUniteComunidad(false);
         setOpenFormVerificaCodigoPhoneRegistro(true);
+        }
     }
 
     const handlePhoneNumberFormLogin = (phone) =>{
+        if (isMounted){
         setPhoneNumberFormLogin(phone[0]);
         setCountryCodeFormLogin(phone[1]);
+        }
     }
 
     const handleConfirmationResultFormLogin = (result) => {
+        if (isMounted)
         setConfirmationResultFormLogin(result);
     }
 
     const handleOpenFormTerminaDeRegistrartePhone = () => {
+        if (isMounted)
         setOpenFormLogin(false);
         props.onGetClose(true);
+        if (isMounted)
         setOpenFormTerminaDeRegistrartePhone(true);
     }
 
     const handleCloseFormVerificaCodigoPhone = () => {
+        if (isMounted)
         setOpenFormVerificaCodigoPhone(false);
     }
 
@@ -236,14 +296,17 @@ function Login(props) {
     }
 
     const handleAgeFormTerminaDeRegistrartePhone = (age) => {
+        if (isMounted)
         setValueAgeFormRegistrate(age);
     }    
 
     const handleAgeFormRegistrate = (age) => {
+        if (isMounted)
         setValueAgeFormRegistrate(age);
     }
 
     const handleAgeFormTerminaDeRegistrarte = (age) => {
+        if (isMounted)
         setValueAgeFormRegistrate(age);
     }    
 
@@ -269,6 +332,7 @@ function Login(props) {
             countryCode: countryCodeFormLogin,
             lastName: apellido,
             age: valueAgeFormRegistrate,
+            sex:null,
             profilePhoto: null,
             googlePhoto: null,
             facebookPhoto: null,
@@ -297,8 +361,10 @@ function Login(props) {
             sessions:[],
         })
         .then(()=>{
+            if (isMounted){
             setOpenFormUniteComunidad(false);
             setOpenFormBienvenidos(true);
+            }
         })
         .catch(()=>{
             console.log('error al crear');
@@ -306,41 +372,54 @@ function Login(props) {
     }
 
     const handleExisteCuenta = (providers) => {
+        if (isMounted){
         setProviders(providers);
         setOpenFormLogin(false);
+        }
         props.onGetClose(true);
+        if (isMounted)
         setOpenFormExisteCuenta(true);
     }
 
     const handleEmailExisteCuenta = (email) => {
+        if (isMounted)
         setEmailFormExisteCuenta(email);
     }
 
     const handleReturnFormExisteCuenta = () => {
+        if (isMounted){
         setOpenFormExisteCuenta(false);
         setOpenFormLogin(true);
+        }
         props.onGetClose(false);
     }
 
     const handleCloseFormExisteCuenta = () => {
+        if (isMounted)
         setOpenFormExisteCuenta(false);
     }
 
     const handleRecoveryPassFormExisteCuenta = () => {
+        if (isMounted){
         setOpenFormExisteCuenta(false);
         setOpenFormRecoveryPasswordFromExisteCuenta(true);
+        }
     }
 
     const handleCloseFormRecoveryPasswordFromExisteCuenta = () => {
+        if (isMounted)
         setOpenFormRecoveryPasswordFromExisteCuenta(false);
     }
 
     const handleReturnFormRecoveryPasswordFromExisteCuenta = () => {
+        if (isMounted){
         setOpenFormRecoveryPasswordFromExisteCuenta(false);
         setOpenFormExisteCuenta(true);
+        }
     }
 
     const handleFinish = () => {
+        if (isMounted)
         setOpenFormCreaTuPerfil(false);
         props.onGetUpdateProfile();
     }
@@ -350,11 +429,13 @@ function Login(props) {
     }
 
     const handlePromotions = (value) => {
+        if (isMounted)
         setPromotions(value);
     }
 
     useEffect(() => {
         if (props.open){
+            if (isMounted){
             setOpenFormRecoveryPassword(false);
             setOpenFormIniciarSesion(false);
             setOpenFormUniteComunidad(false);
@@ -383,9 +464,11 @@ function Login(props) {
             setOpenFormCreaTuPerfil(false);
             setPromotions(false);
             setCountryCodeFormLogin(null);
+            }
         }
+        if (isMounted)
         setOpenFormLogin(props.open);        
-    }, [props.open]);
+    }, [props.open, isMounted]);
 
     return (
         <div>

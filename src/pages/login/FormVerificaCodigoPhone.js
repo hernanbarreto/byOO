@@ -19,6 +19,7 @@ import { PinInput, PinInputField } from '@chakra-ui/react';
 import {emitCustomEvent} from 'react-custom-events';
 
 function FormVerificaCodigoPhone(props) {
+    const [isMounted, setIsMounted] = useState(true);
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
     const [codeVerification, setCodeVerification] = useState('');
     const [value, setValue] = useState('');
@@ -32,6 +33,12 @@ function FormVerificaCodigoPhone(props) {
     
         setOpenMsg(false);
     };
+
+    useEffect(() => {
+        setIsMounted(true);
+        return () => {setIsMounted(false)}
+    }, []);
+
     const styles = (theme) => ({});
     const DialogTitle = withStyles(styles)((props) => {
         const { children, onClose } = props;
@@ -82,28 +89,33 @@ function FormVerificaCodigoPhone(props) {
     }
 
     const handleChange = (value) => {
-        setValue(value)
+        if (isMounted)
+        setValue(value);
       }
     
     const handleComplete = (value) => {
         emitCustomEvent('openLoadingPage', true);
+        if (isMounted)
         setCodeVerification(value);
     }
 
     const [pase, setPase] = useState(false);
     useEffect(() => {
         if (props.open){
+            if (isMounted){
             setValue('');
             setCodeVerification('');
             setPase(false);
+            }
         }             
-    }, [props]);
+    }, [props, isMounted]);
 
 
     useEffect(() => {
         if (!pase){
             if (codeVerification !== ''){
                 if (props.confirmationResult !== null){
+                    if (isMounted)
                     setPase(true);
                     const auth = getAuth();
                     var credential = PhoneAuthProvider.credential(props.confirmationResult.verificationId, codeVerification);
@@ -131,9 +143,11 @@ function FormVerificaCodigoPhone(props) {
                                     emitCustomEvent('openLoadingPage', false);
                                 }).catch((error) => {
                                     emitCustomEvent('openLoadingPage', false);
+                                    if (isMounted){
                                     setMsg('Error: ' + error.code);
                                     setSeverityInfo('error');
                                     setOpenMsg(true);
+                                    }
                                 });
                             }        
                         }else{
@@ -146,25 +160,29 @@ function FormVerificaCodigoPhone(props) {
                     }).catch((error) => {
                         if (error.code === 'auth/invalid-verification-code'){
                             emitCustomEvent('openLoadingPage', false);
+                            if (isMounted){
                             setMsg('El código ingresado es incorrecto.');
                             setSeverityInfo('error');
                             setOpenMsg(true);                    
                             setValue('');
                             setCodeVerification('');
+                            }
                         }                    
                         if (error.code === 'auth/provider-already-linked'){
                             emitCustomEvent('openLoadingPage', false);
+                            if (isMounted){
                             setMsg('Ya tenes un telefono asociado a tu cuenta.');
                             setSeverityInfo('error');
                             setOpenMsg(true);                    
                             setValue('');
                             setCodeVerification('');
+                            }
                         }                    
                     });
                 }
             }
         }
-   }, [props, codeVerification, pase]);
+   }, [props, codeVerification, pase, isMounted]);
 
     return (
         <div>

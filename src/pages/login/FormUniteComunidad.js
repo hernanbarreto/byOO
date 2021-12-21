@@ -25,9 +25,15 @@ const updateUser = httpsCallable(functions, 'updateUser');
 
 var recaptchaVerifier;
 function FormUniteComunidad(props) {
+    const [isMounted, setIsMounted] = useState(true);
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
     const [cancel, setCancel] = useState(false);
     const styles = (theme) => ({});
+
+    useEffect(() => {
+        setIsMounted(true);
+        return () => {setIsMounted(false)}
+    }, []);      
       
     const DialogTitle = withStyles(styles)((props) => {
         const { children } = props;
@@ -206,7 +212,8 @@ function FormUniteComunidad(props) {
                                 recaptchaVerifier.clear();
                         props.onGetConfirmationResult(confirmationResult);
                         props.onGetOpenFormVerificaCodigoPhone(true);
-                        setCancel(false);
+                        if (isMounted)
+                             setCancel(false);
                         emitCustomEvent('openLoadingPage', false);
                     }).catch((error) => {
                         // Error; SMS not sent
@@ -214,7 +221,8 @@ function FormUniteComunidad(props) {
                         if (recaptchaVerifier !== undefined)
                             if (!recaptchaVerifier.destroyed) 
                                 recaptchaVerifier.clear();
-                        setCancel(false);
+                        if (isMounted)
+                             setCancel(false);
                         emitCustomEvent('openLoadingPage', false);
                         try{
                             emitCustomEvent('showMsg', String('No pudimos enviar el SMS al número de teléfono ') + String(props.phoneNumber) + String('/') + String('error'));
@@ -269,14 +277,16 @@ function FormUniteComunidad(props) {
         if (recaptchaVerifier !== undefined)
             if (!recaptchaVerifier.destroyed) 
                 recaptchaVerifier.clear();
+        if (isMounted)
         setCancel(false);
     }
 
     useEffect(() => {
         if (props.open){
+            if (isMounted)
             setCancel(false);
         }         
-    }, [props]);
+    }, [props, isMounted]);
 
     const handleMasInformacion = () =>{
 

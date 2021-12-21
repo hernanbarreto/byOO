@@ -37,6 +37,7 @@ const Transition = React.forwardRef(function Transition(props, ref) {
 
 var recaptchaVerifier;
 function FormLogin(props) {
+    const [isMounted, setIsMounted] = useState(true);
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
     const [txtBtnContinuar, setTxtBtnContinuar] = useState('Continuar');
     const [classNameBtnContinuar, setClassNameBtnContinuar] = useState('button__log__continuar');
@@ -51,6 +52,11 @@ function FormLogin(props) {
     
         setOpenMsg(false);
     };
+
+    useEffect(() => {
+        setIsMounted(true);
+        return () => {setIsMounted(false)}
+    }, []);
 
     const styles = (theme) => ({});
     const DialogTitle = withStyles(styles)((props) => {
@@ -101,8 +107,10 @@ function FormLogin(props) {
             if (!recaptchaVerifier.destroyed) 
                 recaptchaVerifier.clear();
         emitCustomEvent('openLoadingPage', false);
+        if (isMounted){
         setTxtBtnContinuar('Continuar');
         setClassNameBtnContinuar('button__log__continuar');
+        }
         props.onGetClose(true);
     }
     
@@ -110,36 +118,46 @@ function FormLogin(props) {
         if (recaptchaVerifier !== undefined)
             if (!recaptchaVerifier.destroyed) 
                 recaptchaVerifier.clear();
+        if (isMounted){
         setShowEmail(true);
         setShowPhone(false);
         setTxtBtnContinuar('Continuar');
         setClassNameBtnContinuar('button__log__continuar');
+        }
     }      
 
     const handleClickLogPhone = () => {
         if (recaptchaVerifier !== undefined)
             if (!recaptchaVerifier.destroyed) 
                 recaptchaVerifier.clear();
+        if (isMounted){
         setShowEmail(false);
         setShowPhone(true);
         setTxtBtnContinuar('Continuar');
         setClassNameBtnContinuar('button__log__continuar');
+        }
     }
     
     /*atencion del handler submit del form principal*/
     const handleSubmit = () => {
         if (showPhone){
             if (txtBtnContinuar === 'Continuar')
+                if (isMounted){
                 setSubmitCountrySelectPhoneFormPrincipal(true);
+                }
             else{
                 if (recaptchaVerifier !== undefined)
                     if (!recaptchaVerifier.destroyed) 
                         recaptchaVerifier.clear();
+                if (isMounted){
                 setTxtBtnContinuar('Continuar');
                 setClassNameBtnContinuar('button__log__continuar');
+                }
             }
         }else{
-            setSubmitEmailFormPrincipal(true);           
+            if (isMounted){
+            setSubmitEmailFormPrincipal(true);    
+            }       
         }
     }
     /*fin atencion del handler submit del form principal*/
@@ -147,16 +165,22 @@ function FormLogin(props) {
     const handleEnter = () => {
         if (showPhone){
             if (txtBtnContinuar === 'Continuar')
+                if (isMounted){
                 setSubmitCountrySelectPhoneFormPrincipal(true);
+                }
             else{
                 if (recaptchaVerifier !== undefined)
                     if (!recaptchaVerifier.destroyed) 
                         recaptchaVerifier.clear();
+                if (isMounted){
                 setTxtBtnContinuar('Continuar');
                 setClassNameBtnContinuar('button__log__continuar');
+                }
             }
         }else{
-            setSubmitEmailFormPrincipal(true);           
+            if (isMounted){
+            setSubmitEmailFormPrincipal(true);  
+            }         
         }
     }
 
@@ -167,12 +191,16 @@ function FormLogin(props) {
     const [variableEstadoCargadoNewValuePhoneFormPrincipal, setVariableEstadoCargadoNewValuePhoneFormPrincipal] = useState(false);
     const [countryCode, setCountryCode] = useState(null);
     const submitValuePhoneFormPicnipal = (value) => {
+        if (isMounted){
         setSubmitCountrySelectPhoneFormPrincipal(value);
+        }
     }
     const getValuePhoneCountrySelectPhoneFormPrincipal = (phone) => {
+        if (isMounted){
         setValueInputPhoneFormPrincipal(phone[0]);
         setCountryCode(phone[1].code);
         setVariableEstadoCargadoNewValuePhoneFormPrincipal(true);
+        }
     }
 
     /*fin variables de componente CountrySelectPhone*/
@@ -192,8 +220,10 @@ function FormLogin(props) {
                         size: 'normal', // 'normal, invisible' or 'compact'
                         badge: 'inline' //' bottomright' or 'inline' applies to invisible.                    
                     }, auth);
+                    if (isMounted){
                     setTxtBtnContinuar('Cancelar');
                     setClassNameBtnContinuar('button__log__BW');
+                    }
                     emitCustomEvent('openLoadingPage', false);
                     signInWithPhoneNumber(auth, valueInputPhoneFormPrincipal, recaptchaVerifier)
                     .then((confirmationResult) => {
@@ -201,8 +231,10 @@ function FormLogin(props) {
                         if (recaptchaVerifier !== undefined)
                             if (!recaptchaVerifier.destroyed) 
                                 recaptchaVerifier.clear();
+                        if (isMounted){
                         setTxtBtnContinuar('Continuar');
                         setClassNameBtnContinuar('button__log__continuar');
+                        }
                         console.log([valueInputPhoneFormPrincipal, countryCode]);
                         props.onGetPhoneNumber([valueInputPhoneFormPrincipal, countryCode]);
                         props.onGetConfirmationResult(confirmationResult);
@@ -215,11 +247,13 @@ function FormLogin(props) {
                         if (recaptchaVerifier !== undefined)
                             if (!recaptchaVerifier.destroyed) 
                                 recaptchaVerifier.clear();
+                        if (isMounted){
                         setTxtBtnContinuar('Continuar');
                         setClassNameBtnContinuar('button__log__continuar');
                         setMsg('No pudimos enviar el SMS al número de teléfono ' + String(valueInputPhoneFormPrincipal));
                         setSeverityInfo('error');
-                        setOpenMsg(true);                    
+                        setOpenMsg(true);      
+                        }              
                     });                
                 })
                 .catch((error) => {
@@ -229,9 +263,11 @@ function FormLogin(props) {
                     emitCustomEvent('openLoadingPage', false);
                 });
              }
-            setVariableEstadoCargadoNewValuePhoneFormPrincipal(false);       
+             if (isMounted){
+                  setVariableEstadoCargadoNewValuePhoneFormPrincipal(false); 
+             }      
         }         
-    },[props, valueInputPhoneFormPrincipal, variableEstadoCargadoNewValuePhoneFormPrincipal, countryCode]);
+    },[props, valueInputPhoneFormPrincipal, variableEstadoCargadoNewValuePhoneFormPrincipal, countryCode, isMounted]);
     /*fin atencion del valor ingresado del componente CountrySelectPhone*/
 
     /*variables del componente InputEmail Form Principal*/
@@ -240,11 +276,15 @@ function FormLogin(props) {
     const [submitEmailFormPrincipal, setSubmitEmailFormPrincipal] = useState(false);
     const [variableEstadoCargadoNewValueEmailFormPrincipal, setVariableEstadoCargadoNewValueEmailFormPrincipal] = useState(false);
     const submitValueEmailFormPrincipal = (value) => {
+        if (isMounted){
         setSubmitEmailFormPrincipal(value);
+        }
     }
     const getValueEmailFormPrincipal = (email) => {
+        if (isMounted){
         setValueInputEmailFormPrincipal(email);
         setVariableEstadoCargadoNewValueEmailFormPrincipal(true);
+        }
     }
     /*fin variables del componente InputEmail Form Principal*/
       
@@ -281,9 +321,11 @@ function FormLogin(props) {
                         })
                         .catch((error) => {
                             emitCustomEvent('openLoadingPage', false);
+                            if (isMounted){
                             setMsg(error.code.split('/')[1].replace(/-/g,' '));
                             setSeverityInfo('error');
-                            setOpenMsg(true);                    
+                            setOpenMsg(true);
+                            }                    
                         });                   
                     }
                 })
@@ -313,15 +355,19 @@ function FormLogin(props) {
                     .catch((error) => {
                         // Some error occurred, you can inspect the code: error.code
                         emitCustomEvent('openLoadingPage', false);
+                        if (isMounted){
                         setMsg(error.code.split('/')[1].replace(/-/g,' '));
                         setSeverityInfo('error');
-                        setOpenMsg(true);                    
+                        setOpenMsg(true);
+                        }                    
                     });           
                 });                
             }
-            setVariableEstadoCargadoNewValueEmailFormPrincipal(false);       
+            if (isMounted){
+            setVariableEstadoCargadoNewValueEmailFormPrincipal(false); 
+            }      
         }       
-    },[props, valueInputEmailFormPrincipal, variableEstadoCargadoNewValueEmailFormPrincipal]);
+    },[props, valueInputEmailFormPrincipal, variableEstadoCargadoNewValueEmailFormPrincipal, isMounted]);
     /*fin atencion del valor ingresado del componente Input Email del form principal*/    
     
     const handleProvidersGoogle = (providers) => {
@@ -374,8 +420,10 @@ function FormLogin(props) {
         if (recaptchaVerifier !== undefined)
             if (!recaptchaVerifier.destroyed) 
                 recaptchaVerifier.clear();
+        if (isMounted){
         setTxtBtnContinuar('Continuar');
         setClassNameBtnContinuar('button__log__continuar');
+        }
     }
 
     const handleClickFacebook = () => {
@@ -383,8 +431,10 @@ function FormLogin(props) {
         if (recaptchaVerifier !== undefined)
             if (!recaptchaVerifier.destroyed) 
                 recaptchaVerifier.clear();
+        if (isMounted){
         setTxtBtnContinuar('Continuar');
         setClassNameBtnContinuar('button__log__continuar');
+        }
     }
 
     const handleErrorFacebook = () => {

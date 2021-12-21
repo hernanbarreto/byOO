@@ -21,11 +21,17 @@ import Link from '@mui/material/Link';
 import {emitCustomEvent} from 'react-custom-events';
 
 function FormRegistrate(props) {
+    const [isMounted, setIsMounted] = useState(true);
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
     const [checked, setChecked] = useState(false);
 
     const styles = (theme) => ({});
-      
+     
+    useEffect(() => {
+        setIsMounted(true);
+        return () => {setIsMounted(false)}
+    }, []);     
+
     const DialogTitle = withStyles(styles)((props) => {
         const { children, onClose } = props;
         return (
@@ -85,11 +91,14 @@ function FormRegistrate(props) {
     const [submitPasswordFormRegistrate, setSubmitInputPasswordFormRegistrate] = useState(false);
     const [variableEstadoCargadoNewValuePasswordFormRegistrate, setVariableEstadoCargadoNewValuePasswordFormRegistrate] = useState(false);
     const submitValuePasswordFormRegistrate = (value) => {
+        if (isMounted)
         setSubmitInputPasswordFormRegistrate(value);
     }
     const getValuePasswordFormRegistrate = (password) => {
+        if (isMounted){
         setValueInputPasswordFormRegistrate(password);
         setVariableEstadoCargadoNewValuePasswordFormRegistrate(true);
+        }
     }
     /*fin variables de componente InputPassword del form Registrate*/
 
@@ -99,11 +108,14 @@ function FormRegistrate(props) {
     const [submitNameFormRegistrate, setSubmitNameFormRegistrate] = useState(false);
     const [variableEstadoCargadoNewValueNameFormRegistrate, setVariableEstadoCargadoNewValueNameFormRegistrate] = useState(false);
     const submitValueNameFormRegistrate = (value) => {
+        if (isMounted)
         setSubmitNameFormRegistrate(value);
     }
     const getValueNameFormRegistrate = (email) => {
+        if (isMounted){
         setValueInputNameFormRegistrate(email);
         setVariableEstadoCargadoNewValueNameFormRegistrate(true);
+        }
     }
     /*fin variables del componente InputName Form Registrate*/
 
@@ -113,33 +125,42 @@ function FormRegistrate(props) {
     const [submitAgeFormRegistrate, setSubmitAgeFormRegistrate] = useState(false);
     const [variableEstadoCargadoNewValueAgeFormRegistrate, setVariableEstadoCargadoNewValueAgeFormRegistrate] = useState(false);
     const submitValueAgeFormRegistrate = (value) => {
+        if (isMounted)
         setSubmitAgeFormRegistrate(value);
     }
     const getValueAgeFormRegistrate = (email) => {
+        if (isMounted){
         setValueInputAgeFormRegistrate(email);
         setVariableEstadoCargadoNewValueAgeFormRegistrate(true);
+        }
     }
     /*fin variables del componente InputName Form Registrate*/
 
     const handleRegButton = async () => {
+        if (isMounted){
         setSubmitAgeFormRegistrate(true);
         setSubmitInputPasswordFormRegistrate(true);
         setSubmitNameFormRegistrate(true);
+        }
     } 
 
     const handleEnter = async () => {
+        if (isMounted){
         setSubmitAgeFormRegistrate(true);
         setSubmitInputPasswordFormRegistrate(true);
         setSubmitNameFormRegistrate(true);
+        }
     }
 
     /*atencion del valor ingresado del componente InputPassword del form Registrate*/
     useEffect(() => {
-        if (variableEstadoCargadoNewValuePasswordFormRegistrate){        
+        if (variableEstadoCargadoNewValuePasswordFormRegistrate){
+            if (isMounted)        
             setVariableEstadoCargadoNewValuePasswordFormRegistrate(false);       
         } 
 
-        if (variableEstadoCargadoNewValueAgeFormRegistrate){        
+        if (variableEstadoCargadoNewValueAgeFormRegistrate){ 
+            if (isMounted)       
             setVariableEstadoCargadoNewValueAgeFormRegistrate(false);       
         } 
 
@@ -157,9 +178,10 @@ function FormRegistrate(props) {
                     }
                 }
             }
+            if (isMounted)
             setVariableEstadoCargadoNewValueNameFormRegistrate(false);       
         }         
-    },[props, checked, valueInputPasswordFormRegistrate, variableEstadoCargadoNewValuePasswordFormRegistrate, variableEstadoCargadoNewValueAgeFormRegistrate, valueInputNameFormRegistrate, variableEstadoCargadoNewValueNameFormRegistrate, valueInputAgeFormRegistrate]);
+    },[props, isMounted, checked, valueInputPasswordFormRegistrate, variableEstadoCargadoNewValuePasswordFormRegistrate, variableEstadoCargadoNewValueAgeFormRegistrate, valueInputNameFormRegistrate, variableEstadoCargadoNewValueNameFormRegistrate, valueInputAgeFormRegistrate]);
     /*fin atencion del valor ingresado del componente InputPassword del form Registrate*/   
 
     const handleTerminosDeSerivicio = () => {
@@ -175,6 +197,7 @@ function FormRegistrate(props) {
     }
 
     const handleChangeChecked = (event) => {
+        if (isMounted)
         setChecked(event.target.checked);
     }
 
@@ -225,7 +248,7 @@ function FormRegistrate(props) {
                     verify={submitAgeFormRegistrate} 
                     style={styleInputAgeFormRegistrate}
                     close={!props.open}
-                    edad={null}
+                    edad={''}
                 />
                 <Typography 
                     variant="caption"

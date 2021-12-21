@@ -25,6 +25,7 @@ import { getFirestore,
 const database = getFirestore();
 
 function FormVerificaCodigoPhoneLink(props) {
+    const [isMounted, setIsMounted] = useState(true);
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
     const [codeVerification, setCodeVerification] = useState('');
     const [value, setValue] = useState('');
@@ -38,6 +39,12 @@ function FormVerificaCodigoPhoneLink(props) {
     
         setOpenMsg(false);
     };
+
+    useEffect(() => {
+        setIsMounted(true);
+        return () => {setIsMounted(false)}
+    }, []);
+
     const styles = (theme) => ({});
     const DialogTitle = withStyles(styles)((props) => {
         const { children, onClose } = props;
@@ -88,24 +95,29 @@ function FormVerificaCodigoPhoneLink(props) {
     }
 
     const handleChange = (value) => {
+        if (isMounted)
         setValue(value)
-      }
+    }
     
     const handleComplete = (value) => {
         emitCustomEvent('openLoadingPage', true);
+        if (isMounted)
         setCodeVerification(value);
     }
 
     useEffect(() => {
         if (props.open){
+            if (isMounted){
             setValue('');
             setCodeVerification('');
+            }
         }             
-    }, [props]);
+    }, [props, isMounted]);
 
     useEffect(() => {
         if (codeVerification !== ''){
             if (props.confirmationResult !== null){
+                if (isMounted)
                 setCodeVerification('');
                 const auth = getAuth();
                 var credential = PhoneAuthProvider.credential(props.confirmationResult.verificationId, codeVerification);
@@ -131,19 +143,23 @@ function FormVerificaCodigoPhoneLink(props) {
                             console.log(error);
                             if (error.code === 'auth/invalid-verification-code'){
                                 emitCustomEvent('openLoadingPage', false);
+                                if (isMounted){
                                 setMsg('El código ingresado es incorrecto.');
                                 setSeverityInfo('error');
                                 setOpenMsg(true);                    
                                 setValue('');
                                 setCodeVerification('');
+                                }
                             }                    
                             if (error.code === 'auth/provider-already-linked'){
                                 emitCustomEvent('openLoadingPage', false);
+                                if (isMounted){
                                 setMsg('Ya tenes un telefono asociado a tu cuenta.');
                                 setSeverityInfo('error');
                                 setOpenMsg(true);                    
                                 setValue('');
                                 setCodeVerification('');
+                                }
                             }                    
                         });    
                     }).catch((error) => {
@@ -166,19 +182,23 @@ function FormVerificaCodigoPhoneLink(props) {
                             console.log(error);
                             if (error.code === 'auth/invalid-verification-code'){
                                 emitCustomEvent('openLoadingPage', false);
+                                if (isMounted){
                                 setMsg('El código ingresado es incorrecto.');
                                 setSeverityInfo('error');
                                 setOpenMsg(true);                    
                                 setValue('');
                                 setCodeVerification('');
+                                }
                             }                    
                             if (error.code === 'auth/provider-already-linked'){
                                 emitCustomEvent('openLoadingPage', false);
+                                if (isMounted){
                                 setMsg('Ya tenes un telefono asociado a tu cuenta.');
                                 setSeverityInfo('error');
                                 setOpenMsg(true);                    
                                 setValue('');
                                 setCodeVerification('');
+                                }
                             }                    
                         });    
                     });
@@ -202,25 +222,29 @@ function FormVerificaCodigoPhoneLink(props) {
                         console.log(error);
                         if (error.code === 'auth/invalid-verification-code'){
                             emitCustomEvent('openLoadingPage', false);
+                            if (isMounted){
                             setMsg('El código ingresado es incorrecto.');
                             setSeverityInfo('error');
                             setOpenMsg(true);                    
                             setValue('');
                             setCodeVerification('');
+                            }
                         }                    
                         if (error.code === 'auth/provider-already-linked'){
                             emitCustomEvent('openLoadingPage', false);
+                            if (isMounted){
                             setMsg('Ya tenes un telefono asociado a tu cuenta.');
                             setSeverityInfo('error');
                             setOpenMsg(true);                    
                             setValue('');
                             setCodeVerification('');
+                            }
                         }                    
                     });    
                 }
             }
         }                
-   }, [props, codeVerification]);
+   }, [props, codeVerification, isMounted]);
 
     return (
         <div>

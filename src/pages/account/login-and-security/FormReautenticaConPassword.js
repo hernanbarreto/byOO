@@ -24,15 +24,18 @@ import { getFirestore,
     doc, 
     getDoc,
     updateDoc,
-    arrayRemove,
-    Timestamp, 
+    arrayRemove, 
     arrayUnion, 
         } from "firebase/firestore";
 import { useAuth } from '../../../services/firebase';
+import { useInitPage } from '../../useInitPage';
 
 function FormReautenticaConPassword(props) {
     const {currentUser} = useAuth();
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
+
+    const {state} = useInitPage();
+    const [isMounted, setIsMounted] = useState(true);
 
     const[ openMsg, setOpenMsg] = useState(false);
     const [severityInfo, setSeverityInfo] = useState('success');
@@ -84,19 +87,32 @@ function FormReautenticaConPassword(props) {
         );
     });
 
+    useEffect(() => {
+        setIsMounted(true);
+        if (state !== null){
+            if (state){
+            }
+        }
+        return () => {setIsMounted(false)}
+    }, [state]);
+
     const handleCloseIniciarSesion = () => {
         props.onGetReturn(true);
         emitCustomEvent('openLoadingPage', false);
     }
 
     /*submit Iniciar sesion*/
-    const handleClickIniciarSesion = () => {      
-        setSubmitInputPasswordFormIniciarSesion(true);        
+    const handleClickIniciarSesion = () => { 
+        if (isMounted){     
+            setSubmitInputPasswordFormIniciarSesion(true);
+        }        
     }
     /*fin submit iniciar sesion*/ 
     
     const handleEnter = () => {
-        setSubmitInputPasswordFormIniciarSesion(true);        
+        if (isMounted){
+            setSubmitInputPasswordFormIniciarSesion(true);
+        }        
     }
 
     const handleRecuperarPassword = () => {
@@ -110,11 +126,15 @@ function FormReautenticaConPassword(props) {
     const [submitPasswordFormIniciarSesion, setSubmitInputPasswordFormIniciarSesion] = useState(false);
     const [variableEstadoCargadoNewValuePasswordFormIniciarSesion, setVariableEstadoCargadoNewValuePasswordFormIniciarSesion] = useState(false);
     const submitValuePasswordFormIniciarSesion = (value) => {
-        setSubmitInputPasswordFormIniciarSesion(value);
+        if (isMounted){
+            setSubmitInputPasswordFormIniciarSesion(value);
+        }
     }
     const getValuePasswordFormIniciarSesion = (password) => {
-        setValueInputPasswordFormIniciarSesion(password);
-        setVariableEstadoCargadoNewValuePasswordFormIniciarSesion(true);
+        if (isMounted){
+            setValueInputPasswordFormIniciarSesion(password);
+            setVariableEstadoCargadoNewValuePasswordFormIniciarSesion(true);
+        }
     }
     /*fin variables de componente InputPassword del form iniciar sesion*/
 
@@ -124,11 +144,13 @@ function FormReautenticaConPassword(props) {
             if ((valueInputPasswordFormIniciarSesion !== '')) {
                 emitCustomEvent('openLoadingPage', true);
                 const auth = getAuth();
-                const antToken = auth.currentUser.accessToken;
+//                const antToken = auth.currentUser.accessToken;
+                const antToken = auth.currentUser.stsTokenManager.refreshToken;
                 const credential = EmailAuthProvider.credential(auth.currentUser.email, valueInputPasswordFormIniciarSesion);
                 reauthenticateWithCredential(auth.currentUser, credential)
                     .then(async() => {
-                        const newToken = auth.currentUser.accessToken;
+//                        const newToken = auth.currentUser.accessToken;
+                        const newToken = auth.currentUser.stsTokenManager.refreshToken;
                         const database = getFirestore();
                         const infoUser = doc(database, "users", currentUser.uid);
                         const docSnap = await getDoc(infoUser);
@@ -141,31 +163,8 @@ function FormReautenticaConPassword(props) {
                                 sessions: arrayRemove(filtered[0])
                             })
                             .then(async()=>{
-                                    await updateDoc(infoUser, {
-                                        sessions: arrayUnion(                
-                                            {
-                                                id: newToken,
-                                                date: Timestamp.now().toMillis(),
-                                                ip: props.details.user[0].ip, 
-                                                browser: props.details.user[1].browser.name,
-                                                os:{
-                                                    name: props.details.user[1].os.name,
-                                                    version: props.details.user[1].os.version,
-                                                },
-                                                location:{
-                                                    city: props.details.user[0].city,//tigre
-                                                    country: props.details.user[0].country_name, //argentina
-                                                    region: props.details.user[0].region,
-                                                    country_code: props.details.user[0].country_code,
-                                                    currency_name: props.details.user[0].currency_name,
-                                                    currency: props.details.user[0].currency,
-                                                    lenguaje: props.details.user[0].languages.split(',')[0],
-                                                    country_tld: props.details.user[0].country_tld,
-                                                },
-                                            }
-                                        )
-                                    }
-                                    )
+                                filtered[0].id = newToken;
+                                await updateDoc(infoUser, {sessions: arrayUnion(filtered[0]) })
                                     .then(()=>{
                                         props.onGetUpdateProfile(true);
                                         emitCustomEvent('openLoadingPage', false);
@@ -216,9 +215,11 @@ function FormReautenticaConPassword(props) {
                         console.log(error);
                         emitCustomEvent('openLoadingPage', false);
                         if (error.code === 'auth/wrong-password'){
-                            setMsg('El password ingresado es incorrecto, no te preocupes volvé a intentarlo')
-                            setSeverityInfo('error')
-                            setOpenMsg(true);
+                            if (isMounted){
+                                setMsg('El password ingresado es incorrecto, no te preocupes volvé a intentarlo')
+                                setSeverityInfo('error')
+                                setOpenMsg(true);
+                            }
                         }
                         if (error.code === 'auth/invalid-email'){
                             emitCustomEvent('showMsg', String('No existe una cuenta asociada a ') + String(props.email) + String('/') + String('error'));
@@ -230,9 +231,11 @@ function FormReautenticaConPassword(props) {
                         }
                     });
             }
-            setVariableEstadoCargadoNewValuePasswordFormIniciarSesion(false);       
+            if (isMounted){
+                setVariableEstadoCargadoNewValuePasswordFormIniciarSesion(false);
+            }       
         }         
-    },[valueInputPasswordFormIniciarSesion, variableEstadoCargadoNewValuePasswordFormIniciarSesion, props, currentUser]);
+    },[isMounted, valueInputPasswordFormIniciarSesion, variableEstadoCargadoNewValuePasswordFormIniciarSesion, props, currentUser]);
     /*fin atencion del valor ingresado del componente InputPassword del form Inicias sesion*/
 
 

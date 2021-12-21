@@ -19,11 +19,17 @@ import Link from '@mui/material/Link';
 import {emitCustomEvent} from 'react-custom-events';
 
 function FormTerminaDeRegistratePhone(props) {
+    const [isMounted, setIsMounted] = useState(true);
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
     const [checked, setChecked] = useState(false);
 
     const styles = (theme) => ({});
-      
+  
+    useEffect(() => {
+        setIsMounted(true);
+        return () => {setIsMounted(false)}
+    }, []);      
+
     const DialogTitle = withStyles(styles)((props) => {
         const { children, onClose } = props;
         return (
@@ -82,11 +88,14 @@ function FormTerminaDeRegistratePhone(props) {
     const [submitNameFormRegistrate, setSubmitNameFormRegistrate] = useState(false);
     const [variableEstadoCargadoNewValueNameFormRegistrate, setVariableEstadoCargadoNewValueNameFormRegistrate] = useState(false);
     const submitValueNameFormRegistrate = (value) => {
+        if (isMounted)
         setSubmitNameFormRegistrate(value);
     }
     const getValueNameFormRegistrate = (name) => {
+        if (isMounted){
         setValueInputNameFormRegistrate(name);
         setVariableEstadoCargadoNewValueNameFormRegistrate(true);
+        }
     }
     /*fin variables del componente InputName Form Registrate*/
 
@@ -96,27 +105,35 @@ function FormTerminaDeRegistratePhone(props) {
     const [submitAgeFormRegistrate, setSubmitAgeFormRegistrate] = useState(false);
     const [variableEstadoCargadoNewValueAgeFormRegistrate, setVariableEstadoCargadoNewValueAgeFormRegistrate] = useState(false);
     const submitValueAgeFormRegistrate = (value) => {
+        if (isMounted)
         setSubmitAgeFormRegistrate(value);
     }
     const getValueAgeFormRegistrate = (email) => {
+        if (isMounted){
         setValueInputAgeFormRegistrate(email);
         setVariableEstadoCargadoNewValueAgeFormRegistrate(true);
+        }
     }
     /*fin variables del componente InputName Form Registrate*/
 
     const handleRegButton = () => {
+        if (isMounted){
         setSubmitAgeFormRegistrate(true);
         setSubmitNameFormRegistrate(true);
+        }
     } 
 
     const handleEnter = () => {
+        if (isMounted){
         setSubmitAgeFormRegistrate(true);
         setSubmitNameFormRegistrate(true);
+        }
     }
 
     /*atencion del valor ingresado del componente InputPassword del form Registrate*/
     useEffect(() => {
-        if (variableEstadoCargadoNewValueAgeFormRegistrate){        
+        if (variableEstadoCargadoNewValueAgeFormRegistrate){
+            if (isMounted)        
             setVariableEstadoCargadoNewValueAgeFormRegistrate(false);       
         } 
 
@@ -131,9 +148,10 @@ function FormTerminaDeRegistratePhone(props) {
                     emitCustomEvent('openLoadingPage', false);
                 }
             }
+            if (isMounted)
             setVariableEstadoCargadoNewValueNameFormRegistrate(false);       
         }          
-    },[props, checked, variableEstadoCargadoNewValueAgeFormRegistrate, valueInputNameFormRegistrate, variableEstadoCargadoNewValueNameFormRegistrate, valueInputAgeFormRegistrate]);
+    },[props, isMounted, checked, variableEstadoCargadoNewValueAgeFormRegistrate, valueInputNameFormRegistrate, variableEstadoCargadoNewValueNameFormRegistrate, valueInputAgeFormRegistrate]);
     /*fin atencion del valor ingresado del componente InputPassword del form Registrate*/   
 
     const handleTerminosDeSerivicio = () => {
@@ -149,6 +167,7 @@ function FormTerminaDeRegistratePhone(props) {
     }
 
     const handleChangeChecked = (event) => {
+        if (isMounted)
         setChecked(event.target.checked);
     }
 
@@ -199,7 +218,7 @@ function FormTerminaDeRegistratePhone(props) {
                     onSubmitValueAge={submitValueAgeFormRegistrate} 
                     close={!props.open}
                     onGetEnter={handleEnter}
-                    edad={null}
+                    edad={''}
                 />
                 <Typography 
                     variant="caption"

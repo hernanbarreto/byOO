@@ -27,8 +27,7 @@ import { getFirestore,
     doc, 
     getDoc,
     updateDoc,
-    arrayRemove,
-    Timestamp, 
+    arrayRemove, 
     arrayUnion, 
         } from "firebase/firestore";
 import '../../login/Login.css';
@@ -69,7 +68,7 @@ var recaptchaVerifier;
 var antTokenPhone;
 const functions = getFunctions();
 const deleteUser = httpsCallable(functions, 'deleteUser');
-const revokeRefreshTokens = httpsCallable(functions, 'revokeRefreshTokens');
+//const revokeRefreshTokens = httpsCallable(functions, 'revokeRefreshTokens');
 const getUser = httpsCallable(functions, 'getUser');
 const getUserByPhoneNumber = httpsCallable(functions, 'getUserByPhoneNumber');
 
@@ -141,8 +140,10 @@ function LoginAndSecurity(details) {
     const [openFormReautenticaConGoogle, setOpenFormReautenticaConGoogle] = useState(false);
     const [openFormReautenticaConFacebook, setOpenFormReautenticaConFacebook] = useState(false);
     const [openFormReautenticaConPhone, setOpenFormReautenticaConPhone] = useState(false);
+    const [passwordUpdateAt, setPasswordUpdateAt] = useState(null);
 
     const handleUpdateProfile = useCallback(async () => {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }    
         const infoUser = doc(database, "users", currentUser.uid);
         try{                                  
             const docSnap = await getDoc(infoUser);
@@ -164,6 +165,7 @@ function LoginAndSecurity(details) {
                             }
                             if(item.providerId === 'password'){
                                 setPasswordProvider(true);
+                                setPasswordUpdateAt(new Date(currentUser.reloadUserInfo.passwordUpdatedAt).toLocaleDateString(docSnap.data().account.created.location.lenguaje, options) + ' ' + new Date(currentUser.reloadUserInfo.passwordUpdatedAt).toLocaleTimeString());
                             }
                         });
                         if (currentUser.providerData.length === 1){
@@ -244,6 +246,7 @@ function LoginAndSecurity(details) {
         setCountryCode(null);
         setPhoneNumber(null);
         setCerrarProbar(false);
+        setPasswordUpdateAt(null);
         sessions = [];
         }
     },[isMounted]);
@@ -261,18 +264,24 @@ function LoginAndSecurity(details) {
 
 
     const handleEliminarCuenta = () => {
-        setOpenFormEliminarCuenta(true);
+        if (isMounted){
+            setOpenFormEliminarCuenta(true);
+        }
     } 
 
     const handleClose = () => {
-        setOpenFormEliminarCuenta(false);
-        clearStates();
-        handleUpdateProfile();  
+        if (isMounted){
+            setOpenFormEliminarCuenta(false);
+            clearStates();
+            handleUpdateProfile();
+        }  
     }
 
     const handleEliminar = () => {
-        setOpenFormEliminarCuenta(false);
         emitCustomEvent('openLoadingPage', true);
+        if (isMounted){
+            setOpenFormEliminarCuenta(false);
+        }
         deleteUser(currentUser.uid)
         .then(()=>{
             logout()
@@ -322,27 +331,65 @@ function LoginAndSecurity(details) {
         </Typography>,
     ];    
     
-    const handleCerrarSesiones = () => {
-        if (currentUser){
-            emitCustomEvent('openLoadingPage', true);
-            revokeRefreshTokens(currentUser.uid)
-            .then(() => {
-            return getUser(currentUser.uid);
-            })
-            .then((userRecord) => {
-            return new Date(userRecord.data.tokensValidAfterTime).getTime()/1000;
-            })
-            .then((timestamp) => {
-                logout()
-                .then(()=>{
-                    emitCustomEvent('openLoadingPage', false);
-                })
-                .catch((error)=>{
-                    emitCustomEvent('openLoadingPage', false);
-                });
-            });
-        }
-    }
+//    const handleCerrarSesiones = () => {
+//        if (currentUser){
+//            emitCustomEvent('openLoadingPage', true);
+//            revokeRefreshTokens(currentUser.uid)
+//            .then(() => {
+//            return getUser(currentUser.uid);
+//            })
+//            .then((userRecord) => {
+//            return new Date(userRecord.data.tokensValidAfterTime).getTime()/1000;
+//            })
+//            .then((timestamp) => {
+//                logout()
+//                .then(()=>{
+//                    emitCustomEvent('openLoadingPage', false);
+//                })
+//                .catch((error)=>{
+//                    emitCustomEvent('openLoadingPage', false);
+//                });
+//            });
+//        }
+//    }
+
+//const handleCerrarSesiones = async () => {
+//    if (currentUser){
+//        emitCustomEvent('openLoadingPage', true);
+//        const infoUser = doc(database, "users", currentUser.uid);
+//        const docSnap = await getDoc(infoUser);
+//        if (docSnap.exists()) {
+//            docSnap.data().sessions.forEach(async function(element) {
+//                await updateDoc(infoUser, {
+//                    sessions: arrayRemove(element)
+//                })
+//                .then((result)=>{
+//                    console.log(result);
+//                })
+//                .catch((error)=>{
+//                    console.log(error);
+//                });
+//            });
+//            logout()
+//            .then(()=>{
+//                emitCustomEvent('openLoadingPage', false);
+//            })
+//            .catch((error)=>{
+//                emitCustomEvent('openLoadingPage', false);
+//            });
+//        }else{
+//            logout()
+//            .then(()=>{
+//                emitCustomEvent('openLoadingPage', false);
+//                emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta.');
+//            })
+//            .catch((error)=>{
+//                emitCustomEvent('openLoadingPage', false);
+//                emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta.');
+//            });
+//        }                    
+//    }
+//}
 
     const handleCLoseSessionDevice = useCallback(async (i) => {
         emitCustomEvent('openLoadingPage', true);
@@ -358,7 +405,8 @@ function LoginAndSecurity(details) {
                 sessions: arrayRemove(filtered[0])
             })
             .then(()=>{
-                if (sessions[i].id === currentUser.accessToken){
+//                if (sessions[i].id === currentUser.accessToken){
+                if (sessions[i].id === currentUser.stsTokenManager.refreshToken){
                     clearStates();
                     handleUpdateProfile();    
                     logout()
@@ -375,7 +423,8 @@ function LoginAndSecurity(details) {
                 }        
             })
             .catch(()=>{
-                if (sessions[i].id === currentUser.accessToken){
+//                if (sessions[i].id === currentUser.accessToken){
+                if (sessions[i].id === currentUser.stsTokenManager.refreshToken){
                     clearStates();
                     handleUpdateProfile();    
                     logout()
@@ -392,7 +441,8 @@ function LoginAndSecurity(details) {
                 }        
             });
           }else{
-            if (sessions[i].id === currentUser.accessToken){
+//            if (sessions[i].id === currentUser.accessToken){
+            if (sessions[i].id === currentUser.stsTokenManager.refreshToken){
                 clearStates();
                 handleUpdateProfile();    
                 logout()
@@ -455,7 +505,8 @@ function LoginAndSecurity(details) {
                         marginBottom: '0px',
                     }}
                 >
-                    {(sessions[index].id === currentUser.accessToken) ?
+                    {/*{(sessions[index].id === currentUser.accessToken) ?*/}
+                    {(sessions[index].id === currentUser.stsTokenManager.refreshToken) ?
                         <Chip size='small' color='success' label="SESIÓN ACTUAL" sx={{fontSize:'10px', maxWidth: '100px'}}/>
                     :null
                     }
@@ -503,16 +554,20 @@ function LoginAndSecurity(details) {
             unlink(auth.currentUser, 'facebook.com')
             .then(() => {
                 emitCustomEvent('openLoadingPage', false);
-                clearStates();
-                handleUpdateProfile();                    
-                setMsg('Se ha desvinculado el ingreso mediante Facebook');
-                setSeverityInfo('info');
-                setOpenMsg(true);  
+                if (isMounted){
+                    clearStates();
+                    handleUpdateProfile();                    
+                    setMsg('Se ha desvinculado el ingreso mediante Facebook');
+                    setSeverityInfo('info');
+                    setOpenMsg(true);
+                }  
             }).catch((error) => {
                 emitCustomEvent('openLoadingPage', false);
-                setMsg('Ha ocurrido un error al intentar desvincular el ingreso mediante Facebook de tu cuenta');
-                setSeverityInfo('error');
-                setOpenMsg(true);                      
+                if (isMounted){
+                    setMsg('Ha ocurrido un error al intentar desvincular el ingreso mediante Facebook de tu cuenta');
+                    setSeverityInfo('error');
+                    setOpenMsg(true);
+                }                      
             });
         }
     }
@@ -520,14 +575,16 @@ function LoginAndSecurity(details) {
     const responseFacebook = (response) => {
         //esta vinculando
         const auth = getAuth();
-        const antToken = auth.currentUser.accessToken;
+//        const antToken = auth.currentUser.accessToken;
+        const antToken = auth.currentUser.stsTokenManager.refreshToken;
         const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
             unsubscribe();
             if (!isUserEqualF(response, firebaseUser)) {
                 const credential = FacebookAuthProvider.credential(response.accessToken);
                 linkWithCredential(auth.currentUser, credential)
                 .then(async() => {
-                    const newToken = auth.currentUser.accessToken;
+//                    const newToken = auth.currentUser.accessToken;
+                    const newToken = auth.currentUser.stsTokenManager.refreshToken;
                     const database = getFirestore();
                     const infoUser = doc(database, "users", currentUser.uid);
                     const docSnap = await getDoc(infoUser);
@@ -540,38 +597,17 @@ function LoginAndSecurity(details) {
                             sessions: arrayRemove(filtered[0])
                         })
                         .then(async()=>{
-                                await updateDoc(infoUser, {
-                                    sessions: arrayUnion(                
-                                        {
-                                            id: newToken,
-                                            date: Timestamp.now().toMillis(),
-                                            ip: details.user[0].ip, 
-                                            browser: details.user[1].browser.name,
-                                            os:{
-                                                name: details.user[1].os.name,
-                                                version: details.user[1].os.version,
-                                            },
-                                            location:{
-                                                city: details.user[0].city,//tigre
-                                                country: details.user[0].country_name, //argentina
-                                                region: details.user[0].region,
-                                                country_code: details.user[0].country_code,
-                                                currency_name: details.user[0].currency_name,
-                                                currency: details.user[0].currency,
-                                                lenguaje: details.user[0].languages.split(',')[0],
-                                                country_tld: details.user[0].country_tld,
-                                            },
-                                        }
-                                    )
-                                }
-                                )
+                                filtered[0].id = newToken;
+                                await updateDoc(infoUser, {sessions: arrayUnion(filtered[0]) })
                                 .then(()=>{
                                     emitCustomEvent('openLoadingPage', false);
-                                    clearStates();
-                                    handleUpdateProfile();                    
-                                    setMsg('Se ha vinculado el ingreso mediante Facebook');
-                                    setSeverityInfo('success');
-                                    setOpenMsg(true);        
+                                    if (isMounted){
+                                        clearStates();
+                                        handleUpdateProfile();                    
+                                        setMsg('Se ha vinculado el ingreso mediante Facebook');
+                                        setSeverityInfo('success');
+                                        setOpenMsg(true);
+                                    }        
                                 })
                                 .catch((error)=>{
                                     logout()
@@ -612,19 +648,23 @@ function LoginAndSecurity(details) {
                     }
                 }).catch((error) => {
                     emitCustomEvent('openLoadingPage', false);
-                    clearStates();
-                    handleUpdateProfile();                    
-                    setMsg('No se hemos podido vincular el acceso mediante Fecebook a tu cuenta. Prueba con otra cuenta de Fecebook');
-                    setSeverityInfo('error');
-                    setOpenMsg(true);        
+                    if (isMounted){
+                        clearStates();
+                        handleUpdateProfile();                    
+                        setMsg('No se hemos podido vincular el acceso mediante Fecebook a tu cuenta. Prueba con otra cuenta de Fecebook');
+                        setSeverityInfo('error');
+                        setOpenMsg(true);
+                    }        
                 });
             } else {
                 emitCustomEvent('openLoadingPage', false);
-                clearStates();
-                handleUpdateProfile();                    
-                setMsg('No se hemos podido vincular el acceso mediante Fecebook a tu cuenta.');
-                setSeverityInfo('error');
-                setOpenMsg(true);        
+                if (isMounted){
+                    clearStates();
+                    handleUpdateProfile();                    
+                    setMsg('No se hemos podido vincular el acceso mediante Fecebook a tu cuenta.');
+                    setSeverityInfo('error');
+                    setOpenMsg(true);
+                }        
             }
             });    
     }
@@ -645,11 +685,13 @@ function LoginAndSecurity(details) {
 
     const handleErrorFacebook = () => {
         emitCustomEvent('openLoadingPage', false);
-        clearStates();
-        handleUpdateProfile();                    
-        setMsg('No se hemos podido vincular el acceso mediante Fecebook a tu cuenta.');
-        setSeverityInfo('error');
-        setOpenMsg(true);        
+        if (isMounted){
+            clearStates();
+            handleUpdateProfile();                    
+            setMsg('No se hemos podido vincular el acceso mediante Fecebook a tu cuenta.');
+            setSeverityInfo('error');
+            setOpenMsg(true);
+        }        
     }
 
 
@@ -672,40 +714,48 @@ function LoginAndSecurity(details) {
             unlink(auth.currentUser, 'google.com')
             .then(() => {
                 emitCustomEvent('openLoadingPage', false);
-                clearStates();
-                handleUpdateProfile();                    
-                setMsg('Se ha desvinculado el ingreso mediante Google');
-                setSeverityInfo('info');
-                setOpenMsg(true);  
+                if (isMounted){
+                    clearStates();
+                    handleUpdateProfile();                    
+                    setMsg('Se ha desvinculado el ingreso mediante Google');
+                    setSeverityInfo('info');
+                    setOpenMsg(true);
+                }  
             }).catch((error) => {
                 emitCustomEvent('openLoadingPage', false);
-                setMsg('Ha ocurrido un error al intentar desvincular el ingreso mediante Google de tu cuenta');
-                setSeverityInfo('error');
-                setOpenMsg(true);                      
+                if (isMounted){
+                    setMsg('Ha ocurrido un error al intentar desvincular el ingreso mediante Google de tu cuenta');
+                    setSeverityInfo('error');
+                    setOpenMsg(true);
+                }                      
             });
         }
     }
 
     const responseGoogleError = () => {
         emitCustomEvent('openLoadingPage', false);
-        clearStates();
-        handleUpdateProfile();                    
-        setMsg('No se hemos podido vincular el acceso mediante Google a tu cuenta.');
-        setSeverityInfo('error');
-        setOpenMsg(true);        
+        if (isMounted){
+            clearStates();
+            handleUpdateProfile();                    
+            setMsg('No se hemos podido vincular el acceso mediante Google a tu cuenta.');
+            setSeverityInfo('error');
+            setOpenMsg(true);
+        }        
     }
 
     const responseGoogleSuccess = (googleUser) => {
         //esta vinculando
         const auth = getAuth();
-        const antToken = auth.currentUser.accessToken;
+//        const antToken = auth.currentUser.accessToken;
+        const antToken = auth.currentUser.stsTokenManager.refreshToken;
         const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
             unsubscribe();
             if (!isUserEqualG(googleUser, firebaseUser)) {
                 const credential = GoogleAuthProvider.credential(googleUser.getAuthResponse().id_token);
                 linkWithCredential(auth.currentUser, credential)
                 .then(async() => {
-                    const newToken = auth.currentUser.accessToken;
+//                    const newToken = auth.currentUser.accessToken;
+                    const newToken = auth.currentUser.stsTokenManager.refreshToken;
                     const database = getFirestore();
                     const infoUser = doc(database, "users", currentUser.uid);
                     const docSnap = await getDoc(infoUser);
@@ -718,38 +768,17 @@ function LoginAndSecurity(details) {
                             sessions: arrayRemove(filtered[0])
                         })
                         .then(async()=>{
-                                await updateDoc(infoUser, {
-                                    sessions: arrayUnion(                
-                                        {
-                                            id: newToken,
-                                            date: Timestamp.now().toMillis(),
-                                            ip: details.user[0].ip, 
-                                            browser: details.user[1].browser.name,
-                                            os:{
-                                                name: details.user[1].os.name,
-                                                version: details.user[1].os.version,
-                                            },
-                                            location:{
-                                                city: details.user[0].city,//tigre
-                                                country: details.user[0].country_name, //argentina
-                                                region: details.user[0].region,
-                                                country_code: details.user[0].country_code,
-                                                currency_name: details.user[0].currency_name,
-                                                currency: details.user[0].currency,
-                                                lenguaje: details.user[0].languages.split(',')[0],
-                                                country_tld: details.user[0].country_tld,
-                                            },
-                                        }
-                                    )
-                                }
-                                )
+                                filtered[0].id = newToken;
+                                await updateDoc(infoUser, {sessions: arrayUnion(filtered[0]) })
                                 .then(()=>{
                                     emitCustomEvent('openLoadingPage', false);
-                                    clearStates();
-                                    handleUpdateProfile();                    
-                                    setMsg('Se ha vinculado el ingreso mediante Google');
-                                    setSeverityInfo('success');
-                                    setOpenMsg(true);        
+                                    if (isMounted){
+                                        clearStates();
+                                        handleUpdateProfile();                    
+                                        setMsg('Se ha vinculado el ingreso mediante Google');
+                                        setSeverityInfo('success');
+                                        setOpenMsg(true);
+                                    }        
                                 })
                                 .catch((error)=>{
                                     logout()
@@ -790,19 +819,23 @@ function LoginAndSecurity(details) {
                     }
                 }).catch((error) => {
                     emitCustomEvent('openLoadingPage', false);
-                    clearStates();
-                    handleUpdateProfile();                    
-                    setMsg('No se hemos podido vincular el acceso mediante Google a tu cuenta. Prueba con otra cuenta de Google');
-                    setSeverityInfo('error');
-                    setOpenMsg(true);        
+                    if (isMounted){
+                        clearStates();
+                        handleUpdateProfile();                    
+                        setMsg('No se hemos podido vincular el acceso mediante Google a tu cuenta. Prueba con otra cuenta de Google');
+                        setSeverityInfo('error');
+                        setOpenMsg(true);
+                    }        
                 });
             }else {
                 emitCustomEvent('openLoadingPage', false);
-                clearStates();
-                handleUpdateProfile();                    
-                setMsg('No se hemos podido vincular el acceso mediante Google a tu cuenta.');
-                setSeverityInfo('error');
-                setOpenMsg(true);        
+                if (isMounted){
+                    clearStates();
+                    handleUpdateProfile();                    
+                    setMsg('No se hemos podido vincular el acceso mediante Google a tu cuenta.');
+                    setSeverityInfo('error');
+                    setOpenMsg(true);
+                }        
             }
         });  
     }
@@ -822,8 +855,10 @@ function LoginAndSecurity(details) {
     }
 
     const handleVincularPhone = () => {
-        setActualizarPhone(false);
-        setSubmitCountrySelectPhoneFormPrincipal(true);
+        if (isMounted){
+            setActualizarPhone(false);
+            setSubmitCountrySelectPhoneFormPrincipal(true);
+        }
     }
 
     const handleDesvincularPhone = () => {
@@ -850,25 +885,31 @@ function LoginAndSecurity(details) {
                 })
                 .then(()=>{
                     emitCustomEvent('openLoadingPage', false);
-                    clearStates();
-                    handleUpdateProfile();                    
-                    setMsg('Se ha desvinculado el ingreso mediante número telefónico');
-                    setSeverityInfo('info');
-                    setOpenMsg(true);      
+                    if (isMounted){
+                        clearStates();
+                        handleUpdateProfile();                    
+                        setMsg('Se ha desvinculado el ingreso mediante número telefónico');
+                        setSeverityInfo('info');
+                        setOpenMsg(true);
+                    }      
                 })
                 .catch(()=>{
                     emitCustomEvent('openLoadingPage', false);
-                    clearStates();
-                    handleUpdateProfile();                    
-                    setMsg('Se ha desvinculado el ingreso mediante número telefónico');
-                    setSeverityInfo('info');
-                    setOpenMsg(true);      
+                    if (isMounted){
+                        clearStates();
+                        handleUpdateProfile();                    
+                        setMsg('Se ha desvinculado el ingreso mediante número telefónico');
+                        setSeverityInfo('info');
+                        setOpenMsg(true);
+                    }      
                 });
             }).catch((error) => {
                 emitCustomEvent('openLoadingPage', false);
-                setMsg('Ha ocurrido un error al intentar desvincular el ingreso mediante número telefónico de tu cuenta');
-                setSeverityInfo('error');
-                setOpenMsg(true);                      
+                if (isMounted){
+                    setMsg('Ha ocurrido un error al intentar desvincular el ingreso mediante número telefónico de tu cuenta');
+                    setSeverityInfo('error');
+                    setOpenMsg(true);
+                }                      
             });
         }
     }
@@ -880,54 +921,78 @@ function LoginAndSecurity(details) {
     const [variableEstadoCargadoNewValuePhoneFormPrincipal, setVariableEstadoCargadoNewValuePhoneFormPrincipal] = useState(false);
     const [countryCode, setCountryCode] = useState(null);
     const submitValuePhoneFormPicnipal = (value) => {
-        setSubmitCountrySelectPhoneFormPrincipal(value);
+        if (isMounted){
+            setSubmitCountrySelectPhoneFormPrincipal(value);
+        }
     }
     const getValuePhoneCountrySelectPhoneFormPrincipal = (phone) => {
-        setValueInputPhoneFormPrincipal(phone[0]);
-        setCountryCode(phone[1].code);
-        setVariableEstadoCargadoNewValuePhoneFormPrincipal(true);
+        if (isMounted){
+            setValueInputPhoneFormPrincipal(phone[0]);
+            setCountryCode(phone[1].code);
+            setVariableEstadoCargadoNewValuePhoneFormPrincipal(true);
+        }
     }
     /*fin variables de componente CountrySelectPhone*/
 
     const handleEnter = () => {
         if (txtBtnContinuar === 'Actualizar'){
             if (phoneProvider){
-                setCerrarProbar(true);
-                setActualizarPhone(true);
+                if (isMounted){
+                    setCerrarProbar(true);
+                    setActualizarPhone(true);
+                }
             }else{
-                setActualizarPhone(false);
+                if (isMounted){
+                    setActualizarPhone(false);
+                }
             }
-            setSubmitCountrySelectPhoneFormPrincipal(true);
+            if (isMounted){
+                setSubmitCountrySelectPhoneFormPrincipal(true);
+            }
         }else{
-            setCerrarProbar(false);
+            if (isMounted){
+                setCerrarProbar(false);
+            }
             if (recaptchaVerifier !== undefined)
                 if (!recaptchaVerifier.destroyed) 
                     recaptchaVerifier.clear();
-            clearStates();
-            handleUpdateProfile();                                
-            setTxtBtnContinuar('Actualizar');
-            setClassNameBtnContinuar('button__log__continuar');
+            if (isMounted){
+                clearStates();
+                handleUpdateProfile();                                
+                setTxtBtnContinuar('Actualizar');
+                setClassNameBtnContinuar('button__log__continuar');
+            }
         }
     }
 
     const handleClickContinuar = () => {
         if (txtBtnContinuar === 'Actualizar'){
             if (phoneProvider){
-                setCerrarProbar(true);
-                setActualizarPhone(true);
+                if (isMounted){
+                    setCerrarProbar(true);
+                    setActualizarPhone(true);
+                }
             }else{
-                setActualizarPhone(false);
+                if (isMounted){
+                    setActualizarPhone(false);
+                }
             }
-            setSubmitCountrySelectPhoneFormPrincipal(true);
+            if (isMounted){
+                setSubmitCountrySelectPhoneFormPrincipal(true);
+            }
         }else{
-            setCerrarProbar(false);
+            if (isMounted){
+                setCerrarProbar(false);
+            }
             if (recaptchaVerifier !== undefined)
                 if (!recaptchaVerifier.destroyed) 
                     recaptchaVerifier.clear();
-            clearStates();
-            handleUpdateProfile();                                
-            setTxtBtnContinuar('Actualizar');
-            setClassNameBtnContinuar('button__log__continuar');
+            if (isMounted){
+                clearStates();
+                handleUpdateProfile();                                
+                setTxtBtnContinuar('Actualizar');
+                setClassNameBtnContinuar('button__log__continuar');
+            }
         }
     }
 
@@ -942,19 +1007,21 @@ function LoginAndSecurity(details) {
                     if (recaptchaVerifier !== undefined)
                         if (!recaptchaVerifier.destroyed) 
                             recaptchaVerifier.clear();
-                    clearStates();
-                    handleUpdateProfile();                                                
-                    setTxtBtnContinuar('Actualizar');
-                    setClassNameBtnContinuar('button__log__continuar');        
-                    if (userRecord.data.uid === currentUser.uid){
-                        //el usuario existe
-                        setMsg('El número ' + String(valueInputPhoneFormPrincipal) + ' ya se encuentra asociado a tu cuenta.');
-                    }else{
-                        //el usuario existe
-                        setMsg('El número ' + String(valueInputPhoneFormPrincipal) + ' ya se encuentra asociado a otra cuenta.');
+                    if (isMounted){
+                        clearStates();
+                        handleUpdateProfile();                                                
+                        setTxtBtnContinuar('Actualizar');
+                        setClassNameBtnContinuar('button__log__continuar');      
+                        if (userRecord.data.uid === currentUser.uid){
+                            //el usuario existe
+                            setMsg('El número ' + String(valueInputPhoneFormPrincipal) + ' ya se encuentra asociado a tu cuenta.');
+                        }else{
+                            //el usuario existe
+                            setMsg('El número ' + String(valueInputPhoneFormPrincipal) + ' ya se encuentra asociado a otra cuenta.');
+                        }
+                        setSeverityInfo('error');
+                        setOpenMsg(true);
                     }
-                    setSeverityInfo('error');
-                    setOpenMsg(true);
                 })
                 .catch((error) => {
                     const auth = getAuth();
@@ -964,9 +1031,12 @@ function LoginAndSecurity(details) {
                         size: 'normal', // 'normal, invisible' or 'compact'
                         badge: 'inline' //' bottomright' or 'inline' applies to invisible.                    
                     }, auth);                    
-                    antTokenPhone = auth.currentUser.accessToken;
-                    setTxtBtnContinuar('Cancelar');
-                    setClassNameBtnContinuar('button__log__BW');
+//                    antTokenPhone = auth.currentUser.accessToken;
+                    antTokenPhone = auth.currentUser.stsTokenManager.refreshToken;
+                    if (isMounted){
+                        setTxtBtnContinuar('Cancelar');
+                        setClassNameBtnContinuar('button__log__BW');
+                    }
                     emitCustomEvent('openLoadingPage', false);                    
                     signInWithPhoneNumber(auth, valueInputPhoneFormPrincipal, recaptchaVerifier)
                     .then((result) => {
@@ -974,8 +1044,10 @@ function LoginAndSecurity(details) {
                         if (recaptchaVerifier !== undefined)
                             if (!recaptchaVerifier.destroyed) 
                                 recaptchaVerifier.clear();
-                        setConfirmationResult(result);
-                        setOpenFormVerificaCodigoPhone(true);
+                        if (isMounted){
+                            setConfirmationResult(result);
+                            setOpenFormVerificaCodigoPhone(true);
+                        }
                         emitCustomEvent('openLoadingPage', false);
                     }).catch((error) => {
                         // Error; SMS not sent
@@ -983,32 +1055,39 @@ function LoginAndSecurity(details) {
                         if (recaptchaVerifier !== undefined)
                             if (!recaptchaVerifier.destroyed) 
                                 recaptchaVerifier.clear();
-                        clearStates();
-                        handleUpdateProfile();                                                
-                        setTxtBtnContinuar('Actualizar');
-                        setClassNameBtnContinuar('button__log__continuar');
-                        setMsg('No pudimos enviar el SMS al número de teléfono ' + String(valueInputPhoneFormPrincipal));
-                        setSeverityInfo('error');
+                        if (isMounted){                        
+                            clearStates();
+                            handleUpdateProfile();                                                
+                            setTxtBtnContinuar('Actualizar');
+                            setClassNameBtnContinuar('button__log__continuar');
+                            setMsg('No pudimos enviar el SMS al número de teléfono ' + String(valueInputPhoneFormPrincipal));
+                            setSeverityInfo('error');
+                            setOpenMsg(true);
+                        }                    
                         emitCustomEvent('openLoadingPage', false);
-                        setOpenMsg(true);                    
                     });
                 });
              }else{
                 emitCustomEvent('openLoadingPage', false);
-                setMsg('No ingresaste un número de teléfono válido');
-                setSeverityInfo('error');
-                setOpenMsg(true);                    
+                if (isMounted){
+                    setMsg('No ingresaste un número de teléfono válido');
+                    setSeverityInfo('error');
+                    setOpenMsg(true);
+                }                    
             }
             setVariableEstadoCargadoNewValuePhoneFormPrincipal(false);       
         }         
-    },[details, currentUser, valueInputPhoneFormPrincipal, variableEstadoCargadoNewValuePhoneFormPrincipal, clearStates, handleUpdateProfile]);
+    },[details, isMounted, currentUser, valueInputPhoneFormPrincipal, variableEstadoCargadoNewValuePhoneFormPrincipal, clearStates, handleUpdateProfile]);
     /*fin atencion del valor ingresado del componente CountrySelectPhone*/
 
     const handleLinkedPhone = async() => {
-        setTxtBtnContinuar('Actualizar');
-        setClassNameBtnContinuar('button__log__continuar');
+        if (isMounted){
+            setTxtBtnContinuar('Actualizar');
+            setClassNameBtnContinuar('button__log__continuar');
+        }
         const auth = getAuth();
-        const newToken = auth.currentUser.accessToken;
+//        const newToken = auth.currentUser.accessToken;
+        const newToken = auth.currentUser.stsTokenManager.refreshToken;
         const database = getFirestore();
         const infoUser = doc(database, "users", currentUser.uid);
         const docSnap = await getDoc(infoUser);
@@ -1021,39 +1100,18 @@ function LoginAndSecurity(details) {
                     sessions: arrayRemove(filtered[0])
                 })
                 .then(async()=>{
-                    await updateDoc(infoUser, {
-                        sessions: arrayUnion(                
-                            {
-                                id: newToken,
-                                date: Timestamp.now().toMillis(),
-                                ip: details.user[0].ip, 
-                                browser: details.user[1].browser.name,
-                                os:{
-                                    name: details.user[1].os.name,
-                                    version: details.user[1].os.version,
-                                },
-                                location:{
-                                    city: details.user[0].city,//tigre
-                                    country: details.user[0].country_name, //argentina
-                                    region: details.user[0].region,
-                                    country_code: details.user[0].country_code,
-                                    currency_name: details.user[0].currency_name,
-                                    currency: details.user[0].currency,
-                                    lenguaje: details.user[0].languages.split(',')[0],
-                                    country_tld: details.user[0].country_tld,
-                                },
-                            }
-                        )
-                    }
-                    )
+                    filtered[0].id = newToken;
+                    await updateDoc(infoUser, {sessions: arrayUnion(filtered[0]) })
                     .then(()=>{
-                        setOpenFormVerificaCodigoPhone(false);
-                        clearStates();
-                        handleUpdateProfile();                    
+                        if (isMounted){
+                            setOpenFormVerificaCodigoPhone(false);
+                            clearStates();
+                            handleUpdateProfile();                    
+                            setMsg('Ya podés ingresar a byOO con ' + String(valueInputPhoneFormPrincipal));
+                            setSeverityInfo('success');
+                            setOpenMsg(true);
+                        }                    
                         emitCustomEvent('openLoadingPage', false);
-                        setMsg('Ya podés ingresar a byOO con ' + String(valueInputPhoneFormPrincipal));
-                        setSeverityInfo('success');
-                        setOpenMsg(true);                    
                     })
                     .catch((error)=>{
                         logout()
@@ -1095,11 +1153,13 @@ function LoginAndSecurity(details) {
     }
 
     const handleReturnFormVerificaCodigoPhone =() => {
-        clearStates();
-        handleUpdateProfile();                    
-        setTxtBtnContinuar('Actualizar');
-        setClassNameBtnContinuar('button__log__continuar');
-        setOpenFormVerificaCodigoPhone(false);
+        if (isMounted){
+            clearStates();
+            handleUpdateProfile();                    
+            setTxtBtnContinuar('Actualizar');
+            setClassNameBtnContinuar('button__log__continuar');
+            setOpenFormVerificaCodigoPhone(false);
+        }
     }
 
     /*variables del componente InputEmail Form Principal*/
@@ -1107,11 +1167,15 @@ function LoginAndSecurity(details) {
     const [submitEmailFormPrincipal, setSubmitEmailFormPrincipal] = useState(false);
     const [variableEstadoCargadoNewValueEmailFormPrincipal, setVariableEstadoCargadoNewValueEmailFormPrincipal] = useState(false);
     const submitValueEmailFormPrincipal = (value) => {
-        setSubmitEmailFormPrincipal(value);
+        if (isMounted){
+            setSubmitEmailFormPrincipal(value);
+        }
     }
     const getValueEmailFormPrincipal = (email) => {
-        setUserMail(email);
-        setVariableEstadoCargadoNewValueEmailFormPrincipal(true);
+        if (isMounted){
+            setUserMail(email);
+            setVariableEstadoCargadoNewValueEmailFormPrincipal(true);
+        }
     }
     /*fin variables del componente InputEmail Form Principal*/
 
@@ -1121,11 +1185,15 @@ function LoginAndSecurity(details) {
     const [submitPasswordFormRegistrate1, setSubmitInputPasswordFormRegistrate1] = useState(false);
     const [variableEstadoCargadoNewValuePasswordFormRegistrate1, setVariableEstadoCargadoNewValuePasswordFormRegistrate1] = useState(false);
     const submitValuePasswordFormRegistrate1 = (value) => {
-        setSubmitInputPasswordFormRegistrate1(value);
+        if (isMounted){
+            setSubmitInputPasswordFormRegistrate1(value);
+        }
     }
     const getValuePasswordFormRegistrate1 = (password) => {
-        setValueInputPasswordFormRegistrate1(password);
-        setVariableEstadoCargadoNewValuePasswordFormRegistrate1(true);
+        if (isMounted){
+            setValueInputPasswordFormRegistrate1(password);
+            setVariableEstadoCargadoNewValuePasswordFormRegistrate1(true);
+        }
     }
     /*fin variables de componente InputPassword del form Registrate*/
 
@@ -1135,22 +1203,30 @@ function LoginAndSecurity(details) {
     const [submitPasswordFormRegistrate2, setSubmitInputPasswordFormRegistrate2] = useState(false);
     const [variableEstadoCargadoNewValuePasswordFormRegistrate2, setVariableEstadoCargadoNewValuePasswordFormRegistrate2] = useState(false);
     const submitValuePasswordFormRegistrate2 = (value) => {
-        setSubmitInputPasswordFormRegistrate2(value);
+        if (isMounted){
+            setSubmitInputPasswordFormRegistrate2(value);
+        }
     }
     const getValuePasswordFormRegistrate2 = (password) => {
-        setValueInputPasswordFormRegistrate2(password);
-        setVariableEstadoCargadoNewValuePasswordFormRegistrate2(true);
+        if (isMounted){
+            setValueInputPasswordFormRegistrate2(password);
+            setVariableEstadoCargadoNewValuePasswordFormRegistrate2(true);
+        }
     }
     /*fin variables de componente InputPassword del form Registrate*/
     
     /*atencion del valor ingresado del componente Input Email del form principal*/
     useEffect(() => {    
-        if (variableEstadoCargadoNewValuePasswordFormRegistrate1){        
-            setVariableEstadoCargadoNewValuePasswordFormRegistrate1(false);       
+        if (variableEstadoCargadoNewValuePasswordFormRegistrate1){
+            if (isMounted){        
+                setVariableEstadoCargadoNewValuePasswordFormRegistrate1(false); 
+            }      
         }         
 
-        if (variableEstadoCargadoNewValuePasswordFormRegistrate2){        
-            setVariableEstadoCargadoNewValuePasswordFormRegistrate2(false);       
+        if (variableEstadoCargadoNewValuePasswordFormRegistrate2){
+            if (isMounted){        
+                setVariableEstadoCargadoNewValuePasswordFormRegistrate2(false);
+            }       
         }                 
 
         if (variableEstadoCargadoNewValueEmailFormPrincipal){
@@ -1159,7 +1235,8 @@ function LoginAndSecurity(details) {
                     if ((userEmail !== '')&&(userEmail !== null)) {
                         if (valueInputPasswordFormRegistrate1 === valueInputPasswordFormRegistrate2){
                             const auth = getAuth();
-                            const antToken = auth.currentUser.accessToken;
+//                            const antToken = auth.currentUser.accessToken;
+                            const antToken = auth.currentUser.stsTokenManager.refreshToken;
                             fetchSignInMethodsForEmail(auth, userEmail)
                             .then(providers => {
                                 if (providers.length === 0){
@@ -1167,7 +1244,8 @@ function LoginAndSecurity(details) {
                                     const credential = EmailAuthProvider.credential(userEmail, valueInputPasswordFormRegistrate1);
                                     linkWithCredential(auth.currentUser, credential)
                                     .then(async() => {
-                                        const newToken = auth.currentUser.accessToken;
+//                                        const newToken = auth.currentUser.accessToken;
+                                        const newToken = auth.currentUser.stsTokenManager.refreshToken;
                                         const database = getFirestore();
                                         const infoUser = doc(database, "users", currentUser.uid);
                                         const docSnap = await getDoc(infoUser);
@@ -1180,38 +1258,17 @@ function LoginAndSecurity(details) {
                                                 sessions: arrayRemove(filtered[0])
                                             })
                                             .then(async()=>{
-                                                    await updateDoc(infoUser, {
-                                                        sessions: arrayUnion(                
-                                                            {
-                                                                id: newToken,
-                                                                date: Timestamp.now().toMillis(),
-                                                                ip: details.user[0].ip, 
-                                                                browser: details.user[1].browser.name,
-                                                                os:{
-                                                                    name: details.user[1].os.name,
-                                                                    version: details.user[1].os.version,
-                                                                },
-                                                                location:{
-                                                                    city: details.user[0].city,//tigre
-                                                                    country: details.user[0].country_name, //argentina
-                                                                    region: details.user[0].region,
-                                                                    country_code: details.user[0].country_code,
-                                                                    currency_name: details.user[0].currency_name,
-                                                                    currency: details.user[0].currency,
-                                                                    lenguaje: details.user[0].languages.split(',')[0],
-                                                                    country_tld: details.user[0].country_tld,
-                                                                },
-                                                            }
-                                                        )
-                                                    }
-                                                    )
+                                                filtered[0].id = newToken;
+                                                await updateDoc(infoUser, {sessions: arrayUnion(filtered[0]) })
                                                     .then(()=>{
                                                         emitCustomEvent('openLoadingPage', false);
-                                                        clearStates();
-                                                        handleUpdateProfile();                    
-                                                        setMsg('Se han actualizado los datos de tu cuenta');
-                                                        setSeverityInfo('success');
-                                                        setOpenMsg(true);        
+                                                        if (isMounted){
+                                                            clearStates();
+                                                            handleUpdateProfile();                    
+                                                            setMsg('Se han actualizado los datos de tu cuenta');
+                                                            setSeverityInfo('success');
+                                                            setOpenMsg(true);
+                                                        }        
                                                     })
                                                     .catch((error)=>{
                                                         logout()
@@ -1255,29 +1312,41 @@ function LoginAndSecurity(details) {
                                         emitCustomEvent('openLoadingPage', false);
                                         if (error.code === 'auth/provider-already-linked'){
                                             //esta actualizando el password
-                                            setOpenFormReautenticaConPassword(true);
+                                            if (isMounted){
+                                                setOpenFormReautenticaConPassword(true);
+                                            }
                                         }else{
                                             if (error.code === 'auth/requires-recent-login'){
                                                 //requiere actualizar las credenciales
                                                 if (passwordProvider){
-                                                    setOpenFormReautenticaConPassword(true);
+                                                    if (isMounted){
+                                                        setOpenFormReautenticaConPassword(true);
+                                                    }
                                                 }else{
                                                     if (googleProvider){
-                                                        setOpenFormReautenticaConGoogle(true);
+                                                        if (isMounted){
+                                                            setOpenFormReautenticaConGoogle(true);
+                                                        }
                                                     }else{
                                                         if (facebookProvider){
-                                                            setOpenFormReautenticaConFacebook(true);
+                                                            if (isMounted){
+                                                                setOpenFormReautenticaConFacebook(true);
+                                                            }
                                                         }else{
                                                             if (phoneProvider){
-                                                                setOpenFormReautenticaConPhone(true);
+                                                                if (isMounted){
+                                                                    setOpenFormReautenticaConPhone(true);
+                                                                }
                                                             }
                                                         }
                                                     }
                                                 }
                                             }else{
-                                                setMsg('Ha ocurrido un error al intentar actualizar los datos de tu cuenta.');
-                                                setSeverityInfo('error');
-                                                setOpenMsg(true);
+                                                if (isMounted){
+                                                    setMsg('Ha ocurrido un error al intentar actualizar los datos de tu cuenta.');
+                                                    setSeverityInfo('error');
+                                                    setOpenMsg(true);
+                                                }
                                                 emitCustomEvent('openLoadingPage', false);                    
                                             }
                                         }
@@ -1295,7 +1364,8 @@ function LoginAndSecurity(details) {
                                         const credential = EmailAuthProvider.credential(userEmail, valueInputPasswordFormRegistrate1);
                                         linkWithCredential(auth.currentUser, credential)
                                         .then(async() => {
-                                            const newToken = auth.currentUser.accessToken;
+//                                            const newToken = auth.currentUser.accessToken;
+                                            const newToken = auth.currentUser.stsTokenManager.refreshToken;
                                             const database = getFirestore();
                                             const infoUser = doc(database, "users", currentUser.uid);
                                             const docSnap = await getDoc(infoUser);
@@ -1308,38 +1378,17 @@ function LoginAndSecurity(details) {
                                                     sessions: arrayRemove(filtered[0])
                                                 })
                                                 .then(async()=>{
-                                                        await updateDoc(infoUser, {
-                                                            sessions: arrayUnion(                
-                                                                {
-                                                                    id: newToken,
-                                                                    date: Timestamp.now().toMillis(),
-                                                                    ip: details.user[0].ip, 
-                                                                    browser: details.user[1].browser.name,
-                                                                    os:{
-                                                                        name: details.user[1].os.name,
-                                                                        version: details.user[1].os.version,
-                                                                    },
-                                                                    location:{
-                                                                        city: details.user[0].city,//tigre
-                                                                        country: details.user[0].country_name, //argentina
-                                                                        region: details.user[0].region,
-                                                                        country_code: details.user[0].country_code,
-                                                                        currency_name: details.user[0].currency_name,
-                                                                        currency: details.user[0].currency,
-                                                                        lenguaje: details.user[0].languages.split(',')[0],
-                                                                        country_tld: details.user[0].country_tld,
-                                                                    },
-                                                                }
-                                                            )
-                                                        }
-                                                        )
+                                                    filtered[0].id = newToken;
+                                                    await updateDoc(infoUser, {sessions: arrayUnion(filtered[0]) })
                                                         .then(()=>{
                                                             emitCustomEvent('openLoadingPage', false);
-                                                            clearStates();
-                                                            handleUpdateProfile();                    
-                                                            setMsg('Se han actualizado los datos de tu cuenta');
-                                                            setSeverityInfo('success');
-                                                            setOpenMsg(true);        
+                                                            if (isMounted){
+                                                                clearStates();
+                                                                handleUpdateProfile();                    
+                                                                setMsg('Se han actualizado los datos de tu cuenta');
+                                                                setSeverityInfo('success');
+                                                                setOpenMsg(true);
+                                                            }        
                                                         })
                                                         .catch((error)=>{
                                                             logout()
@@ -1383,76 +1432,100 @@ function LoginAndSecurity(details) {
                                             emitCustomEvent('openLoadingPage', false);
                                             if (error.code === 'auth/provider-already-linked'){
                                                 //esta actualizando el password
-                                                setOpenFormReautenticaConPassword(true);
+                                                if (isMounted){
+                                                    setOpenFormReautenticaConPassword(true);
+                                                }
                                             }else{
                                                 if (error.code === 'auth/requires-recent-login'){
                                                     //requiere actualizar las credenciales
                                                     if (passwordProvider){
-                                                        setOpenFormReautenticaConPassword(true);
+                                                        if (isMounted){
+                                                            setOpenFormReautenticaConPassword(true);
+                                                        }
                                                     }else{
                                                         if (googleProvider){
-                                                            setOpenFormReautenticaConGoogle(true);
+                                                            if (isMounted){
+                                                                setOpenFormReautenticaConGoogle(true);
+                                                            }
                                                         }else{
                                                             if (facebookProvider){
-                                                                setOpenFormReautenticaConFacebook(true);
+                                                                if (isMounted){
+                                                                    setOpenFormReautenticaConFacebook(true);
+                                                                }
                                                             }else{
                                                                 if (phoneProvider){
-                                                                    setOpenFormReautenticaConPhone(true);
+                                                                    if (isMounted){
+                                                                        setOpenFormReautenticaConPhone(true);
+                                                                    }
                                                                 }
                                                             }
                                                         }
                                                     }
                                                 }else{
-                                                    setMsg('Ha ocurrido un error al intentar actualizar los datos de tu cuenta.');
-                                                    setSeverityInfo('error');
-                                                    setOpenMsg(true);
+                                                    if (isMounted){
+                                                        setMsg('Ha ocurrido un error al intentar actualizar los datos de tu cuenta.');
+                                                        setSeverityInfo('error');
+                                                        setOpenMsg(true);
+                                                    }
                                                     emitCustomEvent('openLoadingPage', false);                    
                                                 }
                                             }
                                         });                                    
                                     }else{
                                         //el mail no es el del usuario actual
-                                        setMsg('No podemos asociar el correo ' + userEmail + ' porque ya se encuentra asociado a otra cuenta.');
-                                        setSeverityInfo('error');
-                                        setOpenMsg(true); 
+                                        if (isMounted){
+                                            setMsg('No podemos asociar el correo ' + userEmail + ' porque ya se encuentra asociado a otra cuenta.');
+                                            setSeverityInfo('error');
+                                            setOpenMsg(true);
+                                        } 
                                         emitCustomEvent('openLoadingPage', false);
                                     }
                                 }
                             })
                             .catch((error) => {
                                 // Some error occurred, you can inspect the code: error.code
-                                setMsg('Ha ocurrido un error al intentar asociar el correo ' + userEmail + ' a tu cuenta.');
-                                setSeverityInfo('error');
-                                setOpenMsg(true);
+                                if (isMounted){
+                                    setMsg('Ha ocurrido un error al intentar asociar el correo ' + userEmail + ' a tu cuenta.');
+                                    setSeverityInfo('error');
+                                    setOpenMsg(true);
+                                }
                                 emitCustomEvent('openLoadingPage', false);
                             });
                         }else{
                             emitCustomEvent('openLoadingPage', false);
-                            setMsg('Las contraseñas ingresadas deben ser iguales. Revisá las contraseñas ingresadas y probá nuevamente.');
-                            setSeverityInfo('error');
-                            setOpenMsg(true);                    
+                            if (isMounted){
+                                setMsg('Las contraseñas ingresadas deben ser iguales. Revisá las contraseñas ingresadas y probá nuevamente.');
+                                setSeverityInfo('error');
+                                setOpenMsg(true);
+                            }                    
                         }                
                     }else{
+                        if (isMounted){
+                            emitCustomEvent('openLoadingPage', false);
+                            setMsg('Revisá los datos ingresados.');
+                            setSeverityInfo('error');
+                            setOpenMsg(true);
+                        }                            
+                    }
+                }else{
+                    if (isMounted){
                         emitCustomEvent('openLoadingPage', false);
                         setMsg('Revisá los datos ingresados.');
                         setSeverityInfo('error');
-                        setOpenMsg(true);                            
-                    }
-                }else{
+                        setOpenMsg(true);
+                    }                        
+                }
+            }else{
+                if (isMounted){
                     emitCustomEvent('openLoadingPage', false);
                     setMsg('Revisá los datos ingresados.');
                     setSeverityInfo('error');
-                    setOpenMsg(true);                        
-                }
-            }else{
-                emitCustomEvent('openLoadingPage', false);
-                setMsg('Revisá los datos ingresados.');
-                setSeverityInfo('error');
-                setOpenMsg(true);                    
+                    setOpenMsg(true);
+                }                    
             }
             setVariableEstadoCargadoNewValueEmailFormPrincipal(false);       
         }       
-    },[userEmail, variableEstadoCargadoNewValueEmailFormPrincipal, variableEstadoCargadoNewValuePasswordFormRegistrate1, clearStates, currentUser, details, facebookProvider, googleProvider, handleUpdateProfile, passwordProvider, phoneProvider, valueInputPasswordFormRegistrate1, valueInputPasswordFormRegistrate2, variableEstadoCargadoNewValuePasswordFormRegistrate2]);
+    },[userEmail, isMounted, variableEstadoCargadoNewValueEmailFormPrincipal, variableEstadoCargadoNewValuePasswordFormRegistrate1, clearStates, currentUser, details, facebookProvider, googleProvider, handleUpdateProfile, passwordProvider, phoneProvider, valueInputPasswordFormRegistrate1, valueInputPasswordFormRegistrate2, variableEstadoCargadoNewValuePasswordFormRegistrate2]);
     /*fin atencion del valor ingresado del componente Input Email del form principal*/    
 
     const handleVincularPassword = () => {
@@ -1481,9 +1554,11 @@ function LoginAndSecurity(details) {
 
     const handleEnterEmail = () => {
         emitCustomEvent('openLoadingPage', true);
-        setSubmitInputPasswordFormRegistrate1(true);
-        setSubmitInputPasswordFormRegistrate2(true);
-        setSubmitEmailFormPrincipal(true);
+        if (isMounted){
+            setSubmitInputPasswordFormRegistrate1(true);
+            setSubmitInputPasswordFormRegistrate2(true);
+            setSubmitEmailFormPrincipal(true);
+        }
     }
 
     const handleClickActualizarPassword = () => {
@@ -1491,78 +1566,104 @@ function LoginAndSecurity(details) {
     }
 
     const handleRecoveryPassReautenticaConPassword = () => {
-        setOpenFormReautenticaConPassword(false);
-        setOpenFormRecoveryPassword(true);
+        if (isMounted){
+            setOpenFormReautenticaConPassword(false);
+            setOpenFormRecoveryPassword(true);
+        }
     }
 
     const handleRecoveryPassReautenticaConPasswordDesvincular = () => {
-        setOpenFormReautenticaConPasswordDesvincular(false);
-        setOpenFormRecoveryPasswordDesvincular(true);
+        if (isMounted){
+            setOpenFormReautenticaConPasswordDesvincular(false);
+            setOpenFormRecoveryPasswordDesvincular(true);
+        }
     }
 
     const handleReturnFormRecoveryPassword = () =>{
-        setOpenFormRecoveryPassword(false);
-        setOpenFormReautenticaConPassword(true);
+        if (isMounted){
+            setOpenFormRecoveryPassword(false);
+            setOpenFormReautenticaConPassword(true);
+        }
     }
 
     const handleReturnFormRecoveryPasswordDesvincular = () =>{
-        setOpenFormRecoveryPasswordDesvincular(false);
-        setOpenFormReautenticaConPasswordDesvincular(true);
+        if (isMounted){
+            setOpenFormRecoveryPasswordDesvincular(false);
+            setOpenFormReautenticaConPasswordDesvincular(true);
+        }
     }
 
     const handleCloseFormRecoveryPassword = () => {
-        setOpenFormRecoveryPassword(false);
+        if (isMounted){
+            setOpenFormRecoveryPassword(false);
+        }
     }
 
     const handleCloseFormRecoveryPasswordDesvincular = () => {
-        setOpenFormRecoveryPasswordDesvincular(false);
+        if (isMounted){
+            setOpenFormRecoveryPasswordDesvincular(false);
+        }
     }
 
     const handleCloseReautenticaConPassword = () => {
-        setOpenFormReautenticaConPassword(false);
-        clearStates();
-        handleUpdateProfile();                    
+        if (isMounted){
+            setOpenFormReautenticaConPassword(false);
+            clearStates();
+            handleUpdateProfile();
+        }                    
     }
 
     const handleCloseReautenticaConPasswordDesvincular = () => {
-        setOpenFormReautenticaConPasswordDesvincular(false);
-        clearStates();
-        handleUpdateProfile();                    
+        if (isMounted){
+            setOpenFormReautenticaConPasswordDesvincular(false);
+            clearStates();
+            handleUpdateProfile();
+        }                    
     }
 
     const handleCredentialOKPasswordDesvincular = () => {
         emitCustomEvent('openLoadingPage', true);
-        setOpenFormReautenticaConPasswordDesvincular(false);
+        if (isMounted){
+            setOpenFormReautenticaConPasswordDesvincular(false);
+        }
         const auth = getAuth();
         unlink(auth.currentUser, 'password')
         .then(() => {
             emitCustomEvent('openLoadingPage', false);
-            clearStates();
-            handleUpdateProfile();                    
-            setMsg('Se ha desvinculado el ingreso mediante contraseña');
-            setSeverityInfo('info');
-            setOpenMsg(true);      
+            if (isMounted){
+                clearStates();
+                handleUpdateProfile();                    
+                setMsg('Se ha desvinculado el ingreso mediante contraseña');
+                setSeverityInfo('info');
+                setOpenMsg(true);
+            }      
         }).catch((error) => {
             emitCustomEvent('openLoadingPage', false);
-            setMsg('Ha ocurrido un error al intentar desvincular el ingreso mediante contraseña de tu cuenta');
-            setSeverityInfo('error');
-            setOpenMsg(true);                      
+            if (isMounted){
+                setMsg('Ha ocurrido un error al intentar desvincular el ingreso mediante contraseña de tu cuenta');
+                setSeverityInfo('error');
+                setOpenMsg(true);
+            }                      
         });
     }
 
     const handleCredentialOKPassword = () => {
         emitCustomEvent('openLoadingPage', true);
-        setOpenFormReautenticaConGoogle(false);
-        setOpenFormReautenticaConFacebook(false);
-        setOpenFormReautenticaConPassword(false);
-        setOpenFormReautenticaConPhone(false);
+        if (isMounted){
+            setOpenFormReautenticaConGoogle(false);
+            setOpenFormReautenticaConFacebook(false);
+            setOpenFormReautenticaConPassword(false);
+            setOpenFormReautenticaConPhone(false);
+        }
         const auth = getAuth();
-        const antToken = auth.currentUser.accessToken;
+//        const antToken = auth.currentUser.accessToken;
+        const antToken = auth.currentUser.stsTokenManager.refreshToken;
         const credential = EmailAuthProvider.credential(userEmail, valueInputPasswordFormRegistrate1);
         linkWithCredential(auth.currentUser, credential)
         .then(async() => {
             emitCustomEvent('openLoadingPage', true);
-            const newToken = auth.currentUser.accessToken;
+//            const newToken = auth.currentUser.accessToken;
+            const newToken = auth.currentUser.stsTokenManager.refreshToken;
             const database = getFirestore();
             const infoUser = doc(database, "users", currentUser.uid);
             const docSnap = await getDoc(infoUser);
@@ -1575,38 +1676,17 @@ function LoginAndSecurity(details) {
                     sessions: arrayRemove(filtered[0])
                 })
                 .then(async()=>{
-                        await updateDoc(infoUser, {
-                            sessions: arrayUnion(                
-                                {
-                                    id: newToken,
-                                    date: Timestamp.now().toMillis(),
-                                    ip: details.user[0].ip, 
-                                    browser: details.user[1].browser.name,
-                                    os:{
-                                        name: details.user[1].os.name,
-                                        version: details.user[1].os.version,
-                                    },
-                                    location:{
-                                        city: details.user[0].city,//tigre
-                                        country: details.user[0].country_name, //argentina
-                                        region: details.user[0].region,
-                                        country_code: details.user[0].country_code,
-                                        currency_name: details.user[0].currency_name,
-                                        currency: details.user[0].currency,
-                                        lenguaje: details.user[0].languages.split(',')[0],
-                                        country_tld: details.user[0].country_tld,
-                                    },
-                                }
-                            )
-                        }
-                        )
+                    filtered[0].id = newToken;
+                    await updateDoc(infoUser, {sessions: arrayUnion(filtered[0]) })
                         .then(()=>{
                             emitCustomEvent('openLoadingPage', false);
-                            clearStates();
-                            handleUpdateProfile();                    
-                            setMsg('Se han actualizado los datos de tu cuenta');
-                            setSeverityInfo('success');
-                            setOpenMsg(true);        
+                            if (isMounted){
+                                clearStates();
+                                handleUpdateProfile();                    
+                                setMsg('Se han actualizado los datos de tu cuenta');
+                                setSeverityInfo('success');
+                                setOpenMsg(true);
+                            }        
                         })
                         .catch((error)=>{
                             logout()
@@ -1653,11 +1733,13 @@ function LoginAndSecurity(details) {
                 const auth = getAuth();
                 unlink(auth.currentUser, 'password')
                 .then(() => {
-                    const antToken = auth.currentUser.accessToken;
+//                    const antToken = auth.currentUser.accessToken;
+                    const antToken = auth.currentUser.stsTokenManager.refreshToken;
                     linkWithCredential(auth.currentUser, credential)
                     .then(async() => {
                         emitCustomEvent('openLoadingPage', true);
-                        const newToken = auth.currentUser.accessToken;
+//                        const newToken = auth.currentUser.accessToken;
+                        const newToken = auth.currentUser.stsTokenManager.refreshToken;
                         const database = getFirestore();
                         const infoUser = doc(database, "users", currentUser.uid);
                         const docSnap = await getDoc(infoUser);
@@ -1670,38 +1752,17 @@ function LoginAndSecurity(details) {
                                 sessions: arrayRemove(filtered[0])
                             })
                             .then(async()=>{
-                                    await updateDoc(infoUser, {
-                                        sessions: arrayUnion(                
-                                            {
-                                                id: newToken,
-                                                date: Timestamp.now().toMillis(),
-                                                ip: details.user[0].ip, 
-                                                browser: details.user[1].browser.name,
-                                                os:{
-                                                    name: details.user[1].os.name,
-                                                    version: details.user[1].os.version,
-                                                },
-                                                location:{
-                                                    city: details.user[0].city,//tigre
-                                                    country: details.user[0].country_name, //argentina
-                                                    region: details.user[0].region,
-                                                    country_code: details.user[0].country_code,
-                                                    currency_name: details.user[0].currency_name,
-                                                    currency: details.user[0].currency,
-                                                    lenguaje: details.user[0].languages.split(',')[0],
-                                                    country_tld: details.user[0].country_tld,
-                                                },
-                                            }
-                                        )
-                                    }
-                                    )
+                                filtered[0].id = newToken;
+                                await updateDoc(infoUser, {sessions: arrayUnion(filtered[0]) })
                                     .then(()=>{
                                         emitCustomEvent('openLoadingPage', false);
-                                        clearStates();
-                                        handleUpdateProfile();                    
-                                        setMsg('Se han actualizado los datos de tu cuenta');
-                                        setSeverityInfo('success');
-                                        setOpenMsg(true);        
+                                        if (isMounted){
+                                            clearStates();
+                                            handleUpdateProfile();                    
+                                            setMsg('Se han actualizado los datos de tu cuenta');
+                                            setSeverityInfo('success');
+                                            setOpenMsg(true);
+                                        }        
                                     })
                                     .catch((error)=>{
                                         console.log(error);
@@ -1746,29 +1807,37 @@ function LoginAndSecurity(details) {
                         }
                     }).catch((error) => {
                         emitCustomEvent('openLoadingPage', false);
-                        setMsg('Ha ocurrido un error al intentar desvincular el ingreso mediante contraseña de tu cuenta');
-                        setSeverityInfo('error');
-                        setOpenMsg(true);        
+                        if (isMounted){
+                            setMsg('Ha ocurrido un error al intentar desvincular el ingreso mediante contraseña de tu cuenta');
+                            setSeverityInfo('error');
+                            setOpenMsg(true);
+                        }        
                     }); 
                 }).catch((error) => {
                     emitCustomEvent('openLoadingPage', false);
-                    setMsg('Ha ocurrido un error al intentar desvincular el ingreso mediante contraseña de tu cuenta');
-                    setSeverityInfo('error');
-                    setOpenMsg(true);        
+                    if (isMounted){
+                        setMsg('Ha ocurrido un error al intentar desvincular el ingreso mediante contraseña de tu cuenta');
+                        setSeverityInfo('error');
+                        setOpenMsg(true);
+                    }        
                 });
             }else{
                 emitCustomEvent('openLoadingPage', false);
-                setMsg('Ha ocurrido un error al intentar desvincular el ingreso mediante contraseña de tu cuenta');
-                setSeverityInfo('error');
-                setOpenMsg(true);        
+                if (isMounted){
+                    setMsg('Ha ocurrido un error al intentar desvincular el ingreso mediante contraseña de tu cuenta');
+                    setSeverityInfo('error');
+                    setOpenMsg(true);
+                }        
             }
         }); 
     }
 
     const handleCloseReautenticaConGoogle = () => {
-        setOpenFormReautenticaConGoogle(false);
-        clearStates();
-        handleUpdateProfile();                    
+        if (isMounted){
+            setOpenFormReautenticaConGoogle(false);
+            clearStates();
+            handleUpdateProfile();
+        }                    
     }
 
     const handleClickReautenticaConGoogle = () => {
@@ -1776,7 +1845,9 @@ function LoginAndSecurity(details) {
     }
 
     const handleErrorReautenticaConGoogle = () => {
-        setOpenFormReautenticaConGoogle(false);
+        if (isMounted){
+            setOpenFormReautenticaConGoogle(false);
+        }
         emitCustomEvent('openLoadingPage', false);
     }
 
@@ -1785,9 +1856,11 @@ function LoginAndSecurity(details) {
     }
 
     const handleCloseReautenticaConFacebook = () => {
-        setOpenFormReautenticaConFacebook(false);
-        clearStates();
-        handleUpdateProfile();                    
+        if (isMounted){
+            setOpenFormReautenticaConFacebook(false);
+            clearStates();
+            handleUpdateProfile();
+        }                    
     }
 
     const handleClickReautenticaConFacebook = () => {
@@ -1795,7 +1868,9 @@ function LoginAndSecurity(details) {
     }
 
     const handleErrorReautenticaConFacebook = () => {
-        setOpenFormReautenticaConFacebook(false);
+        if (isMounted){
+            setOpenFormReautenticaConFacebook(false);
+        }
         emitCustomEvent('openLoadingPage', false);
     }
 
@@ -1804,9 +1879,11 @@ function LoginAndSecurity(details) {
     }    
     
     const handleCloseReautenticaConPhone = () => {
-        setOpenFormReautenticaConPhone(false);
-        clearStates();
-        handleUpdateProfile();                    
+        if (isMounted){
+            setOpenFormReautenticaConPhone(false);
+            clearStates();
+            handleUpdateProfile();    
+        }                
     }
 
     return (
@@ -1983,6 +2060,17 @@ function LoginAndSecurity(details) {
                                             }
                                             {!loadingCreated && passwordProvider ?
                                             <>
+                                                <Typography 
+                                                    variant="caption"
+                                                    display="block"
+                                                    gutterBottom
+                                                    style={{
+                                                        width: '100%',
+                                                        marginTop: 10,
+                                                    }}
+                                                >
+                                                    Última actualización: <strong>{passwordUpdateAt}</strong>
+                                                </Typography>
                                                 <Button 
                                                     variant='outlined'
                                                     className='button__log__continuar'
@@ -2236,7 +2324,7 @@ function LoginAndSecurity(details) {
                                             <Skeleton variant="text" width="70%"/>
                                         </Stack>
                                         }
-                                        <Button 
+                                    {/*    <Button 
                                             variant='outlined'
                                             className='button__log__continuar'
                                             disableElevation
@@ -2244,6 +2332,7 @@ function LoginAndSecurity(details) {
                                         >
                                         Cerrar todas las sesiones
                                         </Button>
+                                    */}
                                     </Stack>
                                     <Divider/>
                                     <Typography
@@ -2371,7 +2460,7 @@ function LoginAndSecurity(details) {
             :null}
             {openFormReautenticaConPassword ?
                 <FormReautenticaConPassword
-                    email={userEmail}
+                    email={currentUser.email}
                     onGetClose={handleCloseReautenticaConPassword}
                     onGetReturn={handleCloseReautenticaConPassword}
                     onGetRecoveryPass={handleRecoveryPassReautenticaConPassword}
@@ -2382,7 +2471,7 @@ function LoginAndSecurity(details) {
             :null}
             {openFormReautenticaConPasswordDesvincular ?
                 <FormReautenticaConPassword
-                    email={userEmail}
+                    email={currentUser.email}
                     onGetClose={handleCloseReautenticaConPasswordDesvincular}
                     onGetReturn={handleCloseReautenticaConPasswordDesvincular}
                     onGetRecoveryPass={handleRecoveryPassReautenticaConPasswordDesvincular}
@@ -2395,7 +2484,7 @@ function LoginAndSecurity(details) {
                 <FormRecoveryPassword
                     onGetClose={handleCloseFormRecoveryPassword}
                     onGetReturn={handleReturnFormRecoveryPassword}
-                    email={userEmail}
+                    email={currentUser.email}
                     open={openFormRecoveryPassword}
                 />
             :null}
@@ -2403,7 +2492,7 @@ function LoginAndSecurity(details) {
                 <FormRecoveryPassword
                     onGetClose={handleCloseFormRecoveryPasswordDesvincular}
                     onGetReturn={handleReturnFormRecoveryPasswordDesvincular}
-                    email={userEmail}
+                    email={currentUser.email}
                     open={openFormRecoveryPasswordDesvincular}
                 />
             :null}

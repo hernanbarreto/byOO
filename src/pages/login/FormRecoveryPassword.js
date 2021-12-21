@@ -20,6 +20,7 @@ import { emitCustomEvent } from 'react-custom-events';
 import { Divider } from '@material-ui/core';
 
 function FormRecoveryPassword(props) { 
+    const [isMounted, setIsMounted] = useState(true);
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
 
     const[ openMsg, setOpenMsg] = useState(false);
@@ -34,6 +35,11 @@ function FormRecoveryPassword(props) {
     };
     
     const styles = (theme) => ({});
+
+    useEffect(() => {
+        setIsMounted(true);
+        return () => {setIsMounted(false)}
+    }, []);    
       
     const DialogTitle = withStyles(styles)((props) => {
         const { children, onClose } = props;
@@ -78,13 +84,17 @@ function FormRecoveryPassword(props) {
     }
 
     /*submit Restablecer Pass*/
-    const handleClickRecuperarPSW = async () => {      
-        setSubmitEmailFormPrincipal(true);        
+    const handleClickRecuperarPSW = async () => {   
+        if (isMounted){   
+        setSubmitEmailFormPrincipal(true);  
+        }      
     }
     /*fin submit restablecer pass*/
 
     const handleEnter = () => {
-        setSubmitEmailFormPrincipal(true);        
+        if (isMounted){
+        setSubmitEmailFormPrincipal(true);
+        }        
     }
 
     /*variables del componente InputEmail Form Principal*/
@@ -93,11 +103,15 @@ function FormRecoveryPassword(props) {
     const [submitEmailFormPrincipal, setSubmitEmailFormPrincipal] = useState(false);
     const [variableEstadoCargadoNewValueEmailFormPrincipal, setVariableEstadoCargadoNewValueEmailFormPrincipal] = useState(false);
     const submitValueEmailFormPrincipal = (value) => {
+        if (isMounted){
         setSubmitEmailFormPrincipal(value);
+        }
     }
     const getValueEmailFormPrincipal = (email) => {
+        if (isMounted){
         setValueInputEmailFormPrincipal(email);
         setVariableEstadoCargadoNewValueEmailFormPrincipal(true);
+        }
     }
     /*fin variables del componente InputEmail Form Principal*/
     
@@ -111,9 +125,11 @@ function FormRecoveryPassword(props) {
                     .then(providers => {
                         if ((providers.length) === 0) {
                             //email inexistente, debe crear password
+                            if (isMounted){
                             setMsg('No existe ninguna cuenta asociada a ' + String(valueInputEmailFormPrincipal));
                             setSeverityInfo('info');
                             setOpenMsg(true);
+                            }
                             emitCustomEvent('openLoadingPage', false);
                         } else {
                             //email existente,
@@ -127,35 +143,45 @@ function FormRecoveryPassword(props) {
                                 .catch((error) => {
                                     if (error.message.includes('auth/user-not-found')){
                                         emitCustomEvent('openLoadingPage', false);
+                                        if (isMounted){
                                         setMsg('No existe ninguna cuenta asociada a ' + String(valueInputEmailFormPrincipal));
                                         setSeverityInfo('info');
                                         setOpenMsg(true);
+                                        }
                                     }else{
                                         emitCustomEvent('openLoadingPage', false);
+                                        if (isMounted){
                                         setMsg('Ha ocurrido un error, volvé a intentarlo')
                                         setSeverityInfo('info')
                                         setOpenMsg(true);
+                                        }
                                     }
                                 }
                                 );                                            
                             }else{
                                 emitCustomEvent('openLoadingPage', false);
+                                if (isMounted){
                                 setMsg('La cuenta ' + String(valueInputEmailFormPrincipal) + ' no tiene configurado un ingreso mediante contraseña');
                                 setSeverityInfo('info');
-                                setOpenMsg(true);                    
+                                setOpenMsg(true);
+                                }                    
                             }
                         }
                 })
                 .catch((error) => {
                     emitCustomEvent('openLoadingPage', false);
+                    if (isMounted){
                     setMsg('Ha ocurrido un error, volvé a intentarlo');
                     setSeverityInfo('info');
                     setOpenMsg(true);
+                    }
                 });           
             }
+            if (isMounted){
             setVariableEstadoCargadoNewValueEmailFormPrincipal(false);
+            }
         }           
-    },[props, valueInputEmailFormPrincipal, variableEstadoCargadoNewValueEmailFormPrincipal]);
+    },[props, valueInputEmailFormPrincipal, variableEstadoCargadoNewValueEmailFormPrincipal, isMounted]);
     /*fin atencion del valor ingresado del componente Input Email del form principal*/
 
     return (

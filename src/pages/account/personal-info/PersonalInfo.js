@@ -32,14 +32,12 @@ import Skeleton from '@mui/material/Skeleton';
 import { logout } from '../../../services/firebase';
 import { emitCustomEvent } from 'react-custom-events';
 import { useInitPage } from '../../useInitPage';
-import CustomizedSwitch from '../../custom/CustomSwitch';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import InputEmail from '../../login/InputEmail';
 import InputName from '../../login/InputName';
 import { getFirestore,
     arrayRemove,
-    Timestamp, 
     arrayUnion, 
     doc, 
     getDoc,
@@ -52,6 +50,8 @@ import FormReautenticaConGoogle from '../login-and-security/FormReautenticaConGo
 import FormReautenticaConFacebook from '../login-and-security/FormReautenticaConFacebook';
 import FormReautenticaConPhone from '../login-and-security/FormReautenticaConPhone';
 import FormRecoveryPassword from '../../login/FormRecoveryPassword';
+import InputAge from '../../login/InputAge';
+import InputSex from './InputSex';
 
 const functions = getFunctions();
 const getUser = httpsCallable(functions, 'getUser');        
@@ -119,6 +119,8 @@ function PersonalInfo(details) {
     const [userEmail, setUserEmail] = useState('');
     const [countryPhone, setCountryPhone] = useState(null);
     const [phoneNumber, setPhoneNumber] = useState(null);
+    const [valueAge, setValueAge] = useState('');
+    const [valueSex, setValueSex] = useState(null);
 
     const handleUpdateProfile = useCallback(async () => {
         const infoUser = doc(database, "users", currentUser.uid);
@@ -131,9 +133,11 @@ function PersonalInfo(details) {
                         setValueName(docSnap.data().name);
                         setValueLastName(docSnap.data().lastName);
                         setUserEmail(currentUser.email);
-                        setLoadingCreated(false);
                         setPhoneNumber(currentUser.phoneNumber);
                         setCountryPhone(docSnap.data().countryCode);
+                        setValueAge(docSnap.data().age);
+                        setValueSex(docSnap.data().sex);
+                        setLoadingCreated(false);
                     }
                 })
                 .catch(() => {
@@ -170,6 +174,8 @@ function PersonalInfo(details) {
             setUserEmail('');
             setCountryPhone(null);
             setPhoneNumber(null);
+            setValueAge('');
+            setValueSex(null);
         }
     },[isMounted]);
 
@@ -189,17 +195,23 @@ function PersonalInfo(details) {
     const [submitName, setSubmitName] = useState(false);
     const [variableEstadoCargadoNewValueName, setVariableEstadoCargadoNewValueName] = useState(false);
     const submitValueName = (value) => {
-        setSubmitName(value);
+        if (isMounted){
+            setSubmitName(value);
+        }
     }
     const getValueName = (name) => {
-        setValueName(name.split('/')[0]);
-        setValueLastName(name.split('/')[1]);
-        setVariableEstadoCargadoNewValueName(true);
+        if (isMounted){
+            setValueName(name.split('/')[0]);
+            setValueLastName(name.split('/')[1]);
+            setVariableEstadoCargadoNewValueName(true);
+        }
     }
     /*fin variables del componente InputName*/
 
     const handleEnterName = () => {
-        setSubmitName(true);
+        if (isMounted){
+            setSubmitName(true);
+        }
     }
 
     const handleClickActualizarName = () => {
@@ -224,41 +236,51 @@ function PersonalInfo(details) {
                         displayName: valueName + String(' ') + valueLastName
                         }).then(() => {
                             emitCustomEvent('openLoadingPage', false);
-                            setMsg('Se actualizó correctamente tu nombre y apellido');
-                            setSeverityInfo('success');
-                            setOpenMsg(true);
-                            clearStates();
-                            handleUpdateProfile();            
+                            if (isMounted){
+                                setMsg('Se actualizó correctamente tu nombre y apellido');
+                                setSeverityInfo('success');
+                                setOpenMsg(true);
+                                clearStates();
+                                handleUpdateProfile();
+                            }            
                         }).catch((error) => {
                             emitCustomEvent('openLoadingPage', false);
-                            setMsg('Ha ocurrido un error al actualizar tu nombre y apellido');
-                            setSeverityInfo('error');
-                            setOpenMsg(true); 
-                            clearStates();
-                            handleUpdateProfile();            
+                            if (isMounted){
+                                setMsg('Ha ocurrido un error al actualizar tu nombre y apellido');
+                                setSeverityInfo('error');
+                                setOpenMsg(true); 
+                                clearStates();
+                                handleUpdateProfile();
+                            }            
                         });
                     })
                     .catch(()=>{
                         emitCustomEvent('openLoadingPage', false);
-                        setMsg('Ha ocurrido un error al actualizar tu nombre y apellido');
-                        setSeverityInfo('error');
-                        setOpenMsg(true); 
-                        clearStates();
-                        handleUpdateProfile();            
+                        if (isMounted){
+                            setMsg('Ha ocurrido un error al actualizar tu nombre y apellido');
+                            setSeverityInfo('error');
+                            setOpenMsg(true); 
+                            clearStates();
+                            handleUpdateProfile();
+                        }            
                     });
                 }else{
                     emitCustomEvent('openLoadingPage', false);
-                    setMsg('El nombre y apellido que estas intentando actualizar son los mismos que tenes actualmente.');
-                    setSeverityInfo('info');
-                    setOpenMsg(true); 
+                    if (isMounted){
+                        setMsg('El nombre y apellido que estas intentando actualizar son los mismos que tenes confirgurados actualmente.');
+                        setSeverityInfo('info');
+                        setOpenMsg(true);
+                    } 
                 }
             }else{
                 emitCustomEvent('openLoadingPage', false);
-                setMsg('Ha ocurrido un error al intentar acceder a tu información');
-                setSeverityInfo('error');
-                setOpenMsg(true); 
-                clearStates();
-                handleUpdateProfile();            
+                if (isMounted){
+                    setMsg('Ha ocurrido un error al intentar acceder a tu información');
+                    setSeverityInfo('error');
+                    setOpenMsg(true); 
+                    clearStates();
+                    handleUpdateProfile();
+                }            
             }
         }
 
@@ -269,12 +291,14 @@ function PersonalInfo(details) {
             setVariableEstadoCargadoNewValueName(false);       
         }         
 
-    },[currentUser, valueName, valueLastName, variableEstadoCargadoNewValueName, clearStates, handleUpdateProfile]);
+    },[currentUser, isMounted, valueName, valueLastName, variableEstadoCargadoNewValueName, clearStates, handleUpdateProfile]);
     /*fin atencion del valor ingresado del componente InputPassword del form Registrate*/   
 
 
     const handleEnterEmail = () => {
-        setSubmitEmail(true);
+        if (isMounted){
+            setSubmitEmail(true);
+        }
     }
 
     /*variables del componente InputEmail Form Principal*/
@@ -282,11 +306,15 @@ function PersonalInfo(details) {
     const [submitEmail, setSubmitEmail] = useState(false);
     const [variableEstadoCargadoNewValueEmail, setVariableEstadoCargadoNewValueEmail] = useState(false);
     const submitValueEmail = (value) => {
-        setSubmitEmail(value);
+        if (isMounted){
+            setSubmitEmail(value);
+        }
     }
     const getValueEmail = (email) => {
-        setUserEmail(email);
-        setVariableEstadoCargadoNewValueEmail(true);
+        if (isMounted){
+            setUserEmail(email);
+            setVariableEstadoCargadoNewValueEmail(true);
+        }
     }
     /*fin variables del componente InputEmail Form Principal*/
 
@@ -305,28 +333,34 @@ function PersonalInfo(details) {
                             //me fijo si es el mismo
                             if (result.data.uid === auth.currentUser.uid){
                                 //es el mismo usuario
-                                console.log('por aca')
-                                setMsg('La dirección de correo ' + String(userEmail) + ' es tu dirección actual.');
-                                setSeverityInfo('info');
-                                setOpenMsg(true); 
+                                console.log('por aca');
                                 emitCustomEvent('openLoadingPage', false);    
+                                if (isMounted){
+                                    setMsg('La dirección de correo ' + String(userEmail) + ' es tu dirección actual.');
+                                    setSeverityInfo('info');
+                                    setOpenMsg(true);
+                                } 
                             }else{
                                 //no es el mismo usuario
-                                console.log('por aca')
-                                setMsg('No podemos asociar el correo ' + userEmail + ' porque ya se encuentra asociado a otra cuenta.');
-                                setSeverityInfo('error');
-                                setOpenMsg(true); 
+                                console.log('por aca');
                                 emitCustomEvent('openLoadingPage', false);
-                                clearStates();
-                                handleUpdateProfile();            
+                                if (isMounted){
+                                    setMsg('No podemos asociar el correo ' + userEmail + ' porque ya se encuentra asociado a otra cuenta.');
+                                    setSeverityInfo('error');
+                                    setOpenMsg(true); 
+                                    clearStates();
+                                    handleUpdateProfile();
+                                }            
                             }
                         })
                         .catch((error)=>{
                         //el mail no esta asociado a ninguna cuenta
-                            const antToken = auth.currentUser.accessToken;
+//                            const antToken = auth.currentUser.accessToken;
+                            const antToken = auth.currentUser.stsTokenManager.refreshToken;
                             updateEmail(auth.currentUser, userEmail)
                             .then(async()=>{
-                                const newToken = auth.currentUser.accessToken;
+//                                const newToken = auth.currentUser.accessToken;
+                                const newToken = auth.currentUser.stsTokenManager.refreshToken;
                                 const database = getFirestore();
                                 const infoUser = doc(database, "users", currentUser.uid);
                                 const docSnap = await getDoc(infoUser);
@@ -339,38 +373,17 @@ function PersonalInfo(details) {
                                         sessions: arrayRemove(filtered[0])
                                     })
                                     .then(async()=>{
-                                            await updateDoc(infoUser, {
-                                                sessions: arrayUnion(                
-                                                    {
-                                                        id: newToken,
-                                                        date: Timestamp.now().toMillis(),
-                                                        ip: details.user[0].ip, 
-                                                        browser: details.user[1].browser.name,
-                                                        os:{
-                                                            name: details.user[1].os.name,
-                                                            version: details.user[1].os.version,
-                                                        },
-                                                        location:{
-                                                            city: details.user[0].city,//tigre
-                                                            country: details.user[0].country_name, //argentina
-                                                            region: details.user[0].region,
-                                                            country_code: details.user[0].country_code,
-                                                            currency_name: details.user[0].currency_name,
-                                                            currency: details.user[0].currency,
-                                                            lenguaje: details.user[0].languages.split(',')[0],
-                                                            country_tld: details.user[0].country_tld,
-                                                        },
-                                                    }
-                                                )
-                                            }
-                                            )
+                                            filtered[0].id = newToken;
+                                            await updateDoc(infoUser, {sessions: arrayUnion(filtered[0]) })
                                             .then(()=>{
-                                                setMsg('Actualizaste tu correo a ' + String(userEmail) + '.');
-                                                setSeverityInfo('success');
-                                                setOpenMsg(true); 
                                                 emitCustomEvent('openLoadingPage', false);
-                                                clearStates();
-                                                handleUpdateProfile();
+                                                if (isMounted){
+                                                    setMsg('Actualizaste tu correo a ' + String(userEmail) + '.');
+                                                    setSeverityInfo('success');
+                                                    setOpenMsg(true); 
+                                                    clearStates();
+                                                    handleUpdateProfile();
+                                                }
                                             })
                                             .catch((error)=>{
                                                 console.log(error);
@@ -436,28 +449,38 @@ function PersonalInfo(details) {
                                         }
                                     });
                                     if (passwordProvider){
-                                        setOpenFormReautenticaConPassword(true);
+                                        if (isMounted){
+                                            setOpenFormReautenticaConPassword(true);
+                                        }
                                     }else{
                                         if (googleProvider){
-                                            setOpenFormReautenticaConGoogle(true);
+                                            if (isMounted){
+                                                setOpenFormReautenticaConGoogle(true);
+                                            }
                                         }else{
                                             if (facebookProvider){
-                                                setOpenFormReautenticaConFacebook(true);
+                                                if (isMounted){
+                                                    setOpenFormReautenticaConFacebook(true);
+                                                }
                                             }else{
                                                 if (phoneProvider){
-                                                    setOpenFormReautenticaConPhone(true);
+                                                    if (isMounted){
+                                                        setOpenFormReautenticaConPhone(true);
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }else{
                                     console.log('por aca')
-                                    setMsg('Ocurrió un error al intentar actualizar el correo de tu cuenta.');
-                                    setSeverityInfo('error');
-                                    setOpenMsg(true); 
                                     emitCustomEvent('openLoadingPage', false);
-                                    clearStates();
-                                    handleUpdateProfile();    
+                                    if (isMounted){
+                                        setMsg('Ocurrió un error al intentar actualizar el correo de tu cuenta.');
+                                        setSeverityInfo('error');
+                                        setOpenMsg(true); 
+                                        clearStates();
+                                        handleUpdateProfile();
+                                    }    
                                 }
                             }); 
                         });                       
@@ -472,15 +495,19 @@ function PersonalInfo(details) {
                         if ((auth.currentUser.email === userEmail)||(emailProvider)){
                             //el mail es el mismo del usuario actual
                             if (auth.currentUser.email === userEmail){
-                                setMsg('La dirección de correo ' + String(userEmail) + ' es tu dirección actual.');
-                                setSeverityInfo('info');
-                                setOpenMsg(true); 
-                                emitCustomEvent('openLoadingPage', false);    
+                                emitCustomEvent('openLoadingPage', false);
+                                if (isMounted){    
+                                    setMsg('La dirección de correo ' + String(userEmail) + ' es tu dirección actual.');
+                                    setSeverityInfo('info');
+                                    setOpenMsg(true); 
+                                }
                             }else{
-                                const antToken = auth.currentUser.accessToken;
+//                                const antToken = auth.currentUser.accessToken;
+                                const antToken = auth.currentUser.stsTokenManager.refreshToken;
                                 updateEmail(auth.currentUser, userEmail)
                                 .then(async()=>{
-                                    const newToken = auth.currentUser.accessToken;
+//                                    const newToken = auth.currentUser.accessToken;
+                                    const newToken = auth.currentUser.stsTokenManager.refreshToken;
                                     const database = getFirestore();
                                     const infoUser = doc(database, "users", currentUser.uid);
                                     const docSnap = await getDoc(infoUser);
@@ -493,38 +520,17 @@ function PersonalInfo(details) {
                                             sessions: arrayRemove(filtered[0])
                                         })
                                         .then(async()=>{
-                                                await updateDoc(infoUser, {
-                                                    sessions: arrayUnion(                
-                                                        {
-                                                            id: newToken,
-                                                            date: Timestamp.now().toMillis(),
-                                                            ip: details.user[0].ip, 
-                                                            browser: details.user[1].browser.name,
-                                                            os:{
-                                                                name: details.user[1].os.name,
-                                                                version: details.user[1].os.version,
-                                                            },
-                                                            location:{
-                                                                city: details.user[0].city,//tigre
-                                                                country: details.user[0].country_name, //argentina
-                                                                region: details.user[0].region,
-                                                                country_code: details.user[0].country_code,
-                                                                currency_name: details.user[0].currency_name,
-                                                                currency: details.user[0].currency,
-                                                                lenguaje: details.user[0].languages.split(',')[0],
-                                                                country_tld: details.user[0].country_tld,
-                                                            },
-                                                        }
-                                                    )
-                                                }
-                                                )
+                                            filtered[0].id = newToken;
+                                            await updateDoc(infoUser, {sessions: arrayUnion(filtered[0]) })
                                                 .then(()=>{
-                                                    setMsg('Actualizaste tu correo a ' + String(userEmail) + '.');
-                                                    setSeverityInfo('success');
-                                                    setOpenMsg(true); 
                                                     emitCustomEvent('openLoadingPage', false);
-                                                    clearStates();
-                                                    handleUpdateProfile();
+                                                    if (isMounted){
+                                                        setMsg('Actualizaste tu correo a ' + String(userEmail) + '.');
+                                                        setSeverityInfo('success');
+                                                        setOpenMsg(true); 
+                                                        clearStates();
+                                                        handleUpdateProfile();
+                                                    }
                                                 })
                                                 .catch((error)=>{
                                                     console.log(error);
@@ -590,81 +596,102 @@ function PersonalInfo(details) {
                                             }
                                         });
                                         if (passwordProvider){
-                                            setOpenFormReautenticaConPassword(true);
+                                            if (isMounted){
+                                                setOpenFormReautenticaConPassword(true);
+                                            }
                                         }else{
                                             if (googleProvider){
-                                                setOpenFormReautenticaConGoogle(true);
+                                                if (isMounted){
+                                                    setOpenFormReautenticaConGoogle(true);
+                                                }
                                             }else{
                                                 if (facebookProvider){
-                                                    setOpenFormReautenticaConFacebook(true);
+                                                    if (isMounted){
+                                                        setOpenFormReautenticaConFacebook(true);
+                                                    }
                                                 }else{
                                                     if (phoneProvider){
-                                                        setOpenFormReautenticaConPhone(true);
+                                                        if (isMounted){
+                                                            setOpenFormReautenticaConPhone(true);
+                                                        }
                                                     }
                                                 }
                                             }
                                         }
                                     }else{
                                         console.log('por aca')
-                                        setMsg('Ocurrió un error al intentar actualizar el correo de tu cuenta.');
-                                        setSeverityInfo('error');
-                                        setOpenMsg(true); 
                                         emitCustomEvent('openLoadingPage', false);
-                                        clearStates();
-                                        handleUpdateProfile();    
+                                        if (isMounted){
+                                            setMsg('Ocurrió un error al intentar actualizar el correo de tu cuenta.');
+                                            setSeverityInfo('error');
+                                            setOpenMsg(true); 
+                                            clearStates();
+                                            handleUpdateProfile();
+                                        }    
                                     }
                                 });                                
                             }
                         }else{
                             //el mail no es el del usuario actual
                             console.log('por aca')
-                            setMsg('No podemos asociar el correo ' + userEmail + ' porque ya se encuentra asociado a otra cuenta.');
-                            setSeverityInfo('error');
-                            setOpenMsg(true); 
                             emitCustomEvent('openLoadingPage', false);
-                            clearStates();
-                            handleUpdateProfile();            
+                            if (isMounted){
+                                setMsg('No podemos asociar el correo ' + userEmail + ' porque ya se encuentra asociado a otra cuenta.');
+                                setSeverityInfo('error');
+                                setOpenMsg(true); 
+                                clearStates();
+                                handleUpdateProfile();
+                            }            
                         }
                     }
                 })
                 .catch((error) => {
                     console.log(error);
-                    // Some error occurred, you can inspect the code: error.code
-                    setMsg('Ha ocurrido un error al intentar asociar el correo ' + userEmail + ' a tu cuenta.');
-                    setSeverityInfo('error');
-                    setOpenMsg(true);
                     emitCustomEvent('openLoadingPage', false);
-                    clearStates();
-                    handleUpdateProfile();    
+                    if (isMounted){
+                        setMsg('Ha ocurrido un error al intentar asociar el correo ' + userEmail + ' a tu cuenta.');
+                        setSeverityInfo('error');
+                        setOpenMsg(true);
+                        clearStates();
+                        handleUpdateProfile();
+                    }    
                 });                
             }
             setVariableEstadoCargadoNewValueEmail(false);       
         }       
-    },[userEmail, variableEstadoCargadoNewValueEmail, clearStates, currentUser, handleUpdateProfile, details]);
+    },[userEmail, isMounted, variableEstadoCargadoNewValueEmail, clearStates, currentUser, handleUpdateProfile, details]);
     /*fin atencion del valor ingresado del componente Input Email del form principal*/    
 
     const handleCloseReautenticaConPassword = () => {
-        setOpenFormReautenticaConPassword(false);
-        clearStates();
-        handleUpdateProfile();                    
+        if (isMounted){
+            setOpenFormReautenticaConPassword(false);
+            clearStates();
+            handleUpdateProfile();
+        }                    
     }
 
     const handleRecoveryPassReautenticaConPassword = () => {
-        setOpenFormReautenticaConPassword(false);
-        setOpenFormRecoveryPassword(true);
+        if (isMounted){
+            setOpenFormReautenticaConPassword(false);
+            setOpenFormRecoveryPassword(true);
+        }
     }
 
     const handleCredentialOKPassword = () => {
         emitCustomEvent('openLoadingPage', true);
-        setOpenFormReautenticaConPassword(false);
-        setOpenFormReautenticaConGoogle(false);
-        setOpenFormReautenticaConFacebook(false);
-        setOpenFormReautenticaConPhone(false);
+        if (isMounted){
+            setOpenFormReautenticaConPassword(false);
+            setOpenFormReautenticaConGoogle(false);
+            setOpenFormReautenticaConFacebook(false);
+            setOpenFormReautenticaConPhone(false);
+        }
         const auth = getAuth();
-        const antToken = auth.currentUser.accessToken;
+//        const antToken = auth.currentUser.accessToken;
+        const antToken = auth.currentUser.stsTokenManager.refreshToken;
         updateEmail(auth.currentUser, userEmail)
         .then(async()=>{
-            const newToken = auth.currentUser.accessToken;
+//            const newToken = auth.currentUser.accessToken;
+            const newToken = auth.currentUser.stsTokenManager.refreshToken;
             const database = getFirestore();
             const infoUser = doc(database, "users", currentUser.uid);
             const docSnap = await getDoc(infoUser);
@@ -677,38 +704,17 @@ function PersonalInfo(details) {
                     sessions: arrayRemove(filtered[0])
                 })
                 .then(async()=>{
-                        await updateDoc(infoUser, {
-                            sessions: arrayUnion(                
-                                {
-                                    id: newToken,
-                                    date: Timestamp.now().toMillis(),
-                                    ip: details.user[0].ip, 
-                                    browser: details.user[1].browser.name,
-                                    os:{
-                                        name: details.user[1].os.name,
-                                        version: details.user[1].os.version,
-                                    },
-                                    location:{
-                                        city: details.user[0].city,//tigre
-                                        country: details.user[0].country_name, //argentina
-                                        region: details.user[0].region,
-                                        country_code: details.user[0].country_code,
-                                        currency_name: details.user[0].currency_name,
-                                        currency: details.user[0].currency,
-                                        lenguaje: details.user[0].languages.split(',')[0],
-                                        country_tld: details.user[0].country_tld,
-                                    },
-                                }
-                            )
-                        }
-                        )
+                    filtered[0].id = newToken;
+                    await updateDoc(infoUser, {sessions: arrayUnion(filtered[0]) })
                         .then(()=>{
-                            setMsg('Actualizaste tu correo a ' + String(userEmail) + '.');
-                            setSeverityInfo('success');
-                            setOpenMsg(true); 
                             emitCustomEvent('openLoadingPage', false);
-                            clearStates();
-                            handleUpdateProfile();
+                            if (isMounted){
+                                setMsg('Actualizaste tu correo a ' + String(userEmail) + '.');
+                                setSeverityInfo('success');
+                                setOpenMsg(true); 
+                                clearStates();
+                                handleUpdateProfile();
+                            }
                         })
                         .catch((error)=>{
                             console.log(error);
@@ -754,36 +760,48 @@ function PersonalInfo(details) {
         })
         .catch((error)=>{
             console.log(error);
-            setMsg('Ocurrió un error al intentar actualizar el correo de tu cuenta.');
-            setSeverityInfo('error');
-            setOpenMsg(true); 
             emitCustomEvent('openLoadingPage', false);
-            clearStates();
-            handleUpdateProfile();    
+            if (isMounted){
+                setMsg('Ocurrió un error al intentar actualizar el correo de tu cuenta.');
+                setSeverityInfo('error');
+                setOpenMsg(true); 
+                clearStates();
+                handleUpdateProfile();
+            }    
         });  
     }
 
     const handleCloseFormRecoveryPassword = () => {
-        setOpenFormRecoveryPassword(false);
+        if (isMounted){
+            setOpenFormRecoveryPassword(false);
+        }
     }
 
     const handleReturnFormRecoveryPassword = () =>{
-        setOpenFormRecoveryPassword(false);
-        setOpenFormReautenticaConPassword(true);
+        if (isMounted){
+            setOpenFormRecoveryPassword(false);
+            setOpenFormReautenticaConPassword(true);
+        }
     }
 
     const handleCloseReautenticaConGoogle = () => {
-        setOpenFormReautenticaConGoogle(false);
-        clearStates();
-        handleUpdateProfile();                    
+        if (isMounted){
+            setOpenFormReautenticaConGoogle(false);
+            clearStates();
+            handleUpdateProfile();
+        }                    
     }
 
     const handleCredentialOKGoogle = () => {
-        handleCredentialOKPassword();
+        if (isMounted){
+            handleCredentialOKPassword();
+        }
     }
 
     const handleErrorReautenticaConGoogle = () => {
-        setOpenFormReautenticaConGoogle(false);
+        if (isMounted){
+            setOpenFormReautenticaConGoogle(false);
+        }
         emitCustomEvent('openLoadingPage', false);
     }
        
@@ -792,9 +810,11 @@ function PersonalInfo(details) {
     }
 
     const handleCloseReautenticaConFacebook = () => {
-        setOpenFormReautenticaConFacebook(false);
-        clearStates();
-        handleUpdateProfile();                    
+        if (isMounted){
+            setOpenFormReautenticaConFacebook(false);
+            clearStates();
+            handleUpdateProfile();
+        }                    
     }
       
     const handleCredentialOKFacebook = () => {
@@ -802,7 +822,9 @@ function PersonalInfo(details) {
     }
     
     const handleErrorReautenticaConFacebook = () => {
-        setOpenFormReautenticaConFacebook(false);
+        if (isMounted){
+            setOpenFormReautenticaConFacebook(false);
+        }
         emitCustomEvent('openLoadingPage', false);
     }    
 
@@ -811,10 +833,179 @@ function PersonalInfo(details) {
     }
 
     const handleCloseReautenticaConPhone = () => {
-        setOpenFormReautenticaConPhone(false);
-        clearStates();
-        handleUpdateProfile();                    
+        if (isMounted){
+            setOpenFormReautenticaConPhone(false);
+            clearStates();
+            handleUpdateProfile();    
+        }                
     }
+
+    /*variables del componente InputAge Form Registrate*/
+    const styleInputAge = { marginTop: "20px" };
+    const [submitAge, setSubmitAge] = useState(false);
+    const [variableEstadoCargadoNewValueAge, setVariableEstadoCargadoNewValueAge] = useState(false);
+    const [valueInputAge, setValueInputAge] = useState('');
+    const submitValueAge = (value) => {
+        if (isMounted)
+        setSubmitAge(value);
+    }
+    const getValueAge = (email) => {
+        if (isMounted){
+        setValueInputAge(email);
+        setVariableEstadoCargadoNewValueAge(true);
+        }
+    }
+    /*fin variables del componente InputName Form Registrate*/
+
+    const handleEnterAge = async () => {
+        if (isMounted){
+        setSubmitAge(true);
+        }
+    }
+
+    /*atencion del valor ingresado del componente InputPassword del form Registrate*/
+    useEffect(() => {
+        async function fetchData(){
+            emitCustomEvent('openLoadingPage', true);
+            const infoUser = doc(database, "users", currentUser.uid);
+            const docSnap = await getDoc(infoUser);
+            if (docSnap.exists()) {
+                if (docSnap.data().age !== valueInputAge){
+                    await updateDoc(infoUser, {
+                        age: valueInputAge,
+                    })
+                    .then(()=>{
+                        emitCustomEvent('openLoadingPage', false);
+                        if (isMounted){
+                            setMsg('Se actualizó correctamente tu fecha de nacimiento');
+                            setSeverityInfo('success');
+                            setOpenMsg(true);
+                            clearStates();
+                            handleUpdateProfile();
+                        }            
+                    })
+                    .catch(()=>{
+                        emitCustomEvent('openLoadingPage', false);
+                        if (isMounted){
+                            setMsg('Ha ocurrido un error al actualizar tu fecha de nacimiento');
+                            setSeverityInfo('error');
+                            setOpenMsg(true); 
+                            clearStates();
+                            handleUpdateProfile();
+                        }            
+                    });
+                }else{
+                    emitCustomEvent('openLoadingPage', false);
+                    if (isMounted){
+                        setMsg('La fecha de nacimiento que estas intentando actualizar es la misma que tenes configurada actualmente.');
+                        setSeverityInfo('info');
+                        setOpenMsg(true);
+                    } 
+                }
+            }else{
+                emitCustomEvent('openLoadingPage', false);
+                if (isMounted){
+                    setMsg('Ha ocurrido un error al intentar acceder a tu información');
+                    setSeverityInfo('error');
+                    setOpenMsg(true); 
+                    clearStates();
+                    handleUpdateProfile();
+                }            
+            }
+        }
+
+        if (variableEstadoCargadoNewValueAge){
+            if (valueInputAge !== ''){
+                fetchData();
+            }
+            if (isMounted)
+                setVariableEstadoCargadoNewValueAge(false);
+        }
+    },[valueInputAge, variableEstadoCargadoNewValueAge, isMounted, clearStates, currentUser.uid, handleUpdateProfile]);
+    /*fin atencion del valor ingresado del componente InputPassword del form Registrate*/   
+
+    /*variables del componente InputSex*/
+    const styleInputSex = { marginTop: "20px" };
+    const [submitSex, setSubmitSex] = useState(false);
+    const [variableEstadoCargadoNewValueSex, setVariableEstadoCargadoNewValueSex] = useState(false);
+    const [valueInputSex, setValueInputSex] = useState('');
+
+    const submitValueSex = (value) => {
+        if (isMounted)
+        setSubmitSex(value);
+    }
+    const getValueSex = (sex) => {
+        if (isMounted){
+        setValueInputSex(sex);
+        setVariableEstadoCargadoNewValueSex(true);
+        }
+    }
+
+    const handleEnterSex = async () => {
+        if (isMounted){
+            setSubmitSex(true);
+        }
+    }
+
+    useEffect(() => {
+        async function fetchData(){
+            emitCustomEvent('openLoadingPage', true);
+            const infoUser = doc(database, "users", currentUser.uid);
+            const docSnap = await getDoc(infoUser);
+            if (docSnap.exists()) {
+                if (docSnap.data().sex !== valueInputSex) {
+                    await updateDoc(infoUser, {
+                        sex: valueInputSex,
+                    })
+                    .then(()=>{
+                        emitCustomEvent('openLoadingPage', false);
+                        if (isMounted){
+                            setMsg('Se actualizó correctamente tu sexo');
+                            setSeverityInfo('success');
+                            setOpenMsg(true);
+                            clearStates();
+                            handleUpdateProfile();
+                        }            
+                    })
+                    .catch(()=>{
+                        emitCustomEvent('openLoadingPage', false);
+                        if (isMounted){
+                            setMsg('Ha ocurrido un error al actualizar tu sexo');
+                            setSeverityInfo('error');
+                            setOpenMsg(true); 
+                            clearStates();
+                            handleUpdateProfile();
+                        }            
+                    });
+                }else{
+                    emitCustomEvent('openLoadingPage', false);
+                    if (isMounted){
+                        setMsg('El sexo que estas intentando actualizar es el mismo que tenes confirgurado actualmente.');
+                        setSeverityInfo('info');
+                        setOpenMsg(true);
+                    } 
+                }
+            }else{
+                emitCustomEvent('openLoadingPage', false);
+                if (isMounted){
+                    setMsg('Ha ocurrido un error al intentar acceder a tu información');
+                    setSeverityInfo('error');
+                    setOpenMsg(true); 
+                    clearStates();
+                    handleUpdateProfile();
+                }            
+            }
+        }
+
+        if (variableEstadoCargadoNewValueSex){
+            if (valueInputSex !== ''){
+                fetchData();
+            }
+            if (isMounted)
+                setVariableEstadoCargadoNewValueSex(false);
+        }
+    },[valueInputSex, variableEstadoCargadoNewValueSex, isMounted]);
+
 
     return (
         <div>
@@ -985,6 +1176,35 @@ function PersonalInfo(details) {
                                             >
                                                 Este es el sexo que aparece en tu identificación oficial.
                                             </Typography>
+                                            {!loadingCreated?
+                                            <>
+                                            <InputSex
+                                                style={styleInputSex}
+                                                close={loadingCreated}
+                                                sex={valueSex}
+                                                verify={submitSex}
+                                                onGetEnter={handleEnterSex}
+                                                onGetValue={getValueSex} 
+                                                onSubmitValue={submitValueSex} 
+
+                                            />
+                                            <Button 
+                                                variant='outlined'
+                                                className='button__log__continuar'
+                                                onClick={handleEnterSex}
+                                                style={{
+                                                    marginBottom: 10,
+                                                }}
+                                            >
+                                                Actualizar
+                                            </Button>
+                                            </>
+                                            :
+                                            <>
+                                            <Skeleton variant="text" width="100%"/>
+                                            <Skeleton variant="text" width="100%"/>
+                                            </>
+                                            }
                                         <Divider/>
                                         </AccordionDetails>
                                     </Accordion>
@@ -1030,6 +1250,34 @@ function PersonalInfo(details) {
                                             >
                                                 Esta es la fecha de nacimiento que aparece en tu identificación oficial.
                                             </Typography>
+                                            {!loadingCreated?
+                                            <>
+                                            <InputAge
+                                                onGetValueAge={getValueAge} 
+                                                onSubmitValueAge={submitValueAge} 
+                                                onGetEnter={handleEnterAge}
+                                                verify={submitAge} 
+                                                style={styleInputAge}
+                                                close={loadingCreated}
+                                                edad={valueAge}
+                                            />
+                                            <Button 
+                                                variant='outlined'
+                                                className='button__log__continuar'
+                                                onClick={handleEnterAge}
+                                                style={{
+                                                    marginBottom: 10,
+                                                }}
+                                            >
+                                                Actualizar
+                                            </Button>
+                                            </>
+                                            :
+                                            <>
+                                            <Skeleton variant="text" width="100%"/>
+                                            <Skeleton variant="text" width="100%"/>
+                                            </>
+                                            }
                                         <Divider/>
                                         </AccordionDetails>
                                     </Accordion>
@@ -1320,7 +1568,7 @@ function PersonalInfo(details) {
             </Container>
             {openFormReautenticaConPassword ?
                 <FormReautenticaConPassword
-                    email={userEmail}
+                    email={currentUser.email}
                     onGetClose={handleCloseReautenticaConPassword}
                     onGetReturn={handleCloseReautenticaConPassword}
                     onGetRecoveryPass={handleRecoveryPassReautenticaConPassword}
@@ -1333,7 +1581,7 @@ function PersonalInfo(details) {
                 <FormRecoveryPassword
                     onGetClose={handleCloseFormRecoveryPassword}
                     onGetReturn={handleReturnFormRecoveryPassword}
-                    email={userEmail}
+                    email={currentUser.email}
                     open={openFormRecoveryPassword}
                 />
             :null}

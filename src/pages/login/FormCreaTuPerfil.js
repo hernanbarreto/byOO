@@ -83,6 +83,7 @@ const sendMail = httpsCallable(functions, 'sendMail');
 const database = getFirestore();
 
 function FormCreaTuPerfil(props) {
+    const [isMounted, setIsMounted] = useState(true);
     const [telefono, setTelefono] = useState(false);
     const [correo, setCorreo] = useState(false);
     const [facebook, setFacebook] = useState(false);
@@ -122,50 +123,66 @@ function FormCreaTuPerfil(props) {
         setOpenMsg(false);
     };
     
+    useEffect(() => {
+        setIsMounted(true);
+        return () => {setIsMounted(false)}
+    }, []);
+
       const isStepSkipped = useCallback((step) => {
         return skipped.has(step);
       },[skipped]);
     
       const handleNext = useCallback(() => {
-        let newSkipped = skipped;
-        if (isStepSkipped(activeStep)) {
-          newSkipped = new Set(newSkipped.values());
-          newSkipped.delete(activeStep);
+        if (isMounted){
+            let newSkipped = skipped;
+            if (isStepSkipped(activeStep)) {
+                newSkipped = new Set(newSkipped.values());
+                newSkipped.delete(activeStep);
+            }
+            setActiveStep((prevActiveStep) => prevActiveStep + 1);
+            setSkipped(newSkipped);
         }
-    
-        setActiveStep((prevActiveStep) => prevActiveStep + 1);
-        setSkipped(newSkipped);
-      },[activeStep, isStepSkipped, skipped]);
+      },[isMounted, activeStep, isStepSkipped, skipped]);
       
-      const handleSkip = () => {
-        setActiveStep((prevActiveStep) => prevActiveStep + 1);
-        setSkipped((prevSkipped) => {
-          const newSkipped = new Set(prevSkipped.values());
-          newSkipped.add(activeStep);
-          return newSkipped;
-        });
-      };    
+    const handleSkip = () => {
+        if (isMounted){
+            setActiveStep((prevActiveStep) => prevActiveStep + 1);
+            setSkipped((prevSkipped) => {
+            const newSkipped = new Set(prevSkipped.values());
+            newSkipped.add(activeStep);
+            return newSkipped;
+            });
+        }
+    };    
 
     const handleNextPhone = () => {
-        setOpenFormVerificaCodigoPhone(false);
-        handleNext();
-        setMostrar(true);
+        if (isMounted){
+            setOpenFormVerificaCodigoPhone(false);
+            handleNext();
+            setMostrar(true);
+        }
     }
 
     const handleReturnFormVerificaCodigoPhone =() => {
-        setOpenFormVerificaCodigoPhone(false);
-        setMostrar(true);
+        if (isMounted){
+            setOpenFormVerificaCodigoPhone(false);
+            setMostrar(true);
+        }
     }
     
     const handleClickContinuar = () => {
         if (txtBtnContinuar === 'Continuar')
-            setSubmitCountrySelectPhoneFormPrincipal(true);
+            if (isMounted){
+                setSubmitCountrySelectPhoneFormPrincipal(true);
+            }
         else{
             if (recaptchaVerifier !== undefined)
                 if (!recaptchaVerifier.destroyed) 
                     recaptchaVerifier.clear();
-            setTxtBtnContinuar('Continuar');
-            setClassNameBtnContinuar('button__log__continuar');
+            if (isMounted){
+                setTxtBtnContinuar('Continuar');
+                setClassNameBtnContinuar('button__log__continuar');
+            }
         }
     }
 
@@ -176,12 +193,16 @@ function FormCreaTuPerfil(props) {
     const [variableEstadoCargadoNewValuePhoneFormPrincipal, setVariableEstadoCargadoNewValuePhoneFormPrincipal] = useState(false);
     const [countryCodeFormPrincipal, setCountryCodeFormPrincipal] = useState(null);
     const submitValuePhoneFormPicnipal = (value) => {
-        setSubmitCountrySelectPhoneFormPrincipal(value);
+        if (isMounted){
+            setSubmitCountrySelectPhoneFormPrincipal(value);
+        }
     }
     const getValuePhoneCountrySelectPhoneFormPrincipal = (phone) => {
-        setValueInputPhoneFormPrincipal(phone[0]);
-        setCountryCodeFormPrincipal(phone[1].code);
-        setVariableEstadoCargadoNewValuePhoneFormPrincipal(true);
+        if (isMounted){
+            setValueInputPhoneFormPrincipal(phone[0]);
+            setCountryCodeFormPrincipal(phone[1].code);
+            setVariableEstadoCargadoNewValuePhoneFormPrincipal(true);
+        }
     }
     /*fin variables de componente CountrySelectPhone*/
 
@@ -191,11 +212,15 @@ function FormCreaTuPerfil(props) {
     const [submitEmailFormPrincipal, setSubmitEmailFormPrincipal] = useState(false);
     const [variableEstadoCargadoNewValueEmailFormPrincipal, setVariableEstadoCargadoNewValueEmailFormPrincipal] = useState(false);
     const submitValueEmailFormPrincipal = (value) => {
-        setSubmitEmailFormPrincipal(value);
+        if (isMounted){
+            setSubmitEmailFormPrincipal(value);
+        }
     }
     const getValueEmailFormPrincipal = (email) => {
-        setValueInputEmailFormPrincipal(email);
-        setVariableEstadoCargadoNewValueEmailFormPrincipal(true);
+        if (isMounted){
+            setValueInputEmailFormPrincipal(email);
+            setVariableEstadoCargadoNewValueEmailFormPrincipal(true);
+        }
     }
     /*fin variables del componente InputEmail Form Principal*/
       
@@ -205,23 +230,31 @@ function FormCreaTuPerfil(props) {
     const [submitPasswordFormRegistrate, setSubmitInputPasswordFormRegistrate] = useState(false);
     const [variableEstadoCargadoNewValuePasswordFormRegistrate, setVariableEstadoCargadoNewValuePasswordFormRegistrate] = useState(false);
     const submitValuePasswordFormRegistrate = (value) => {
-        setSubmitInputPasswordFormRegistrate(value);
+        if (isMounted){
+            setSubmitInputPasswordFormRegistrate(value);
+        }
     }
     const getValuePasswordFormRegistrate = (password) => {
-        setValueInputPasswordFormRegistrate(password);
-        setVariableEstadoCargadoNewValuePasswordFormRegistrate(true);
+        if (isMounted){
+            setValueInputPasswordFormRegistrate(password);
+            setVariableEstadoCargadoNewValuePasswordFormRegistrate(true);
+        }
     }
     /*fin variables de componente InputPassword del form Registrate*/
 
     const handleEnter = () => {
         if (txtBtnContinuar === 'Continuar')
-            setSubmitCountrySelectPhoneFormPrincipal(true);
+            if (isMounted){
+                setSubmitCountrySelectPhoneFormPrincipal(true);
+            }
         else{
             if (recaptchaVerifier !== undefined)
                 if (!recaptchaVerifier.destroyed) 
                     recaptchaVerifier.clear();
-            setTxtBtnContinuar('Continuar');
-            setClassNameBtnContinuar('button__log__continuar');
+            if (isMounted){
+                setTxtBtnContinuar('Continuar');
+                setClassNameBtnContinuar('button__log__continuar');
+            }
         }
     }
 
@@ -237,11 +270,13 @@ function FormCreaTuPerfil(props) {
                     if (recaptchaVerifier !== undefined)
                         if (!recaptchaVerifier.destroyed) 
                             recaptchaVerifier.clear();
-                    setTxtBtnContinuar('Continuar');
-                    setClassNameBtnContinuar('button__log__continuar');
-                    setMsg('El número ' + String(valueInputPhoneFormPrincipal) + ' ya se encuentra asociado a otra cuenta.');
-                    setSeverityInfo('error');
-                    setOpenMsg(true);                    
+                    if (isMounted){
+                        setTxtBtnContinuar('Continuar');
+                        setClassNameBtnContinuar('button__log__continuar');
+                        setMsg('El número ' + String(valueInputPhoneFormPrincipal) + ' ya se encuentra asociado a otra cuenta.');
+                        setSeverityInfo('error');
+                        setOpenMsg(true);
+                    }                    
                 })
                 .catch((error) => {
                     //el usuario no existe
@@ -252,8 +287,10 @@ function FormCreaTuPerfil(props) {
                         size: 'normal', // 'normal, invisible' or 'compact'
                         badge: 'inline' //' bottomright' or 'inline' applies to invisible.                    
                     }, auth);
-                    setTxtBtnContinuar('Cancelar');
-                    setClassNameBtnContinuar('button__log__BW');
+                    if (isMounted){
+                        setTxtBtnContinuar('Cancelar');
+                        setClassNameBtnContinuar('button__log__BW');
+                    }
                     emitCustomEvent('openLoadingPage', false);
                     
                     signInWithPhoneNumber(auth, valueInputPhoneFormPrincipal, recaptchaVerifier)
@@ -262,11 +299,13 @@ function FormCreaTuPerfil(props) {
                         if (recaptchaVerifier !== undefined)
                             if (!recaptchaVerifier.destroyed) 
                                 recaptchaVerifier.clear();
-                        setTxtBtnContinuar('Continuar');
-                        setClassNameBtnContinuar('button__log__continuar');
-                        setConfirmationResult(result);
-                        setMostrar(false);
-                        setOpenFormVerificaCodigoPhone(true);
+                        if (isMounted){
+                            setTxtBtnContinuar('Continuar');
+                            setClassNameBtnContinuar('button__log__continuar');
+                            setConfirmationResult(result);
+                            setMostrar(false);
+                            setOpenFormVerificaCodigoPhone(true);
+                        }
                         emitCustomEvent('openLoadingPage', false);
                     }).catch((error) => {
                         // Error; SMS not sent
@@ -274,18 +313,22 @@ function FormCreaTuPerfil(props) {
                         if (recaptchaVerifier !== undefined)
                             if (!recaptchaVerifier.destroyed) 
                                 recaptchaVerifier.clear();
-                        setTxtBtnContinuar('Continuar');
-                        setClassNameBtnContinuar('button__log__continuar');
-                        setMsg('No pudimos enviar el SMS al número de teléfono ' + String(valueInputPhoneFormPrincipal));
-                        setSeverityInfo('error');
+                        if (isMounted){
+                            setTxtBtnContinuar('Continuar');
+                            setClassNameBtnContinuar('button__log__continuar');
+                            setMsg('No pudimos enviar el SMS al número de teléfono ' + String(valueInputPhoneFormPrincipal));
+                            setSeverityInfo('error');
+                            setOpenMsg(true);
+                        }                    
                         emitCustomEvent('openLoadingPage', false);
-                        setOpenMsg(true);                    
                     });                
                 });
              }
-            setVariableEstadoCargadoNewValuePhoneFormPrincipal(false);       
+             if (isMounted){
+                setVariableEstadoCargadoNewValuePhoneFormPrincipal(false);  
+             }     
         }             
-    },[props, valueInputPhoneFormPrincipal, variableEstadoCargadoNewValuePhoneFormPrincipal]);
+    },[props, isMounted, valueInputPhoneFormPrincipal, variableEstadoCargadoNewValuePhoneFormPrincipal]);
     /*fin atencion del valor ingresado del componente CountrySelectPhone*/
 
     const handleGoogleUser = useCallback(async () => {
@@ -297,19 +340,21 @@ function FormCreaTuPerfil(props) {
         .then(()=>{
             steps.splice(2, 1);
             textSteps.splice(2, 1);
-            setValueInputEmailFormPrincipal(props.googleUser.profileObj.email);
-            setCorreo(false);
-            setFacebook(false);
-            setGoogle(false);
-            setPerfil(false);
-            setTelefono(true); 
-            setMostrar(true);
+            if (isMounted){
+                setValueInputEmailFormPrincipal(props.googleUser.profileObj.email);
+                setCorreo(false);
+                setFacebook(false);
+                setGoogle(false);
+                setPerfil(false);
+                setTelefono(true); 
+                setMostrar(true);
+            }
             emitCustomEvent('openLoadingPage', false);
         })
         .catch(()=>{
             emitCustomEvent('openLoadingPage', false);            
         });
-    },[props.googleUser]);
+    },[props.googleUser, isMounted]);
 
     const handleFacebookUser = useCallback(async () => {
         const auth = getAuth();
@@ -320,19 +365,41 @@ function FormCreaTuPerfil(props) {
         .then(()=>{
             steps.splice(3, 1);
             textSteps.splice(3, 1);
-            setValueInputEmailFormPrincipal(props.facebookUser.email);
-            setCorreo(false);
-            setFacebook(false);
-            setGoogle(false);
-            setPerfil(false);
-            setTelefono(true);
-            setMostrar(true);
+            if (isMounted){
+                setValueInputEmailFormPrincipal(props.facebookUser.email);
+                setCorreo(false);
+                setFacebook(false);
+                setGoogle(false);
+                setPerfil(false);
+                setTelefono(true);
+                setMostrar(true);
+            }
             emitCustomEvent('openLoadingPage', false);
         })
         .catch(()=>{
             emitCustomEvent('openLoadingPage', false);
         });
-    },[props.facebookUser]);
+    },[props.facebookUser, isMounted]);
+
+    const handlePhotoPerfil = useCallback(async () => {
+        const auth = getAuth();
+        const infoUser = doc(database, "users", auth.currentUser.uid);                                  
+        const docSnap = await getDoc(infoUser);
+        if (docSnap.exists()) {
+            if (isMounted){
+            setGooglePhotoState(docSnap.data().googlePhoto);
+            setFacebookPhotoState(docSnap.data().facebookPhoto);
+            setLoadingDataFromFirestore(false); 
+            }               
+        } else {
+            if (isMounted){
+            setMsg('Ha ocurrido un error al intentar acceder al servidor');
+            setSeverityInfo('error');
+            setOpenMsg(true);
+            }
+            emitCustomEvent('openLoadingPage', false);
+        }
+    },[isMounted]);
 
     useEffect(() => {     
         if (props.open){
@@ -379,67 +446,79 @@ function FormCreaTuPerfil(props) {
                             textSteps.splice(1, 0, 'De esta forma, prestadores de servicio, usuarios y byOO pueden ponerse en contacto con vos. Además, podés usar este correo y contraseña para ingresar a tu cuenta.');
                         }
                     }
-                }                
-                setMostrar(false);
-                emitCustomEvent('openLoadingPage', true);
-                setFacebook(false);
-                setGoogle(false);
-                setPerfil(false);
-                setTelefono(false);    
-                setCorreo(false);    
-                setActiveStep(0);
-                setLoadingDataFromFirestore(false);
-                setGooglePhotoState(null);
-                setFacebookPhotoState(null);
-                setPhotoUploaded(null);
-                setFilePhoto(null);
-                setLoading(false);
-                emitCustomEvent('openLoadingPage', false);
-                setLoadingAvatarFacebook(true);
-                setLoadingAvatarGoogle(true);
-                setCountryCodeFormPrincipal(null);
+                }
+                if (isMounted){                
+                    setMostrar(false);
+                    emitCustomEvent('openLoadingPage', true);
+                    setFacebook(false);
+                    setGoogle(false);
+                    setPerfil(false);
+                    setTelefono(false);    
+                    setCorreo(false);    
+                    setActiveStep(0);
+                    setLoadingDataFromFirestore(false);
+                    setGooglePhotoState(null);
+                    setFacebookPhotoState(null);
+                    setPhotoUploaded(null);
+                    setFilePhoto(null);
+                    setLoading(false);
+                    emitCustomEvent('openLoadingPage', false);
+                    setLoadingAvatarFacebook(true);
+                    setLoadingAvatarGoogle(true);
+                    setCountryCodeFormPrincipal(null);
+                }
                 props.onGetFinish(true);
             }else{
                 if (steps.length === 4){
                     if (steps[activeStep].includes('teléfono')){
+                        if (isMounted){
                         setCorreo(false);
                         setFacebook(false);
                         setGoogle(false);
                         setPerfil(false);
-                        setTelefono(true); 
+                        setTelefono(true);
+                        } 
                         emitCustomEvent('openLoadingPage', false);
                     }else{
                         if (steps[activeStep].includes('correo y contraseña')){
+                            if (isMounted){
                             setFacebook(false);
                             setGoogle(false);
                             setPerfil(false);
                             setTelefono(false);    
-                            setCorreo(true);    
+                            setCorreo(true);
+                            }    
                             emitCustomEvent('openLoadingPage', false);
                         }else{
                             if (steps[activeStep].includes('facebook')){
+                                if (isMounted){
                                 setGoogle(false);
                                 setPerfil(false);
                                 setTelefono(false);    
                                 setCorreo(false);    
-                                setFacebook(true);                            
+                                setFacebook(true);
+                                }                            
                                 emitCustomEvent('openLoadingPage', false);
                             }else{
                                 if (steps[activeStep].includes('google')){
+                                    if (isMounted){
                                     setPerfil(false);
                                     setTelefono(false);    
                                     setCorreo(false);    
                                     setFacebook(false);    
-                                    setGoogle(true);          
+                                    setGoogle(true);
+                                    }          
                                     emitCustomEvent('openLoadingPage', false);
                                 }else{
                                     if (steps[activeStep].includes('foto de perfil')){
+                                        if (isMounted){
                                         setTelefono(false);    
                                         setCorreo(false);    
                                         setFacebook(false);    
                                         setGoogle(false);
                                         setLoadingDataFromFirestore(true);    
                                         setPerfil(true);
+                                        }
                                         handlePhotoPerfil();
                                         emitCustomEvent('openLoadingPage', false);
                                     }
@@ -457,7 +536,8 @@ function FormCreaTuPerfil(props) {
                         }else{
                             if (props.phoneUser !== null){
                                 steps.splice(0, 1);
-                                textSteps.splice(0, 1);                            
+                                textSteps.splice(0, 1);
+                                if (isMounted){                            
                                 setValueInputEmailFormPrincipal('');
                                 setCorreo(true);
                                 setFacebook(false);
@@ -466,10 +546,12 @@ function FormCreaTuPerfil(props) {
                                 setTelefono(false);            
                                 setCorreo(true);
                                 setMostrar(true);
+                                }
                                 emitCustomEvent('openLoadingPage', false);
                             }else{
                                 steps.splice(1, 1);
                                 textSteps.splice(1, 1);
+                                if (isMounted){
                                 setValueInputEmailFormPrincipal('');
                                 setCorreo(false);
                                 setFacebook(false);
@@ -477,6 +559,7 @@ function FormCreaTuPerfil(props) {
                                 setPerfil(false);
                                 setTelefono(true);  
                                 setMostrar(true);
+                                }
                                 emitCustomEvent('openLoadingPage', false);
                             }
                         }
@@ -484,28 +567,14 @@ function FormCreaTuPerfil(props) {
                 } 
             }   
         }            
-    }, [props, activeStep, handleFacebookUser, handleGoogleUser])
-
-    const handlePhotoPerfil = async () => {
-        const auth = getAuth();
-        const infoUser = doc(database, "users", auth.currentUser.uid);                                  
-        const docSnap = await getDoc(infoUser);
-        if (docSnap.exists()) {
-            setGooglePhotoState(docSnap.data().googlePhoto);
-            setFacebookPhotoState(docSnap.data().facebookPhoto);
-            setLoadingDataFromFirestore(false);                
-        } else {
-            setMsg('Ha ocurrido un error al intentar acceder al servidor');
-            setSeverityInfo('error');
-            setOpenMsg(true);
-            emitCustomEvent('openLoadingPage', false);
-        }
-    }
+    }, [props, isMounted, activeStep, handleFacebookUser, handleGoogleUser, handlePhotoPerfil])
 
     /*atencion del valor ingresado del componente Input Email del form principal*/
     useEffect(() => {      
-        if (variableEstadoCargadoNewValuePasswordFormRegistrate){        
-            setVariableEstadoCargadoNewValuePasswordFormRegistrate(false);       
+        if (variableEstadoCargadoNewValuePasswordFormRegistrate){  
+            if (isMounted){      
+            setVariableEstadoCargadoNewValuePasswordFormRegistrate(false);   
+            }    
         } 
 
         if (variableEstadoCargadoNewValueEmailFormPrincipal){
@@ -530,15 +599,19 @@ function FormCreaTuPerfil(props) {
                                                 setMsg(error.code.split('/')[1].replace(/-/g,' '));
                                             }catch{
                                                 setMsg('Ha ocurrido un error');
-                                            }                            
+                                            } 
+                                            if (isMounted){                           
                                             setSeverityInfo('error');
                                             setOpenMsg(true);
+                                            }
                                             emitCustomEvent('openLoadingPage', false);
                                         });                                
                                     }else{
+                                        if (isMounted){
                                         setMsg('No podemos asociar el correo ' + valueInputEmailFormPrincipal + ' porque ya se encuentra asociado a otra cuenta.');
                                         setSeverityInfo('error');
                                         setOpenMsg(true); 
+                                        }
                                         emitCustomEvent('openLoadingPage', false);
                                     }
                                 })
@@ -553,9 +626,11 @@ function FormCreaTuPerfil(props) {
                                             setMsg(error.code.split('/')[1].replace(/-/g,' '));
                                         }catch{
                                             setMsg('Ha ocurrido un error');
-                                        }                            
+                                        }  
+                                        if (isMounted){                          
                                         setSeverityInfo('error');
                                         setOpenMsg(true);
+                                        }
                                         emitCustomEvent('openLoadingPage', false);
                                     });                                
                                 });
@@ -570,19 +645,27 @@ function FormCreaTuPerfil(props) {
                                         emitCustomEvent('openLoadingPage', false);
                                     }).catch((error) => {
                                         try{
+                                            if (isMounted){
                                             setMsg(error.code.split('/')[1].replace(/-/g,' '));
+                                            }
                                         }catch{
+                                            if (isMounted){
                                             setMsg('Ha ocurrido un error');
-                                        }                            
+                                            }
+                                        } 
+                                        if (isMounted){                           
                                         setSeverityInfo('error');
-                                        setOpenMsg(true);  
+                                        setOpenMsg(true);
+                                        }  
                                         emitCustomEvent('openLoadingPage', false);
                                     });                                    
                                 }else{
                                     //el mail no es el del usuario actual
+                                    if (isMounted){
                                     setMsg('No podemos asociar el correo ' + valueInputEmailFormPrincipal + ' porque ya se encuentra asociado a otra cuenta.');
                                     setSeverityInfo('error');
                                     setOpenMsg(true); 
+                                    }
                                     emitCustomEvent('openLoadingPage', false);
                                 }
                             }
@@ -590,6 +673,7 @@ function FormCreaTuPerfil(props) {
                         .catch((error) => {
                             // Some error occurred, you can inspect the code: error.code
                             emitCustomEvent('openLoadingPage', false);
+                            if (isMounted){
                             try{
                                 setMsg(error.code.split('/')[1].replace(/-/g,' '));
                             }catch{
@@ -597,19 +681,24 @@ function FormCreaTuPerfil(props) {
                             }                            
                             setSeverityInfo('error');
                             setOpenMsg(true);
+                            }
                             emitCustomEvent('openLoadingPage', false);
                         }
                     );
                 }           
             }
-            setVariableEstadoCargadoNewValueEmailFormPrincipal(false);       
+            if (isMounted){
+            setVariableEstadoCargadoNewValueEmailFormPrincipal(false);  
+            }     
         }              
-    },[props, handleNext, valueInputEmailFormPrincipal, variableEstadoCargadoNewValueEmailFormPrincipal, valueInputPasswordFormRegistrate, variableEstadoCargadoNewValuePasswordFormRegistrate]);
+    },[props, isMounted, handleNext, valueInputEmailFormPrincipal, variableEstadoCargadoNewValueEmailFormPrincipal, valueInputPasswordFormRegistrate, variableEstadoCargadoNewValuePasswordFormRegistrate]);
     /*fin atencion del valor ingresado del componente Input Email del form principal*/    
    
-    const handleEnterCorreo = () => {            
+    const handleEnterCorreo = () => {     
+        if (isMounted){       
         setSubmitEmailFormPrincipal(true);
         setSubmitInputPasswordFormRegistrate(true);
+        }
     } 
     
     const handleGoogleLinked = async (data) => {
@@ -623,10 +712,11 @@ function FormCreaTuPerfil(props) {
             emitCustomEvent('openLoadingPage', false);
         })
         .catch(()=>{
-            emitCustomEvent('openLoadingPage', false);
+            if (isMounted){
             setMsg('Ha ocurrido un error en la base de datos');
             setSeverityInfo('error');
             setOpenMsg(true);  
+            }
             emitCustomEvent('openLoadingPage', false);
         });
     }
@@ -643,13 +733,15 @@ function FormCreaTuPerfil(props) {
                     .then((usercred) => {
                         handleGoogleLinked(googleUser.profileObj);
                     }).catch((error) => {
+                        if (isMounted){
                         try{
                             setMsg(error.code.split('/')[1].replace(/-/g,' '));
                         }catch{
                             setMsg('Ha ocurrido un error');
                         }                            
                         setSeverityInfo('error');
-                        setOpenMsg(true);  
+                        setOpenMsg(true);
+                        }  
                         emitCustomEvent('openLoadingPage', false);
                     });                                    
                 }else{
@@ -659,9 +751,11 @@ function FormCreaTuPerfil(props) {
                             unsubscribe();
                             // Check if we are already signed-in Firebase with the correct user.
                             if (!isUserEqualGoogle(googleUser, firebaseUser)) {
+                                if (isMounted){
                                 setMsg('No podemos asociar esta cuenta de google porque ya se encuentra asociado a otra cuenta.');
                                 setSeverityInfo('error');
-                                setOpenMsg(true);  
+                                setOpenMsg(true); 
+                                } 
                                 emitCustomEvent('openLoadingPage', false);
                             } else {
                                 console.log('User already signed-in Firebase.');
@@ -673,26 +767,30 @@ function FormCreaTuPerfil(props) {
                         .then((usercred) => {
                             handleGoogleLinked(googleUser.profileObj);
                         }).catch((error) => {
+                            if (isMounted){
                             try{
                                 setMsg(error.code.split('/')[1].replace(/-/g,' '));
                             }catch{
                                 setMsg('Ha ocurrido un error');
                             }                            
                             setSeverityInfo('error');
-                            setOpenMsg(true);  
+                            setOpenMsg(true); 
+                            } 
                             emitCustomEvent('openLoadingPage', false);
                         });                                    
                     }
                 }
             })
             .catch((error) => {
+                if (isMounted){
                 try{
                     setMsg(error.code.split('/')[1].replace(/-/g,' '));
                 }catch{
                     setMsg('Ha ocurrido un error');
                 }                            
                 setSeverityInfo('error');
-                setOpenMsg(true);  
+                setOpenMsg(true); 
+                } 
                 emitCustomEvent('openLoadingPage', false);
             }
         );
@@ -736,10 +834,11 @@ function FormCreaTuPerfil(props) {
             emitCustomEvent('openLoadingPage', false);
         })
         .catch(()=>{
-            emitCustomEvent('openLoadingPage', false);
+            if (isMounted){
             setMsg('Ha ocurrido un error en la base de datos');
             setSeverityInfo('error');
-            setOpenMsg(true);  
+            setOpenMsg(true); 
+            } 
             emitCustomEvent('openLoadingPage', false);
         });
     }
@@ -758,13 +857,15 @@ function FormCreaTuPerfil(props) {
                     .then((usercred) => {
                         handleFacebookLinked(usercred);
                     }).catch((error) => {
+                        if (isMounted){
                         try{
                             setMsg(error.code.split('/')[1].replace(/-/g,' '));
                         }catch{
                             setMsg('Ha ocurrido un error');
                         }                            
                         setSeverityInfo('error');
-                        setOpenMsg(true);  
+                        setOpenMsg(true);
+                        }  
                         emitCustomEvent('openLoadingPage', false);
                     });                                    
                 }else{
@@ -777,9 +878,11 @@ function FormCreaTuPerfil(props) {
                             unsubscribe();
                             // Check if we are already signed-in Firebase with the correct user.
                             if (!isUserEqualFacebook(response, firebaseUser)) {
+                                if (isMounted){
                                 setMsg('No podemos asociar esta cuenta de facebook porque ya se encuentra asociado a otra cuenta.');
                                 setSeverityInfo('error');
-                                setOpenMsg(true);  
+                                setOpenMsg(true);
+                                }  
                                 emitCustomEvent('openLoadingPage', false);
                             } else {
                                 console.log('User already signed-in Firebase.');
@@ -792,26 +895,30 @@ function FormCreaTuPerfil(props) {
                         .then((usercred) => {
                             handleFacebookLinked(usercred);
                         }).catch((error) => {
+                            if (isMounted){
                             try{
                                 setMsg(error.code.split('/')[1].replace(/-/g,' '));
                             }catch{
                                 setMsg('Ha ocurrido un error');
                             }                            
                             setSeverityInfo('error');
-                            setOpenMsg(true);  
+                            setOpenMsg(true);
+                            }  
                             emitCustomEvent('openLoadingPage', false);
                         });                                    
                     }
                 }
             })
             .catch((error) => {
+                if (isMounted){
                 try{
                     setMsg(error.code.split('/')[1].replace(/-/g,' '));
                 }catch{
                     setMsg('Ha ocurrido un error');
                 }                            
                 setSeverityInfo('error');
-                setOpenMsg(true);  
+                setOpenMsg(true);
+                }  
                 emitCustomEvent('openLoadingPage', false);
             }
         );
@@ -833,21 +940,27 @@ function FormCreaTuPerfil(props) {
     }  
 
     const handleSelectPhotoGoogle = () => {
+        if (isMounted){
         setSelectedPhotoAvatar(false);
         setSelectedPhotoFacebook(false);
         setSelectedPhotoGoogle(true);
+        }
     }
 
     const handleSelectPhotoFacebook = () => {
+        if (isMounted){
         setSelectedPhotoAvatar(false);
         setSelectedPhotoGoogle(false);
         setSelectedPhotoFacebook(true);
+        }
     }
 
     const handleSelectPhotoAvatar = () => {
+        if (isMounted){
         setSelectedPhotoGoogle(false);
         setSelectedPhotoFacebook(false);
         setSelectedPhotoAvatar(true);
+        }
     }
 
     const handleListo = async () => {
@@ -864,9 +977,11 @@ function FormCreaTuPerfil(props) {
                 })
                 .catch(()=>{
                     emitCustomEvent('openLoadingPage', false);
+                    if (isMounted){
                     setMsg('Ha ocurrido un error en la base de datos');
                     setSeverityInfo('error');
-                    setOpenMsg(true);  
+                    setOpenMsg(true);
+                    }  
                 });
             }else{
                 if (selectedPhotoFacebook){
@@ -878,9 +993,11 @@ function FormCreaTuPerfil(props) {
                     })
                     .catch(()=>{
                         emitCustomEvent('openLoadingPage', false);
+                        if (isMounted){
                         setMsg('Ha ocurrido un error en la base de datos');
                         setSeverityInfo('error');
-                        setOpenMsg(true);  
+                        setOpenMsg(true);
+                        }  
                     });        
                 }else{
                     if (selectedPhotoAvatar){
@@ -893,9 +1010,11 @@ function FormCreaTuPerfil(props) {
                             })
                             .catch(()=>{
                                 emitCustomEvent('openLoadingPage', false);
+                                if (isMounted){
                                 setMsg('Ha ocurrido un error en la base de datos');
                                 setSeverityInfo('error');
-                                setOpenMsg(true);  
+                                setOpenMsg(true);
+                                }  
                             });
                         }else{
                             handleNext();
@@ -904,9 +1023,11 @@ function FormCreaTuPerfil(props) {
                 }
             }
         } else {
+            if (isMounted){
             setMsg('Ha ocurrido un error al intentar acceder al servidor');
             setSeverityInfo('error');
             setOpenMsg(true);
+            }
             emitCustomEvent('openLoadingPage', false);
         }
     }
@@ -917,8 +1038,10 @@ function FormCreaTuPerfil(props) {
 
     const handleFileSelected = async (file) => {
         if (file !== undefined){
+            if (isMounted){
             setLoading(true);
             setFilePhoto(file);
+            }
             const auth = getAuth();
             const storage = getStorage();
             const storageRef = ref(storage, auth.currentUser.uid + '/profile/' + file.name);
@@ -930,10 +1053,12 @@ function FormCreaTuPerfil(props) {
 //                console.log('Upload is ' + progress + '% done');
             }, 
             (error) => {
+                if (isMounted){
                 setMsg('Ha ocurrido un error al cargar el archivo');
                 setSeverityInfo('error');
                 setOpenMsg(true);
                 setLoading(false);
+                }
             }, 
             () => {
                 getDownloadURL(uploadTask.snapshot.ref)
@@ -944,27 +1069,35 @@ function FormCreaTuPerfil(props) {
                         await updateDoc(infoUser, {
                             profilePhoto: downloadURL,
                         }).then(()=>{
+                            if (isMounted){
                             setPhotoUploaded(downloadURL);
                             setLoading(false);
+                            }
                         }).catch(()=>{
                             emitCustomEvent('openLoadingPage', false);
+                            if (isMounted){
                             setMsg('Ha ocurrido un error en la base de datos');
                             setSeverityInfo('error');
                             setOpenMsg(true);  
                             setLoading(false);
+                            }
                         });
                     }
                 });
             }
           );            
         }else{
+            if (isMounted){
             setLoading(false);
+            }
         }
     }
 
     const handleRemovePhoto = () => {
+        if (isMounted){
         setLoading(true);
         handleSelectPhotoAvatar();
+        }
         const auth = getAuth();
         const storage = getStorage();
         const storageRef = ref(storage, auth.currentUser.uid + '/profile/' + filePhoto.name);        
@@ -975,32 +1108,42 @@ function FormCreaTuPerfil(props) {
                 await updateDoc(infoUser, {
                     profilePhoto: null,
                 }).then(()=>{
+                    if (isMounted){
                     setFilePhoto(null);
                     setPhotoUploaded(null);
                     setLoading(false);
+                    }
                 }).catch(()=>{
                     emitCustomEvent('openLoadingPage', false);
+                    if (isMounted){
                     setMsg('Ha ocurrido un error en la base de datos');
                     setSeverityInfo('error');
                     setOpenMsg(true);  
                     setLoading(false);
+                    }
                 });
             }
         }).catch((error) => {
             setMsg('Ha ocurrido un error al borrar el archivo');
+            if (isMounted){
             setSeverityInfo('error');
             setOpenMsg(true);
             emitCustomEvent('openLoadingPage', false);
             setLoading(false);
+            }
         });        
     }
 
     const handleLoadAvatarGoogle = () => {
+        if (isMounted){
         setLoadingAvatarGoogle(false);
+        }
     }
 
     const handleLoadAvatarFacebook = () => {
+        if (isMounted){
         setLoadingAvatarFacebook(false);
+        }
     }
 
     return (

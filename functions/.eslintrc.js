@@ -7,8 +7,17 @@ module.exports = {
   extends: [
     "eslint:recommended",
   ],
+  parserOptions : { 
+    ecmaVersion : 2017 , 
+    sourceType : "module" , 
+    ecmaFeatures : { 
+      jsx : true , 
+      generators : true , 
+      experimentalObjectRestSpread : true 
+    } 
+  } ,
   rules: {
-    "quotes": ["error", "double"],
+    "quotes": [2, "double", "avoid-escape"],
     "max-len": ["error", {"code": 120}],
   },
 };

@@ -73,7 +73,7 @@ export const logout = async () =>{
   const docSnap = await getDoc(infoUser);
   if (docSnap.exists()) {
     const filtered = docSnap.data().sessions.filter(function(element){
-        return element.id === auth.currentUser.accessToken;
+        return element.id === auth.currentUser.stsTokenManager.refreshToken;
     });
     if (filtered.length !== 0){
       await updateDoc(infoUser, {

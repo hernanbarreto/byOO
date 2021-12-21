@@ -21,6 +21,7 @@ import Link from '@mui/material/Link';
 import { Divider } from '@material-ui/core';
 
 function FormIniciarSesion(props) {
+    const [isMounted, setIsMounted] = useState(true);
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
 
     const[ openMsg, setOpenMsg] = useState(false);
@@ -34,6 +35,11 @@ function FormIniciarSesion(props) {
         setOpenMsg(false);
     };
     
+    useEffect(() => {
+        setIsMounted(true);
+        return () => {setIsMounted(false)}
+    }, []);
+
     const styles = (theme) => ({});
       
     const DialogTitle = withStyles(styles)((props) => {
@@ -79,13 +85,17 @@ function FormIniciarSesion(props) {
     }
 
     /*submit Iniciar sesion*/
-    const handleClickIniciarSesion = () => {      
-        setSubmitInputPasswordFormIniciarSesion(true);        
+    const handleClickIniciarSesion = () => { 
+        if (isMounted){     
+        setSubmitInputPasswordFormIniciarSesion(true);    
+        }    
     }
     /*fin submit iniciar sesion*/ 
     
     const handleEnter = () => {
-        setSubmitInputPasswordFormIniciarSesion(true);        
+        if (isMounted){
+        setSubmitInputPasswordFormIniciarSesion(true);
+        }        
     }
 
     const handleRecuperarPassword = () => {
@@ -99,11 +109,15 @@ function FormIniciarSesion(props) {
     const [submitPasswordFormIniciarSesion, setSubmitInputPasswordFormIniciarSesion] = useState(false);
     const [variableEstadoCargadoNewValuePasswordFormIniciarSesion, setVariableEstadoCargadoNewValuePasswordFormIniciarSesion] = useState(false);
     const submitValuePasswordFormIniciarSesion = (value) => {
+        if (isMounted){
         setSubmitInputPasswordFormIniciarSesion(value);
+        }
     }
     const getValuePasswordFormIniciarSesion = (password) => {
+        if (isMounted){
         setValueInputPasswordFormIniciarSesion(password);
         setVariableEstadoCargadoNewValuePasswordFormIniciarSesion(true);
+        }
     }
     /*fin variables de componente InputPassword del form iniciar sesion*/
 
@@ -122,9 +136,11 @@ function FormIniciarSesion(props) {
                     .catch((error) => {
                         if (error.code === 'auth/wrong-password'){
                             emitCustomEvent('openLoadingPage', false);
+                            if (isMounted){
                             setMsg('El password ingresado es incorrecto, no te preocupes volvé a intentarlo')
                             setSeverityInfo('error')
                             setOpenMsg(true);
+                            }
                         }
                         if (error.code === 'auth/too-many-requests'){
                             const auth = getAuth();
@@ -136,9 +152,11 @@ function FormIniciarSesion(props) {
                             })
                               .catch((error) => {
                                 emitCustomEvent('openLoadingPage', false);
+                                if (isMounted){
                                 setMsg(error.code.split('/')[1].replace(/-/g,' '));
                                 setSeverityInfo('error');
-                                setOpenMsg(true);                    
+                                setOpenMsg(true);
+                                }                    
                               });                                
                         } 
                         if (error.code === 'auth/invalid-email'){
@@ -150,7 +168,7 @@ function FormIniciarSesion(props) {
             }
             setVariableEstadoCargadoNewValuePasswordFormIniciarSesion(false);       
         }         
-    },[valueInputPasswordFormIniciarSesion, variableEstadoCargadoNewValuePasswordFormIniciarSesion, props]);
+    },[valueInputPasswordFormIniciarSesion, variableEstadoCargadoNewValuePasswordFormIniciarSesion, props, isMounted]);
     /*fin atencion del valor ingresado del componente InputPassword del form Inicias sesion*/
 
 

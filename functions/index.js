@@ -8,42 +8,45 @@ admin.initializeApp({
   databaseURL: "https://byoo-af7e5-default-rtdb.firebaseio.com",
 });
 
-exports.verifyIdToken = functions.https.onCall((data) => {
-  return admin.auth().verifyIdToken(data, true);
+exports.verifyIdToken = functions.https.onCall(async (data) => {
+  return admin.auth().verifyIdToken(data, true)
+         .catch((error)=>{
+          return (error);           
+         })
 });  
 
-exports.revokeRefreshTokens = functions.https.onCall((data) => {
-  return admin.auth().revokeRefreshTokens(data);
+exports.revokeRefreshTokens = functions.https.onCall(async (data) => {
+  return admin.auth().revokeRefreshTokens(data)
 });  
 
-exports.deleteUser = functions.https.onCall((data) => {
-    return admin.auth().deleteUser(data);
+exports.deleteUser = functions.https.onCall(async (data) => {
+    return admin.auth().deleteUser(data)
 });  
 
-exports.getUserByPhoneNumber = functions.https.onCall((data) => {
-  return admin.auth().getUserByPhoneNumber(data);
+exports.getUserByPhoneNumber = functions.https.onCall(async (data) => {
+  return admin.auth().getUserByPhoneNumber(data)
 });
 
-exports.updateUser = functions.https.onCall((data) => {
-  return admin.auth().updateUser(data[0], data[1]);
+exports.updateUser = functions.https.onCall(async (data) => {
+  return admin.auth().updateUser(data[0], data[1])
 });
 
-exports.getUserByEmail = functions.https.onCall((data) => {
-  return admin.auth().getUserByEmail(data);
+exports.getUserByEmail = functions.https.onCall(async (data) => {
+  return admin.auth().getUserByEmail(data)
 });
 
-exports.getUsers = functions.https.onCall((data) => {
-  return admin.auth().getUsers(data);
+exports.getUsers = functions.https.onCall(async (data) => {
+  return admin.auth().getUsers(data)
 });
 
-exports.setCustomUserClaims = functions.https.onCall((data) => {
-  return admin.auth().setCustomUserClaims(data, { admin: true });
+exports.setCustomUserClaims = functions.https.onCall(async (data) => {
+  return admin.auth().setCustomUserClaims(data, { admin: true })
 });
 
-exports.getUser = functions.https.onCall((data) => {
-  return admin.auth().getUser(data);
+exports.getUser = functions.https.onCall(async (data) => {
+  return admin.auth().getUser(data)
 });
 
-exports.sendMail = functions.https.onCall((data) => {
-  return admin.firestore().collection("mail").add({from: data[0], to: data[1], template: data[2]});
+exports.sendMail = functions.https.onCall(async (data) => {
+  return admin.firestore().collection("mail").add({from: data[0], to: data[1], template: data[2]})
 });

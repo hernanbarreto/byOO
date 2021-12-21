@@ -33,6 +33,7 @@ const getUserByEmail = httpsCallable(functions, 'getUserByEmail');
 
 var recaptchaVerifier;
 function FormExisteCuenta(props) {
+    const [isMounted, setIsMounted] = useState(true);
     const[ openMsg, setOpenMsg] = useState(false);
     const [severityInfo, setSeverityInfo] = useState('success');
     const [msg, setMsg] = useState('');
@@ -43,6 +44,11 @@ function FormExisteCuenta(props) {
     
         setOpenMsg(false);
     };
+
+    useEffect(() => {
+        setIsMounted(true);
+        return () => {setIsMounted(false)}
+    }, []);
 
     const [email, setEmail] = useState(null);
     const [googleProvider, setGoogleProvider] = useState(false);
@@ -98,8 +104,10 @@ function FormExisteCuenta(props) {
         if (recaptchaVerifier !== undefined)
             if (!recaptchaVerifier.destroyed) 
                 recaptchaVerifier.clear();
+        if (isMounted){
         setTxtBtnContinuar('Continuar');
         setClassNameBtnContinuar('button__log__continuar');
+        }
         emitCustomEvent('openLoadingPage', false);
         props.onGetReturn(true);
     }
@@ -109,10 +117,11 @@ function FormExisteCuenta(props) {
         if (recaptchaVerifier !== undefined)
             if (!recaptchaVerifier.destroyed) 
                 recaptchaVerifier.clear();
+        if (isMounted){
         setTxtBtnContinuar('Continuar');
         setClassNameBtnContinuar('button__log__continuar');
-
-        setSubmitInputPasswordFormIniciarSesion(true);        
+        setSubmitInputPasswordFormIniciarSesion(true);       
+        } 
     }
     /*fin submit iniciar sesion*/ 
     
@@ -120,18 +129,21 @@ function FormExisteCuenta(props) {
         if (recaptchaVerifier !== undefined)
             if (!recaptchaVerifier.destroyed) 
                 recaptchaVerifier.clear();
+        if (isMounted){
         setTxtBtnContinuar('Continuar');
         setClassNameBtnContinuar('button__log__continuar');
-
-        setSubmitInputPasswordFormIniciarSesion(true);        
+        setSubmitInputPasswordFormIniciarSesion(true); 
+        }       
     }
 
     const handleRecuperarPassword = () => {
         if (recaptchaVerifier !== undefined)
             if (!recaptchaVerifier.destroyed) 
                 recaptchaVerifier.clear();
+        if (isMounted){
         setTxtBtnContinuar('Continuar');
         setClassNameBtnContinuar('button__log__continuar');
+        }
 
         props.onGetRecoveryPass(true);
         emitCustomEvent('openLoadingPage', false);
@@ -141,8 +153,10 @@ function FormExisteCuenta(props) {
         if (recaptchaVerifier !== undefined)
             if (!recaptchaVerifier.destroyed) 
                 recaptchaVerifier.clear();
+        if (isMounted){
         setTxtBtnContinuar('Continuar');
         setClassNameBtnContinuar('button__log__continuar');
+        }
 
         emitCustomEvent('openLoadingPage', false);
     }
@@ -155,8 +169,10 @@ function FormExisteCuenta(props) {
         if (recaptchaVerifier !== undefined)
             if (!recaptchaVerifier.destroyed) 
                 recaptchaVerifier.clear();
+        if (isMounted){
         setTxtBtnContinuar('Continuar');
-        setClassNameBtnContinuar('button__log__continuar');        
+        setClassNameBtnContinuar('button__log__continuar');      
+        }  
 
         emitCustomEvent('openLoadingPage', true);
     }
@@ -165,8 +181,10 @@ function FormExisteCuenta(props) {
         if (recaptchaVerifier !== undefined)
             if (!recaptchaVerifier.destroyed) 
                 recaptchaVerifier.clear();
+        if (isMounted){
         setTxtBtnContinuar('Continuar');
         setClassNameBtnContinuar('button__log__continuar');
+        }
 
         emitCustomEvent('openLoadingPage', true);
     }
@@ -175,8 +193,10 @@ function FormExisteCuenta(props) {
         if (recaptchaVerifier !== undefined)
             if (!recaptchaVerifier.destroyed) 
                 recaptchaVerifier.clear();
+        if (isMounted){
         setTxtBtnContinuar('Continuar');
         setClassNameBtnContinuar('button__log__continuar');
+        }
 
         props.onGetEmail(email);
     }
@@ -185,8 +205,10 @@ function FormExisteCuenta(props) {
         if (recaptchaVerifier !== undefined)
             if (!recaptchaVerifier.destroyed) 
                 recaptchaVerifier.clear();
+        if (isMounted){
         setTxtBtnContinuar('Continuar');
         setClassNameBtnContinuar('button__log__continuar');
+        }
 
         if (value){
             props.onGetOpenFormTerminaDeRegistrarte(true);
@@ -199,8 +221,10 @@ function FormExisteCuenta(props) {
         if (recaptchaVerifier !== undefined)
             if (!recaptchaVerifier.destroyed) 
                 recaptchaVerifier.clear();
+        if (isMounted){
         setTxtBtnContinuar('Continuar');
         setClassNameBtnContinuar('button__log__continuar');
+        }
 
         if (value){
             props.onGetOpenFormTerminaDeRegistrarte(true);
@@ -213,8 +237,10 @@ function FormExisteCuenta(props) {
         if (recaptchaVerifier !== undefined)
             if (!recaptchaVerifier.destroyed) 
                 recaptchaVerifier.clear();
+        if (isMounted){
         setTxtBtnContinuar('Continuar');
         setClassNameBtnContinuar('button__log__continuar');
+        }
 
         emitCustomEvent('openLoadingPage', false);
         props.onGetNameFormTerminaDeRegistrarte(value.profileObj.givenName);
@@ -228,8 +254,10 @@ function FormExisteCuenta(props) {
         if (recaptchaVerifier !== undefined)
             if (!recaptchaVerifier.destroyed) 
                 recaptchaVerifier.clear();
+        if (isMounted){
         setTxtBtnContinuar('Continuar');
         setClassNameBtnContinuar('button__log__continuar');
+        }
 
         emitCustomEvent('openLoadingPage', false);
         props.onGetNameFormTerminaDeRegistrarte(value.name.split(' ')[0]);
@@ -249,11 +277,15 @@ function FormExisteCuenta(props) {
     const [submitPasswordFormIniciarSesion, setSubmitInputPasswordFormIniciarSesion] = useState(false);
     const [variableEstadoCargadoNewValuePasswordFormIniciarSesion, setVariableEstadoCargadoNewValuePasswordFormIniciarSesion] = useState(false);
     const submitValuePasswordFormIniciarSesion = (value) => {
+        if (isMounted){
         setSubmitInputPasswordFormIniciarSesion(value);
+        }
     }
     const getValuePasswordFormIniciarSesion = (password) => {
+        if (isMounted){
         setValueInputPasswordFormIniciarSesion(password);
         setVariableEstadoCargadoNewValuePasswordFormIniciarSesion(true);
+        }
     }
     /*fin variables de componente InputPassword del form iniciar sesion*/
 
@@ -265,45 +297,69 @@ function FormExisteCuenta(props) {
                 for (var i = 0; i< props.email.split('@')[0].length-2; i++){
                     k+='*';
                 }
+                if (isMounted){
                 setEmail(props.email.split('@')[0].substring(0,1) + k + props.email.split('@')[0].substring(props.email.split('@')[0].length-1, props.email.split('@')[0].length) + '@' + props.email.split('@')[1]);
+                }
             }
         }else{
+            if (isMounted){
             setEmail(null);
+            }
         }
 
         if (props.providers.length !==0){
             if (props.providers.includes('google.com')){
+                if (isMounted){
                 setGoogleProvider(true);
+                }
             }else{
+                if (isMounted){
                 setGoogleProvider(false);
+                }
             }
             if (props.providers.includes('facebook.com')){
+                if (isMounted){
                 setFacebookProvider(true);
+                }
             }else{
+                if (isMounted){
                 setFacebookProvider(false);
+                }
             }
             if (props.providers.includes('password')){
+                if (isMounted){
                 setPasswordProvider(true);
+                }
             }else{
+                if (isMounted){
                 setPasswordProvider(false);
+                }
             }
             if (props.providers.includes('phone')){
                 if (props.email !== null){
                     getUserByEmail(props.email)
                     .then((userRecord) => {
+                        if (isMounted){
                         setPhoneNumber(userRecord.data.phoneNumber);
                         setPhoneProvider(true);
+                        }
                     })
                     .catch((error)=>{
                         console.log(error);
+                        if (isMounted){
                         setPhoneNumber(null);
                         setPhoneProvider(false);
+                        }
                     });
                 }else{
+                    if (isMounted){
                     setPhoneProvider(false);
+                    }
                 }
             }else{
+                if (isMounted){
                 setPhoneProvider(false);
+                }
             }
         }
 
@@ -320,9 +376,11 @@ function FormExisteCuenta(props) {
                     .catch((error) => {
                         if (error.code === 'auth/wrong-password'){
                             emitCustomEvent('openLoadingPage', false);
+                            if (isMounted){
                             setMsg('El password ingresado es incorrecto, no te preocupes volvé a intentarlo')
                             setSeverityInfo('error')
                             setOpenMsg(true);
+                            }
                         }
                         if (error.code === 'auth/too-many-requests'){
                             const auth = getAuth();
@@ -334,9 +392,11 @@ function FormExisteCuenta(props) {
                             })
                               .catch((error) => {
                                 emitCustomEvent('openLoadingPage', false);
+                                if (isMounted){
                                 setMsg(error.code.split('/')[1].replace(/-/g,' '));
                                 setSeverityInfo('error');
-                                setOpenMsg(true);                    
+                                setOpenMsg(true);
+                                }                    
                               });                                
                         } 
                         if (error.code === 'auth/invalid-email'){
@@ -346,9 +406,11 @@ function FormExisteCuenta(props) {
                         }
                     });
             }
-            setVariableEstadoCargadoNewValuePasswordFormIniciarSesion(false);       
+            if (isMounted){
+            setVariableEstadoCargadoNewValuePasswordFormIniciarSesion(false); 
+            }      
         }          
-    },[valueInputPasswordFormIniciarSesion, variableEstadoCargadoNewValuePasswordFormIniciarSesion, props, email]);
+    },[valueInputPasswordFormIniciarSesion, variableEstadoCargadoNewValuePasswordFormIniciarSesion, props, email, isMounted]);
     /*fin atencion del valor ingresado del componente InputPassword del form Inicias sesion*/
 
     const handleUpdateProfile = () => {
@@ -364,8 +426,10 @@ function FormExisteCuenta(props) {
                 size: 'normal', // 'normal, invisible' or 'compact'
                 badge: 'inline' //' bottomright' or 'inline' applies to invisible.                    
             }, auth);
+            if (isMounted){
             setTxtBtnContinuar('Cancelar');
             setClassNameBtnContinuar('button__log__BW');
+            }
             emitCustomEvent('openLoadingPage', false);
             signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier)
             .then((confirmationResult) => {
@@ -373,10 +437,12 @@ function FormExisteCuenta(props) {
                 if (recaptchaVerifier !== undefined)
                     if (!recaptchaVerifier.destroyed) 
                         recaptchaVerifier.clear();
+                if (isMounted){
                 setTxtBtnContinuar('Continuar');
                 setClassNameBtnContinuar('button__log__continuar');
                 setConfirmationResult(confirmationResult);
                 setOpenFormVerificaCodigoPhone(true);
+                }
                 emitCustomEvent('openLoadingPage', false);
             }).catch((error) => {
                 // Error; SMS not sent
@@ -385,18 +451,22 @@ function FormExisteCuenta(props) {
                 if (recaptchaVerifier !== undefined)
                     if (!recaptchaVerifier.destroyed) 
                         recaptchaVerifier.clear();
+                if (isMounted){
                 setTxtBtnContinuar('Continuar');
                 setClassNameBtnContinuar('button__log__continuar');
                 setMsg('No pudimos enviar el SMS al número de teléfono ' + String(phoneNumber));
                 setSeverityInfo('error');
-                setOpenMsg(true);                    
+                setOpenMsg(true);    
+                }                
             });                
          }else{
             if (recaptchaVerifier !== undefined)
                 if (!recaptchaVerifier.destroyed) 
                     recaptchaVerifier.clear();
+            if (isMounted){
             setTxtBtnContinuar('Continuar');
             setClassNameBtnContinuar('button__log__continuar');
+            }
         }
     }
 
@@ -404,11 +474,15 @@ function FormExisteCuenta(props) {
     }
 
     const handleReturnFormVerificaCodigoPhone = () => {
+        if (isMounted){
         setOpenFormVerificaCodigoPhone(false);
+        }
     }
 
     const handleCloseFormVerificaCodigoPhone = () => {
+        if (isMounted){
         setOpenFormVerificaCodigoPhone(false);
+        }
         props.onGetClose(true);
     }
 

@@ -27,7 +27,7 @@ import { getFirestore,
         doc, 
         updateDoc, 
         arrayUnion, 
-        arrayRemove,
+//        arrayRemove,
         getDoc } from "firebase/firestore";
 import { useAuth } from '../../services/firebase';
 import { getFunctions, httpsCallable } from "firebase/functions";
@@ -39,7 +39,7 @@ import { getAuth } from "firebase/auth";
 
 const database = getFirestore();
 const functions = getFunctions();
-const verifyIdToken = httpsCallable(functions, 'verifyIdToken');
+//const verifyIdToken = httpsCallable(functions, 'verifyIdToken');
 const deleteUser = httpsCallable(functions, 'deleteUser');
 
 function Header(details) {
@@ -111,105 +111,190 @@ function Header(details) {
         });
     } 
 
-    const handleUpdateProfile = useCallback(async () => {
-        setLoadingAvatar(true);
-        setOpenLogin(false);
-        const auth = getAuth();
-        const currentUser1 = auth.currentUser;
-        const infoUser = doc(database, "users", currentUser1.uid);
-        try{                                  
-            const docSnap = await getDoc(infoUser);
-            if (docSnap.exists()) {
-                docSnap.data().sessions.forEach(function(element) {
-                    console.log(element)
-                    verifyIdToken(element.id)
-                    .then((result) => {
-                        console.log(result);
-                    })
-                    .catch(async (error) => {
-                        console.log(error);
-                        await updateDoc(infoUser, {
-                            sessions: arrayRemove(element)
-                        })
-                        .then((result)=>{
-                            console.log(result);
-                        })
-                        .catch((error)=>{
-                            console.log(error);
-                        });
-                    });                        
-                })                    
-                const filtered = docSnap.data().sessions.filter(function(element){
-                    return element.id === currentUser1.accessToken;
-                });
-                if (filtered.length === 0){
-                    await updateDoc(infoUser, {
-                            sessions: arrayUnion(                
-                                {
-                                    id: currentUser1.accessToken,
-                                    date: Timestamp.now().toMillis(),
-                                    ip: details.user[0].ip, 
-                                    browser: details.user[1].browser.name,
-                                    os:{
-                                        name: details.user[1].os.name,
-                                        version: details.user[1].os.version,
-                                    },
-                                    location:{
-                                        city: details.user[0].city,//tigre
-                                        country: details.user[0].country_name, //argentina
-                                        region: details.user[0].region,
-                                        country_code: details.user[0].country_code,
-                                        currency_name: details.user[0].currency_name,
-                                        currency: details.user[0].currency,
-                                        lenguaje: details.user[0].languages.split(',')[0],
-                                        country_tld: details.user[0].country_tld,
-                                    },
-                                }
-                            )
-                        }
-                    )
-                    .then(()=>{
-                        if (currentUser1.providerData.length === 1){
-                            //tiene un solo proveedor
-                            if (currentUser1.providerData[0].providerId === 'phone'){
-                                //tiene un solo proveedor y es phone
-                                if (currentUser1.email !== null){
-                                    //tiene un solo proveedor, es phone y tiene un email asociado esta mal, hay que asignarle null a email
-                                }
+//    const handleUpdateProfile = useCallback(async () => {
+//        setLoadingAvatar(true);
+//        setOpenLogin(false);
+//        const auth = getAuth();
+//        const currentUser1 = auth.currentUser;
+//        const infoUser = doc(database, "users", currentUser1.uid);
+//        try{                                  
+//            const docSnap = await getDoc(infoUser);
+//            if (docSnap.exists()) {
+//                docSnap.data().sessions.forEach(function(element) {
+//                    console.log(element)
+//                    verifyIdToken(element.id)
+//                    .then(async (result) => {
+//                        if (result.data.uid !== undefined){
+//                            console.log(result);
+//                        }else{
+//                            console.log(result.data.errorInfo.code);
+//                            if (result.data.errorInfo.code === 'auth/id-token-revoked'){
+//                                await updateDoc(infoUser, {
+//                                    sessions: arrayRemove(element)
+//                                })
+//                                .then((result)=>{
+//                                    console.log(result);
+//                                })
+//                                .catch((error)=>{
+//                                    console.log(error);
+//                                });
+//                            }
+//                        }
+//                    })
+//                })                    
+//                const filtered = docSnap.data().sessions.filter(function(element){
+//                    return element.id === currentUser1.accessToken;
+//                });
+//                if (filtered.length === 0){
+//                    await updateDoc(infoUser, {
+//                            sessions: arrayUnion(                
+//                                {
+//                                    id: currentUser1.accessToken,
+//                                    date: Timestamp.now().toMillis(),
+//                                    ip: details.user[0].ip, 
+//                                    browser: details.user[1].browser.name,
+//                                    os:{
+//                                        name: details.user[1].os.name,
+//                                        version: details.user[1].os.version,
+//                                    },
+//                                    location:{
+//                                        city: details.user[0].city,//tigre
+//                                        country: details.user[0].country_name, //argentina
+//                                        region: details.user[0].region,
+//                                        country_code: details.user[0].country_code,
+//                                        currency_name: details.user[0].currency_name,
+//                                        currency: details.user[0].currency,
+//                                        lenguaje: details.user[0].languages.split(',')[0],
+//                                        country_tld: details.user[0].country_tld,
+//                                    },
+//                                }
+//                            )
+//                        }
+//                    )
+//                    .then(()=>{
+//                        if (currentUser1.providerData.length === 1){
+//                            //tiene un solo proveedor
+//                            if (currentUser1.providerData[0].providerId === 'phone'){
+//                                //tiene un solo proveedor y es phone
+//                                if (currentUser1.email !== null){
+//                                    //tiene un solo proveedor, es phone y tiene un email asociado esta mal, hay que asignarle null a email
+//                                }
+//                            }
+//                        }
+//                        setPhotoURL(docSnap.data().profilePhoto);
+//                    })
+//                    .catch(()=>{
+//                        emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
+//                        console.log('error')
+//                        setLoadingAvatar(false);
+//                    });
+//                }else{
+//                    setPhotoURL(docSnap.data().profilePhoto);
+//                }
+//            }else{
+//                deleteUser(currentUser1.uid)
+//                .then(()=>{
+//                    logout()
+//                    .then(()=>{
+//                        emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta, tenés que volver a registrarte/error');
+//                    })
+//                    .catch((error)=>{
+//                        emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta, tenés que volver a registrarte/error');
+//                    });
+//                })
+//                .catch(()=>{
+//                    console.log('error')
+//                })
+//                setLoadingAvatar(false);
+//            }
+//        }catch{
+//            emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
+//            console.log('error')
+//            setLoadingAvatar(false);
+//        } 
+//    },[details]);
+
+const handleUpdateProfile = useCallback(async () => {
+    setLoadingAvatar(true);
+    setOpenLogin(false);
+    const auth = getAuth();
+    const currentUser1 = auth.currentUser;
+    const infoUser = doc(database, "users", currentUser1.uid);
+    try{                                  
+        const docSnap = await getDoc(infoUser);
+        if (docSnap.exists()) {                  
+            const filtered = docSnap.data().sessions.filter(function(element){
+                return element.id === currentUser1.stsTokenManager.refreshToken;
+            });
+            if (filtered.length === 0){
+                await updateDoc(infoUser, {
+                        sessions: arrayUnion(                
+                            {
+                                id: currentUser1.stsTokenManager.refreshToken,
+                                date: Timestamp.now().toMillis(),
+                                ip: details.user[0].ip, 
+                                browser: details.user[1].browser.name,
+                                os:{
+                                    name: details.user[1].os.name,
+                                    version: details.user[1].os.version,
+                                },
+                                location:{
+                                    city: details.user[0].city,//tigre
+                                    country: details.user[0].country_name, //argentina
+                                    region: details.user[0].region,
+                                    country_code: details.user[0].country_code,
+                                    currency_name: details.user[0].currency_name,
+                                    currency: details.user[0].currency,
+                                    lenguaje: details.user[0].languages.split(',')[0],
+                                    country_tld: details.user[0].country_tld,
+                                },
+                            }
+                        )
+                    }
+                )
+                .then(()=>{
+                    if (currentUser1.providerData.length === 1){
+                        //tiene un solo proveedor
+                        if (currentUser1.providerData[0].providerId === 'phone'){
+                            //tiene un solo proveedor y es phone
+                            if (currentUser1.email !== null){
+                                //tiene un solo proveedor, es phone y tiene un email asociado esta mal, hay que asignarle null a email
                             }
                         }
-                        setPhotoURL(docSnap.data().profilePhoto);
-                    })
-                    .catch(()=>{
-                        emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
-                        console.log('error')
-                        setLoadingAvatar(false);
-                    });
-                }else{
+                    }
                     setPhotoURL(docSnap.data().profilePhoto);
-                }
-            }else{
-                deleteUser(currentUser1.uid)
-                .then(()=>{
-                    logout()
-                    .then(()=>{
-                        emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta, tenés que volver a registrarte/error');
-                    })
-                    .catch((error)=>{
-                        emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta, tenés que volver a registrarte/error');
-                    });
                 })
                 .catch(()=>{
+                    emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
                     console.log('error')
-                })
-                setLoadingAvatar(false);
+                    setLoadingAvatar(false);
+                });
+            }else{
+                setPhotoURL(docSnap.data().profilePhoto);
             }
-        }catch{
-            emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
-            console.log('error')
+        }else{
+            deleteUser(currentUser1.uid)
+            .then(()=>{
+                logout()
+                .then(()=>{
+                    emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta, tenés que volver a registrarte/error');
+                })
+                .catch((error)=>{
+                    emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta, tenés que volver a registrarte/error');
+                });
+            })
+            .catch(()=>{
+                console.log('error')
+            })
             setLoadingAvatar(false);
-        } 
-    },[details]);
+        }
+    }catch{
+        emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
+        console.log('error')
+        setLoadingAvatar(false);
+    } 
+},[details]);
+
 
     const handleUpdateProfileBasic = useCallback(async () => {
         setLoadingAvatar(true);

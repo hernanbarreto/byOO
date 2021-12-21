@@ -14,6 +14,8 @@ import NotFound from './pages/NotFound';
 import { useUserAgent } from '@oieduardorabelo/use-user-agent';
 import Axios from 'axios';
 import LoadingPage from './pages/login/LoadingPage';
+import CookieAcept from './pages/CookieAcept';
+
 
 function App() {
   const details = useUserAgent();
@@ -27,12 +29,12 @@ function App() {
     }
   }, [details])
 
-
   return (
     <div className="App">
       <AuthProvider>
         <Info />
         <Router>
+          <CookieAcept/>
           <Header user={userDetails}/>
           <LoadingPage/>
           <Switch>
@@ -53,7 +55,7 @@ function App() {
             </Route>
             <Route component={NotFound} />
           </Switch>
-          <Footer/> 
+          <Footer/>
         </Router>
       </AuthProvider>
     </div>

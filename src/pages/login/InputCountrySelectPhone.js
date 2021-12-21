@@ -7,6 +7,7 @@ import Autocomplete from '@mui/material/Autocomplete';
 
 
 function InputCountrySelectPhone(props) {
+    const [isMounted, setIsMounted] = useState(true);
     const countries = [
         { code: 'AD', label: 'Andorra', phone: '376' },
         { code: 'AE', label: 'United Arab Emirates', phone: '971' },
@@ -270,6 +271,11 @@ function InputCountrySelectPhone(props) {
             return '';
     });
 
+    useEffect(() => {
+        setIsMounted(true);
+        return () => {setIsMounted(false)}
+    }, []);
+
     const useStyles = makeStyles({
         option: {
           fontSize: 14,
@@ -283,42 +289,54 @@ function InputCountrySelectPhone(props) {
     const classes = useStyles();  
 
     const handlerNumeroTelefonicoChange = (e) => {
+        if (isMounted){
         setValueInputPhone(e.target.value.replace(/[^ 0-9]/g, ''));
         setStateErrorPhone(false);
         sethelperTextPhone('');
+        }
     }
 
     useEffect(() => {
         if(props.code){
+            if (isMounted){
             setValuePhone(String('+' + countries.find(elements => elements.code === props.code).phone));
             setValueCountri(countries.find(elements => elements.code === props.code ));
+            }
         }
         if(props.close){
+            if (isMounted){
             setStateErrorPhone(false);
             sethelperTextPhone('');
             setValueInputPhone('');
+            }
         }
         if (props.verify){
             if (valueInputPhone !== undefined){
                 if (String(valueInputPhone.replace(/[^ 0-9]/g, '')).length <= 4) {
                     if (String(valueInputPhone.replace(/[^ 0-9]/g, '')).length === 0) 
+                        if (isMounted) 
                         sethelperTextPhone('Debes ingresar un número telefónico');
                     else
+                        if (isMounted)
                         sethelperTextPhone('El número telefónico ingresado es demasiado corto');
+                    if (isMounted)
                     setStateErrorPhone(true);
                     props.onGetValuePhone(['','']);
                 }else{
+                    if (isMounted)
                     setStateErrorPhone(false);
                     props.onGetValuePhone([String(valuePhone) + String(valueInputPhone.replace(/[^ 0-9]/g, '')), valueCountri]);
                 }         
             }else{
+                if (isMounted){
                 sethelperTextPhone('Debes ingresar un número telefónico');
                 setStateErrorPhone(true);
+                }
                 props.onGetValuePhone(['','']);
             }
             props.onSubmitValuePhone(false);
         }          
-    },[props]);
+    },[props, isMounted]);
 
     const handleKey = (e) => {
         if (e.key === 'Enter') {

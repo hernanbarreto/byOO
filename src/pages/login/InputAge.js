@@ -6,43 +6,65 @@ import DatePicker from '@mui/lab/DatePicker';
 import esLocale from 'date-fns/locale/es';
 
 function InputAge(props) {
+    const [isMounted, setIsMounted] = useState(true);
     const [valueFechaNacimiento, setValueFechaNacimiento] = useState(props.edad);
     const [stateErrorFecha, setStateErrorFecha] = useState(false);
     const [helperTextFecha, sethelperTextFecha ] = useState('');
 
     useEffect(() => {
+        setIsMounted(true);
+        return () => {setIsMounted(false)}
+    }, []);
+
+    useEffect(() => {
         if(props.close){
+            if (isMounted){
             setValueFechaNacimiento(null);
             setStateErrorFecha(false);          
             sethelperTextFecha('');
+            }
         }
 
         if (props.verify){
-            if (valueFechaNacimiento !== undefined){
-                if (valueFechaNacimiento !== null){
-                    var cumple = new Date(valueFechaNacimiento);
-                    if ((Date.now()-cumple.getTime()) >= (1000*60*60*24*365*18)){
-                        props.onGetValueAge(cumple.getTime());
+            if (valueFechaNacimiento !== ''){
+                if (valueFechaNacimiento !== undefined){
+                    if (valueFechaNacimiento !== null){
+                        var cumple = new Date(valueFechaNacimiento);
+                        if ((Date.now()-cumple.getTime()) >= (1000*60*60*24*365*18)){
+                            props.onGetValueAge(cumple.getTime());
+                        }else{
+                            if (isMounted){
+                            setStateErrorFecha(true);
+                            sethelperTextFecha('Debes ser mayor de 18 años para registrarte en byOO');
+                            }
+                            props.onGetValueAge('');
+                        }  
                     }else{
+                        //debe ingresar una fecha de nacimiento
+                        if (isMounted){
                         setStateErrorFecha(true);
-                        sethelperTextFecha('Debes ser mayor de 18 años para registrarte en byOO');
+                        sethelperTextFecha('Debes ingresar una fecha de nacimiento');
+                        }
                         props.onGetValueAge('');
-                    }  
+                    }
                 }else{
                     //debe ingresar una fecha de nacimiento
+                    if (isMounted){
                     setStateErrorFecha(true);
                     sethelperTextFecha('Debes ingresar una fecha de nacimiento');
+                    }
                     props.onGetValueAge('');
                 }
             }else{
-                //debe ingresar una fecha de nacimiento
-                setStateErrorFecha(true);
-                sethelperTextFecha('Debes ingresar una fecha de nacimiento');
-                props.onGetValueAge('');
+                if (isMounted){
+                    setStateErrorFecha(true);
+                    sethelperTextFecha('Debes ingresar una fecha de nacimiento');
+                    }
+                    props.onGetValueAge('');    
             }
             props.onSubmitValueAge(false);
         }         
-    },[props, valueFechaNacimiento]);
+    },[props, valueFechaNacimiento, isMounted]);
 
     const handleKey = (e) => {
         if (e.key === 'Enter') {

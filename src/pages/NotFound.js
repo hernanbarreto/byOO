@@ -15,7 +15,7 @@ function NotFound () {
         if (state !== null){
             if (state){
             }
-        }       
+        }
     }, [state]);
 
     const Img = styled('img')({

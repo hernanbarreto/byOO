@@ -22,13 +22,16 @@ import { getFirestore,
     getDoc, 
     updateDoc,
     arrayRemove,
-    Timestamp, 
     arrayUnion,} from "firebase/firestore";
 
 import { logout } from '../../../services/firebase';
 import { useAuth } from '../../../services/firebase';
+import { useInitPage } from '../../useInitPage';
 
 function FormReautenticaCodigoPhone(props) {
+    const {state} = useInitPage();
+    const [isMounted, setIsMounted] = useState(true);
+
     const {currentUser} = useAuth();
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
     const [codeVerification, setCodeVerification] = useState('');
@@ -81,7 +84,15 @@ function FormReautenticaCodigoPhone(props) {
         );
     });
 
-    
+    useEffect(() => {
+        setIsMounted(true);
+        if (state !== null){
+            if (state){
+            }
+        }
+        return () => {setIsMounted(false)}
+    }, [state]); 
+
     const handleCloseFormVerificaCodigoPhone = () => {
         props.onGetReturn(true);
         emitCustomEvent('openLoadingPage', false);
@@ -93,31 +104,41 @@ function FormReautenticaCodigoPhone(props) {
     }
 
     const handleChange = (value) => {
-        setValue(value)
+        if (isMounted){
+            setValue(value);
+        }
       }
     
     const handleComplete = (value) => {
         emitCustomEvent('openLoadingPage', true);
-        setCodeVerification(value);
+        if (isMounted){
+            setCodeVerification(value);
+        }
     }
 
     useEffect(() => {
         if (props.open){
-            setValue('');
-            setCodeVerification('');
+            if (isMounted){
+                setValue('');
+                setCodeVerification('');
+            }
         }             
-    }, [props]);
+    }, [props, isMounted]);
 
     useEffect(() => {
         if (codeVerification !== ''){
             if (props.confirmationResult !== null){
-                setCodeVerification('');
+                if (isMounted){
+                    setCodeVerification('');
+                }
                 const auth = getAuth();
-                const antToken = auth.currentUser.accessToken;
+//                const antToken = auth.currentUser.accessToken;
+                const antToken = auth.currentUser.stsTokenManager.refreshToken;
                 var credential = PhoneAuthProvider.credential(props.confirmationResult.verificationId, codeVerification);
                 reauthenticateWithCredential(auth.currentUser, credential)
                 .then(async() => {
-                    const newToken = auth.currentUser.accessToken;
+//                    const newToken = auth.currentUser.accessToken;
+                    const newToken = auth.currentUser.stsTokenManager.refreshToken;
                     const database = getFirestore();
                     const infoUser = doc(database, "users", currentUser.uid);
                     const docSnap = await getDoc(infoUser);
@@ -130,31 +151,8 @@ function FormReautenticaCodigoPhone(props) {
                             sessions: arrayRemove(filtered[0])
                         })
                         .then(async()=>{
-                                await updateDoc(infoUser, {
-                                    sessions: arrayUnion(                
-                                        {
-                                            id: newToken,
-                                            date: Timestamp.now().toMillis(),
-                                            ip: props.details.user[0].ip, 
-                                            browser: props.details.user[1].browser.name,
-                                            os:{
-                                                name: props.details.user[1].os.name,
-                                                version: props.details.user[1].os.version,
-                                            },
-                                            location:{
-                                                city: props.details.user[0].city,//tigre
-                                                country: props.details.user[0].country_name, //argentina
-                                                region: props.details.user[0].region,
-                                                country_code: props.details.user[0].country_code,
-                                                currency_name: props.details.user[0].currency_name,
-                                                currency: props.details.user[0].currency,
-                                                lenguaje: props.details.user[0].languages.split(',')[0],
-                                                country_tld: props.details.user[0].country_tld,
-                                            },
-                                        }
-                                    )
-                                }
-                                )
+                            filtered[0].id = newToken;
+                            await updateDoc(infoUser, {sessions: arrayUnion(filtered[0]) })
                                 .then(()=>{
                                     props.onGetUpdateProfile(true);
                                     emitCustomEvent('openLoadingPage', false);
@@ -204,13 +202,15 @@ function FormReautenticaCodigoPhone(props) {
                 .catch((error) => {
                     console.log(error);
                     emitCustomEvent('openLoadingPage', false);
-                    setMsg('Ha ocurrido un error al obtener las credenciales de Teléfono')
-                    setSeverityInfo('error')
-                    setOpenMsg(true);
+                    if (isMounted){
+                        setMsg('Ha ocurrido un error al obtener las credenciales de Teléfono')
+                        setSeverityInfo('error')
+                        setOpenMsg(true);
+                    }
                 });
             }
         }                
-   }, [props, codeVerification, currentUser]);
+   }, [props, isMounted, codeVerification, currentUser]);
 
     return (
         <div>

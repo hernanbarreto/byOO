@@ -1,4 +1,4 @@
-import React, { useState }from 'react';
+import React, { useState, useEffect }from 'react';
 import Dialog from '@material-ui/core/Dialog';
 import MuiDialogTitle from '@material-ui/core/DialogTitle';
 import MuiDialogContent from '@material-ui/core/DialogContent';
@@ -21,16 +21,19 @@ import { getFirestore,
     getDoc,
     updateDoc,
     arrayRemove,
-    Timestamp, 
     arrayUnion, 
         } from "firebase/firestore";
 import { useAuth } from '../../../services/firebase';
 import GoogleLogin from 'react-google-login';
 import GoogleIcon from '@mui/icons-material/Google';
+import { useInitPage } from '../../useInitPage';
 
 function FormReautenticaConGoogle(props) {
     const {currentUser} = useAuth();
     const mobilAccess = !useMediaQuery('(min-width:769px)', { noSsr: true });
+
+    const {state} = useInitPage();
+    const [isMounted, setIsMounted] = useState(true);
 
     const[ openMsg, setOpenMsg] = useState(false);
     const [severityInfo, setSeverityInfo] = useState('success');
@@ -82,6 +85,15 @@ function FormReautenticaConGoogle(props) {
         );
     });
 
+    useEffect(() => {
+        setIsMounted(true);
+        if (state !== null){
+            if (state){
+            }
+        }
+        return () => {setIsMounted(false)}
+    }, [state]);    
+
     const handleCloseIniciarSesion = () => {
         props.onGetReturn(true);
         emitCustomEvent('openLoadingPage', false);
@@ -89,11 +101,13 @@ function FormReautenticaConGoogle(props) {
 
     const responseGoogleSuccess = (googleUser) => {
         const auth = getAuth();
-        const antToken = auth.currentUser.accessToken;
+//        const antToken = auth.currentUser.accessToken;
+        const antToken = auth.currentUser.stsTokenManager.refreshToken;
         const credential = GoogleAuthProvider.credential(googleUser.getAuthResponse().id_token);
         reauthenticateWithCredential(auth.currentUser, credential)
             .then(async() => {
-                const newToken = auth.currentUser.accessToken;
+//                const newToken = auth.currentUser.accessToken;
+                const newToken = auth.currentUser.stsTokenManager.refreshToken;
                 const database = getFirestore();
                 const infoUser = doc(database, "users", currentUser.uid);
                 const docSnap = await getDoc(infoUser);
@@ -106,31 +120,8 @@ function FormReautenticaConGoogle(props) {
                         sessions: arrayRemove(filtered[0])
                     })
                     .then(async()=>{
-                            await updateDoc(infoUser, {
-                                sessions: arrayUnion(                
-                                    {
-                                        id: newToken,
-                                        date: Timestamp.now().toMillis(),
-                                        ip: props.details.user[0].ip, 
-                                        browser: props.details.user[1].browser.name,
-                                        os:{
-                                            name: props.details.user[1].os.name,
-                                            version: props.details.user[1].os.version,
-                                        },
-                                        location:{
-                                            city: props.details.user[0].city,//tigre
-                                            country: props.details.user[0].country_name, //argentina
-                                            region: props.details.user[0].region,
-                                            country_code: props.details.user[0].country_code,
-                                            currency_name: props.details.user[0].currency_name,
-                                            currency: props.details.user[0].currency,
-                                            lenguaje: props.details.user[0].languages.split(',')[0],
-                                            country_tld: props.details.user[0].country_tld,
-                                        },
-                                    }
-                                )
-                            }
-                            )
+                        filtered[0].id = newToken;
+                        await updateDoc(infoUser, {sessions: arrayUnion(filtered[0]) })
                             .then(()=>{
                                 props.onGetUpdateProfile(true);
                                 emitCustomEvent('openLoadingPage', false);
@@ -180,9 +171,11 @@ function FormReautenticaConGoogle(props) {
             .catch((error) => {
                 console.log(error);
                 emitCustomEvent('openLoadingPage', false);
-                setMsg('Ha ocurrido un error al obtener las credenciales de Google')
-                setSeverityInfo('error')
-                setOpenMsg(true);
+                if (isMounted){
+                    setMsg('Ha ocurrido un error al obtener las credenciales de Google')
+                    setSeverityInfo('error')
+                    setOpenMsg(true);
+                }
             });
     }
 

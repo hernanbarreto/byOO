@@ -7,19 +7,27 @@ import VisibilityOff from '@material-ui/icons/VisibilityOff';
 
 
 function InputPassword(props) {
-
+    const [isMounted, setIsMounted] = useState(true);
     const condicionPassw = 'La contraseña debe contener al menos 8 caracteres, un número y una mayúscula'
     const [stateErrorPassword, setStateErrorPassword] = useState(false);
     const [helperTextPassword, sethelperTextPassword] = useState('');
     const [valuePassword, setValuePassword] = useState(props.password);
     const [showPassword, setShowPassword] = useState(false);
     
+    useEffect(() => {
+        setIsMounted(true);
+        return () => {setIsMounted(false)}
+    }, []);
+
     const handlerChangePassword = () => {
+        if (isMounted){
         setStateErrorPassword(false);
-        sethelperTextPassword('');  
+        sethelperTextPassword(''); 
+        } 
     }
     
     const handleClickShowPassword = () => {
+        if (isMounted)
         setShowPassword(!showPassword);
     };
     
@@ -29,32 +37,40 @@ function InputPassword(props) {
     
     useEffect(() => {
         if(props.close){
+            if (isMounted){
             setValuePassword('');
             setStateErrorPassword(false);          
             sethelperTextPassword('');
+            }
         }
         if (props.verify){
             if (valuePassword !== undefined){
                 if ((valuePassword.length >= 8) && (valuePassword.replace(/[^ 0-9]/g, '')!== '') && (valuePassword.replace(/[^ A-Z]/g, '')!== '')){
+                    if (isMounted)
                     setStateErrorPassword(false);          
                     props.onGetValuePassword(valuePassword);
                 } else {
                     if (String(valuePassword).length === 0){
+                        if (isMounted)
                         sethelperTextPassword('Debes ingresar una contraseña');
                     }else{
+                        if (isMounted)
                         sethelperTextPassword(condicionPassw);
                     }
+                    if (isMounted)
                     setStateErrorPassword(true);
                     props.onGetValuePassword('');
                 }
             }else{
+                if (isMounted){
                 sethelperTextPassword('Debes ingresar una contraseña');
                 setStateErrorPassword(true);
+                }
                 props.onGetValuePassword('');
             }
             props.onSubmitValuePassword(false);
         }         
-    },[props, valuePassword]);  
+    },[props, valuePassword, isMounted]);  
 
     const handleKey = (e) => {
         if (e.key === 'Enter') {

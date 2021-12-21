@@ -27,6 +27,7 @@
     "geoip-lite": "^1.4.2",
     "node-device-detector": "^1.4.0",
     "react": "^17.0.2",
+    "react-cookie-consent": "^7.0.1",
     "react-custom-events": "^1.0.5",
     "react-datepicker": "^4.2.1",
     "react-dom": "^17.0.2",
