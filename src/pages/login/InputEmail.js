@@ -68,6 +68,7 @@ function InputEmail(props) {
     return (
         <div style={props.style}>
             <TextField 
+                disabled={props.disabled} 
                 error={stateErrorEmail}
                 helperText={helperTextEmail}
                 value={valueInputEmail}

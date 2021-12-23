@@ -337,6 +337,7 @@ function Login(props) {
             googlePhoto: null,
             facebookPhoto: null,
             promotions: promotions,
+            accountVerified: false,
             account:{
                 created:{
                     date: auth.currentUser.metadata.createdAt,

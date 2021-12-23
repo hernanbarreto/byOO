@@ -82,6 +82,7 @@ function InputPassword(props) {
     return (
         <div style={props.style}>
             <TextField 
+                disabled={props.disabled} 
                 error={stateErrorPassword}
                 helperText={helperTextPassword}
                 onChange={handlerChangePassword} 

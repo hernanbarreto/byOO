@@ -44,7 +44,7 @@ import { getFirestore,
     updateDoc,
         } from "firebase/firestore";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import { getAuth, updateProfile, updateEmail, fetchSignInMethodsForEmail } from "firebase/auth";
+import { getAuth, updateProfile, updateEmail, fetchSignInMethodsForEmail,sendEmailVerification,RecaptchaVerifier,signInWithPhoneNumber } from "firebase/auth";
 import FormReautenticaConPassword from '../login-and-security/FormReautenticaConPassword';
 import FormReautenticaConGoogle from '../login-and-security/FormReautenticaConGoogle';
 import FormReautenticaConFacebook from '../login-and-security/FormReautenticaConFacebook';
@@ -52,12 +52,30 @@ import FormReautenticaConPhone from '../login-and-security/FormReautenticaConPho
 import FormRecoveryPassword from '../../login/FormRecoveryPassword';
 import InputAge from '../../login/InputAge';
 import InputSex from './InputSex';
+import InputCountrySelectPhone from '../../login/InputCountrySelectPhone';
+import FormVerificaCodigoPhoneLink from '../../login/FormVerificaCodigoPhoneLink';
+import FormPoliticaIdentidad from './FormPoliticaIdentidad';
+import LockIcon from '@mui/icons-material/Lock';
+import DniFront from '../../../images/svg/dni_fron.svg';
+import DniBack from '../../../images/svg/dni_back.svg';
 
 const functions = getFunctions();
 const getUser = httpsCallable(functions, 'getUser');        
-const getUserByEmail = httpsCallable(functions, 'getUserByEmail');        
+const getUserByEmail = httpsCallable(functions, 'getUserByEmail');
+const updateUser = httpsCallable(functions, 'updateUser');
+const getUserByPhoneNumber = httpsCallable(functions, 'getUserByPhoneNumber');
 
 const database = getFirestore();
+
+var recaptchaVerifier;
+var antTokenPhone;
+
+const Img = styled('img')({
+    margin: 'auto',
+    display: 'block',
+    maxWidth: '100%',
+    maxHeight: '150px',
+}); 
 
 function PersonalInfo(details) {
     const [ openMsg, setOpenMsg] = useState(false);
@@ -121,6 +139,17 @@ function PersonalInfo(details) {
     const [phoneNumber, setPhoneNumber] = useState(null);
     const [valueAge, setValueAge] = useState('');
     const [valueSex, setValueSex] = useState(null);
+    const [accountVerified, setAccountVerified] = useState(false);
+
+    const [txtBtnContinuar, setTxtBtnContinuar] = useState('Actualizar');
+    const [classNameBtnContinuar, setClassNameBtnContinuar] = useState('button__log__continuar');
+    const [phoneProvider, setPhoneProvider] = useState(false);
+    const [confirmationResult, setConfirmationResult] = useState(null);
+    const [openFormVerificaCodigoPhone, setOpenFormVerificaCodigoPhone] = useState(false);
+    const [actualizarPhone, setActualizarPhone] = useState(false);
+    const [cerrarProbar, setCerrarProbar] = useState(false);
+
+
 
     const handleUpdateProfile = useCallback(async () => {
         const infoUser = doc(database, "users", currentUser.uid);
@@ -130,6 +159,12 @@ function PersonalInfo(details) {
                 getUser(currentUser.uid)
                 .then((record) => {
                     if (isMounted){
+                        record.data.providerData.forEach((item) => {
+                            if(item.providerId === 'phone'){
+                                setPhoneProvider(true);
+                                setPhoneNumber(currentUser.phoneNumber);
+                            }
+                        });
                         setValueName(docSnap.data().name);
                         setValueLastName(docSnap.data().lastName);
                         setUserEmail(currentUser.email);
@@ -137,6 +172,7 @@ function PersonalInfo(details) {
                         setCountryPhone(docSnap.data().countryCode);
                         setValueAge(docSnap.data().age);
                         setValueSex(docSnap.data().sex);
+                        setAccountVerified(docSnap.data().accountVerified);
                         setLoadingCreated(false);
                     }
                 })
@@ -176,6 +212,12 @@ function PersonalInfo(details) {
             setPhoneNumber(null);
             setValueAge('');
             setValueSex(null);
+            setAccountVerified(false);
+            setCountryPhone(null);
+            setValueInputPhone('');
+            setCountryCode(null);
+            setPhoneNumber(null);
+            setCerrarProbar(false);
         }
     },[isMounted]);
 
@@ -376,14 +418,40 @@ function PersonalInfo(details) {
                                             filtered[0].id = newToken;
                                             await updateDoc(infoUser, {sessions: arrayUnion(filtered[0]) })
                                             .then(()=>{
-                                                emitCustomEvent('openLoadingPage', false);
-                                                if (isMounted){
-                                                    setMsg('Actualizaste tu correo a ' + String(userEmail) + '.');
-                                                    setSeverityInfo('success');
-                                                    setOpenMsg(true); 
-                                                    clearStates();
-                                                    handleUpdateProfile();
-                                                }
+                                                updateUser([currentUser.uid, { emailVerified: false,}])
+                                                .then((user) => {
+                                                    sendEmailVerification(auth.currentUser)
+                                                    .then(() => {
+                                                        emitCustomEvent('openLoadingPage', false);
+                                                        if (isMounted){
+                                                            clearStates();
+                                                            handleUpdateProfile();                    
+                                                            setMsg('Se han actualizado los datos de tu cuenta. Ingresa a ' + auth.currentUser.email + ' para que verifiques tu cuenta.');
+                                                            setSeverityInfo('success');
+                                                            setOpenMsg(true);
+                                                        }        
+                                                    })
+                                                    .catch((error)=>{
+                                                        emitCustomEvent('openLoadingPage', false);
+                                                        if (isMounted){
+                                                            clearStates();
+                                                            handleUpdateProfile();                    
+                                                            setMsg('Se han actualizado los datos de tu cuenta, aunque no hemos podido enviar un correo de verificación a ' + auth.currentUser.email);
+                                                            setSeverityInfo('error');
+                                                            setOpenMsg(true);
+                                                        }        
+                                                    });
+                                                })
+                                                .catch((error) => {
+                                                    emitCustomEvent('openLoadingPage', false);
+                                                    if (isMounted){
+                                                        clearStates();
+                                                        handleUpdateProfile();                    
+                                                        setMsg('Ha ocurrido un error al intentar actualizar los datos de tu cuenta.');
+                                                        setSeverityInfo('error');
+                                                        setOpenMsg(true);
+                                                    }        
+                                                });
                                             })
                                             .catch((error)=>{
                                                 console.log(error);
@@ -523,14 +591,40 @@ function PersonalInfo(details) {
                                             filtered[0].id = newToken;
                                             await updateDoc(infoUser, {sessions: arrayUnion(filtered[0]) })
                                                 .then(()=>{
-                                                    emitCustomEvent('openLoadingPage', false);
-                                                    if (isMounted){
-                                                        setMsg('Actualizaste tu correo a ' + String(userEmail) + '.');
-                                                        setSeverityInfo('success');
-                                                        setOpenMsg(true); 
-                                                        clearStates();
-                                                        handleUpdateProfile();
-                                                    }
+                                                    updateUser([currentUser.uid, { emailVerified: false,}])
+                                                    .then((user) => {
+                                                        sendEmailVerification(auth.currentUser)
+                                                        .then(() => {
+                                                            emitCustomEvent('openLoadingPage', false);
+                                                            if (isMounted){
+                                                                clearStates();
+                                                                handleUpdateProfile();                    
+                                                                setMsg('Se han actualizado los datos de tu cuenta. Ingresa a ' + auth.currentUser.email + ' para que verifiques tu cuenta.');
+                                                                setSeverityInfo('success');
+                                                                setOpenMsg(true);
+                                                            }        
+                                                        })
+                                                        .catch((error)=>{
+                                                            emitCustomEvent('openLoadingPage', false);
+                                                            if (isMounted){
+                                                                clearStates();
+                                                                handleUpdateProfile();                    
+                                                                setMsg('Se han actualizado los datos de tu cuenta, aunque no hemos podido enviar un correo de verificación a ' + auth.currentUser.email);
+                                                                setSeverityInfo('error');
+                                                                setOpenMsg(true);
+                                                            }        
+                                                        });
+                                                    })
+                                                    .catch((error) => {
+                                                        emitCustomEvent('openLoadingPage', false);
+                                                        if (isMounted){
+                                                            clearStates();
+                                                            handleUpdateProfile();                    
+                                                            setMsg('Ha ocurrido un error al intentar actualizar los datos de tu cuenta.');
+                                                            setSeverityInfo('error');
+                                                            setOpenMsg(true);
+                                                        }        
+                                                    });
                                                 })
                                                 .catch((error)=>{
                                                     console.log(error);
@@ -707,14 +801,40 @@ function PersonalInfo(details) {
                     filtered[0].id = newToken;
                     await updateDoc(infoUser, {sessions: arrayUnion(filtered[0]) })
                         .then(()=>{
-                            emitCustomEvent('openLoadingPage', false);
-                            if (isMounted){
-                                setMsg('Actualizaste tu correo a ' + String(userEmail) + '.');
-                                setSeverityInfo('success');
-                                setOpenMsg(true); 
-                                clearStates();
-                                handleUpdateProfile();
-                            }
+                            updateUser([currentUser.uid, { emailVerified: false,}])
+                            .then((user) => {
+                                sendEmailVerification(auth.currentUser)
+                                .then(() => {
+                                    emitCustomEvent('openLoadingPage', false);
+                                    if (isMounted){
+                                        clearStates();
+                                        handleUpdateProfile();                    
+                                        setMsg('Se han actualizado los datos de tu cuenta. Ingresa a ' + auth.currentUser.email + ' para que verifiques tu cuenta.');
+                                        setSeverityInfo('success');
+                                        setOpenMsg(true);
+                                    }        
+                                })
+                                .catch((error)=>{
+                                    emitCustomEvent('openLoadingPage', false);
+                                    if (isMounted){
+                                        clearStates();
+                                        handleUpdateProfile();                    
+                                        setMsg('Se han actualizado los datos de tu cuenta, aunque no hemos podido enviar un correo de verificación a ' + auth.currentUser.email);
+                                        setSeverityInfo('error');
+                                        setOpenMsg(true);
+                                    }        
+                                });
+                            })
+                            .catch((error) => {
+                                emitCustomEvent('openLoadingPage', false);
+                                if (isMounted){
+                                    clearStates();
+                                    handleUpdateProfile();                    
+                                    setMsg('Ha ocurrido un error al intentar actualizar los datos de tu cuenta.');
+                                    setSeverityInfo('error');
+                                    setOpenMsg(true);
+                                }        
+                            });
                         })
                         .catch((error)=>{
                             console.log(error);
@@ -1004,8 +1124,264 @@ function PersonalInfo(details) {
             if (isMounted)
                 setVariableEstadoCargadoNewValueSex(false);
         }
-    },[valueInputSex, variableEstadoCargadoNewValueSex, isMounted]);
+    },[valueInputSex, variableEstadoCargadoNewValueSex, isMounted, clearStates, currentUser.uid, handleUpdateProfile]);
 
+    /*variables del componente CountrySelectPhone*/
+    const styleSelectCountryPhone = { marginTop: "10px", marginBottom: '10px' };
+    const [valueInputPhone, setValueInputPhone] = useState('');
+    const [submitCountrySelectPhone, setSubmitCountrySelectPhone] = useState(false);
+    const [variableEstadoCargadoNewValuePhone, setVariableEstadoCargadoNewValuePhone] = useState(false);
+    const [countryCode, setCountryCode] = useState(null);
+    const submitValuePhone = (value) => {
+        if (isMounted){
+            setSubmitCountrySelectPhone(value);
+        }
+    }
+    const getValuePhoneCountrySelectPhone = (phone) => {
+        if (isMounted){
+            setValueInputPhone(phone[0]);
+            setCountryCode(phone[1].code);
+            setVariableEstadoCargadoNewValuePhone(true);
+        }
+    }
+    /*fin variables de componente CountrySelectPhone*/
+
+    const handleEnterPhone = () => {
+        if (txtBtnContinuar === 'Actualizar'){
+            if (phoneProvider){
+                if (isMounted){
+                    setCerrarProbar(true);
+                    setActualizarPhone(true);
+                }
+            }else{
+                if (isMounted){
+                    setActualizarPhone(false);
+                }
+            }
+            if (isMounted){
+                setSubmitCountrySelectPhone(true);
+            }
+        }else{
+            if (isMounted){
+                setCerrarProbar(false);
+            }
+            if (recaptchaVerifier !== undefined)
+                if (!recaptchaVerifier.destroyed) 
+                    recaptchaVerifier.clear();
+            if (isMounted){
+                clearStates();
+                handleUpdateProfile();                                
+                setTxtBtnContinuar('Actualizar');
+                setClassNameBtnContinuar('button__log__continuar');
+            }
+        }
+    }
+
+    const handleClickContinuar = () => {
+        if (txtBtnContinuar === 'Actualizar'){
+            if (phoneProvider){
+                if (isMounted){
+                    setCerrarProbar(true);
+                    setActualizarPhone(true);
+                }
+            }else{
+                if (isMounted){
+                    setActualizarPhone(false);
+                }
+            }
+            if (isMounted){
+                setSubmitCountrySelectPhone(true);
+            }
+        }else{
+            if (isMounted){
+                setCerrarProbar(false);
+            }
+            if (recaptchaVerifier !== undefined)
+                if (!recaptchaVerifier.destroyed) 
+                    recaptchaVerifier.clear();
+            if (isMounted){
+                clearStates();
+                handleUpdateProfile();                                
+                setTxtBtnContinuar('Actualizar');
+                setClassNameBtnContinuar('button__log__continuar');
+            }
+        }
+    }
+
+    /*atencion del valor ingresado del componente CountrySelectPhone*/
+    useEffect(() => {
+        if (variableEstadoCargadoNewValuePhone){
+            if ((valueInputPhone !== '')) {
+                emitCustomEvent('openLoadingPage', true);
+                getUserByPhoneNumber(valueInputPhone)  
+                .then((userRecord) => {
+                    emitCustomEvent('openLoadingPage', false);
+                    if (recaptchaVerifier !== undefined)
+                        if (!recaptchaVerifier.destroyed) 
+                            recaptchaVerifier.clear();
+                    if (isMounted){
+                        clearStates();
+                        handleUpdateProfile();                                                
+                        setTxtBtnContinuar('Actualizar');
+                        setClassNameBtnContinuar('button__log__continuar');      
+                        if (userRecord.data.uid === currentUser.uid){
+                            //el usuario existe
+                            setMsg('El número ' + String(valueInputPhone) + ' ya se encuentra asociado a tu cuenta.');
+                        }else{
+                            //el usuario existe
+                            setMsg('El número ' + String(valueInputPhone) + ' ya se encuentra asociado a otra cuenta.');
+                        }
+                        setSeverityInfo('info');
+                        setOpenMsg(true);
+                    }
+                })
+                .catch((error) => {
+                    const auth = getAuth();
+                    auth.languageCode = details.user[0].languages.split(',')[0];
+                    recaptchaVerifier = new RecaptchaVerifier('recaptcha-container20', {
+                        type: 'image', // 'audio'
+                        size: 'normal', // 'normal, invisible' or 'compact'
+                        badge: 'inline' //' bottomright' or 'inline' applies to invisible.                    
+                    }, auth);                    
+//                    antTokenPhone = auth.currentUser.accessToken;
+                    antTokenPhone = auth.currentUser.stsTokenManager.refreshToken;
+                    if (isMounted){
+                        setTxtBtnContinuar('Cancelar');
+                        setClassNameBtnContinuar('button__log__BW');
+                    }
+                    emitCustomEvent('openLoadingPage', false);                    
+                    signInWithPhoneNumber(auth, valueInputPhone, recaptchaVerifier)
+                    .then((result) => {
+                        emitCustomEvent('openLoadingPage', true);
+                        if (recaptchaVerifier !== undefined)
+                            if (!recaptchaVerifier.destroyed) 
+                                recaptchaVerifier.clear();
+                        if (isMounted){
+                            setConfirmationResult(result);
+                            setOpenFormVerificaCodigoPhone(true);
+                        }
+                        emitCustomEvent('openLoadingPage', false);
+                    }).catch((error) => {
+                        // Error; SMS not sent
+                        // ...
+                        if (recaptchaVerifier !== undefined)
+                            if (!recaptchaVerifier.destroyed) 
+                                recaptchaVerifier.clear();
+                        if (isMounted){                        
+                            clearStates();
+                            handleUpdateProfile();                                                
+                            setTxtBtnContinuar('Actualizar');
+                            setClassNameBtnContinuar('button__log__continuar');
+                            setMsg('No pudimos enviar el SMS al número de teléfono ' + String(valueInputPhone));
+                            setSeverityInfo('error');
+                            setOpenMsg(true);
+                        }                    
+                        emitCustomEvent('openLoadingPage', false);
+                    });
+                });
+             }else{
+                emitCustomEvent('openLoadingPage', false);
+                if (isMounted){
+                    setMsg('No ingresaste un número de teléfono válido');
+                    setSeverityInfo('error');
+                    setOpenMsg(true);
+                }                    
+            }
+            setVariableEstadoCargadoNewValuePhone(false);       
+        }         
+    },[details, isMounted, currentUser, valueInputPhone, variableEstadoCargadoNewValuePhone, clearStates, handleUpdateProfile]);
+    /*fin atencion del valor ingresado del componente CountrySelectPhone*/
+
+    const handleLinkedPhone = async() => {
+        if (isMounted){
+            setTxtBtnContinuar('Actualizar');
+            setClassNameBtnContinuar('button__log__continuar');
+        }
+        const auth = getAuth();
+//        const newToken = auth.currentUser.accessToken;
+        const newToken = auth.currentUser.stsTokenManager.refreshToken;
+        const database = getFirestore();
+        const infoUser = doc(database, "users", currentUser.uid);
+        const docSnap = await getDoc(infoUser);
+        if (docSnap.exists()) {
+            const filtered = docSnap.data().sessions.filter(function(element){
+              return element.id === antTokenPhone;
+            });
+            if (filtered.length !== 0){
+                await updateDoc(infoUser, {
+                    sessions: arrayRemove(filtered[0])
+                })
+                .then(async()=>{
+                    filtered[0].id = newToken;
+                    await updateDoc(infoUser, {sessions: arrayUnion(filtered[0]) })
+                    .then(()=>{
+                        if (isMounted){
+                            setOpenFormVerificaCodigoPhone(false);
+                            clearStates();
+                            handleUpdateProfile();                    
+                            setMsg('Ya podés ingresar a byOO con ' + String(valueInputPhone));
+                            setSeverityInfo('success');
+                            setOpenMsg(true);
+                        }                    
+                        emitCustomEvent('openLoadingPage', false);
+                    })
+                    .catch((error)=>{
+                        logout()
+                        .then(()=>{
+                            emitCustomEvent('openLoadingPage', false);
+                        })
+                        .catch((error)=>{
+                            emitCustomEvent('openLoadingPage', false);
+                        });                                
+                    });
+            })
+            .catch((error)=>{ 
+                logout()
+                .then(()=>{
+                    emitCustomEvent('openLoadingPage', false);
+                })
+                .catch((error)=>{
+                    emitCustomEvent('openLoadingPage', false);
+                });                        
+            });
+          }else{ 
+            logout()
+            .then(()=>{
+                emitCustomEvent('openLoadingPage', false);
+            })
+            .catch((error)=>{
+                emitCustomEvent('openLoadingPage', false);
+            });                    
+          }
+        }else{
+            logout()
+            .then(()=>{
+                emitCustomEvent('openLoadingPage', false);
+            })
+            .catch((error)=>{
+                emitCustomEvent('openLoadingPage', false);
+            });                    
+        }
+    }
+
+    const handleReturnFormVerificaCodigoPhone = () => {
+        if (isMounted){
+            clearStates();
+            handleUpdateProfile();                    
+            setTxtBtnContinuar('Actualizar');
+            setClassNameBtnContinuar('button__log__continuar');
+            setOpenFormVerificaCodigoPhone(false);
+        }
+    }
+
+    const [openFormPoliticaIdentidad, setOpenFormPoliticaIdentidad] = useState(false);
+    const handlePoliticaIdentificación = () => {
+        setOpenFormPoliticaIdentidad (true);
+    }
+
+    const handleCloseFormPoliticaIdentidad = () => {
+        setOpenFormPoliticaIdentidad (false);
+    }
 
     return (
         <div>
@@ -1106,6 +1482,7 @@ function PersonalInfo(details) {
                                             <>
                                             <InputName
                                                 style={styleInputName}
+                                                disabled={accountVerified}
                                                 onGetValueName={getValueName} 
                                                 verify={submitName} 
                                                 onSubmitValueName={submitValueName} 
@@ -1114,6 +1491,7 @@ function PersonalInfo(details) {
                                                 name={valueName}
                                                 lastName={valueLastName}
                                             />
+                                            {!accountVerified ?
                                             <Button 
                                                 variant='outlined'
                                                 className='button__log__continuar'
@@ -1124,6 +1502,7 @@ function PersonalInfo(details) {
                                             >
                                                 Actualizar
                                             </Button>
+                                            :null}
                                             </>
                                             :
                                             <>
@@ -1180,6 +1559,7 @@ function PersonalInfo(details) {
                                             <>
                                             <InputSex
                                                 style={styleInputSex}
+                                                disabled={accountVerified}
                                                 close={loadingCreated}
                                                 sex={valueSex}
                                                 verify={submitSex}
@@ -1188,6 +1568,7 @@ function PersonalInfo(details) {
                                                 onSubmitValue={submitValueSex} 
 
                                             />
+                                            {!accountVerified ?
                                             <Button 
                                                 variant='outlined'
                                                 className='button__log__continuar'
@@ -1198,6 +1579,7 @@ function PersonalInfo(details) {
                                             >
                                                 Actualizar
                                             </Button>
+                                            :null}
                                             </>
                                             :
                                             <>
@@ -1253,6 +1635,7 @@ function PersonalInfo(details) {
                                             {!loadingCreated?
                                             <>
                                             <InputAge
+                                                disabled={accountVerified}
                                                 onGetValueAge={getValueAge} 
                                                 onSubmitValueAge={submitValueAge} 
                                                 onGetEnter={handleEnterAge}
@@ -1261,6 +1644,7 @@ function PersonalInfo(details) {
                                                 close={loadingCreated}
                                                 edad={valueAge}
                                             />
+                                            {!accountVerified ?
                                             <Button 
                                                 variant='outlined'
                                                 className='button__log__continuar'
@@ -1271,6 +1655,7 @@ function PersonalInfo(details) {
                                             >
                                                 Actualizar
                                             </Button>
+                                            :null}
                                             </>
                                             :
                                             <>
@@ -1395,7 +1780,55 @@ function PersonalInfo(details) {
                                             >
                                                 Agregá un número para que byOO y los usuarios de la comunidad puedan comunicarse con vos.
                                             </Typography>
-                                        <Divider/>
+                                            <Divider/>
+                                            {!loadingCreated ? 
+                                            <>
+                                            <InputCountrySelectPhone 
+                                                style={styleSelectCountryPhone} 
+                                                onGetValuePhone={getValuePhoneCountrySelectPhone} 
+                                                verify={submitCountrySelectPhone} 
+                                                onSubmitValuePhone={submitValuePhone} 
+                                                onGetEnter={handleEnterPhone}
+                                                country={details.user[0].country_code}
+                                                disabled={false}
+                                                phone={phoneNumber}
+                                                code={countryPhone}
+                                                close={cerrarProbar}
+                                            />
+                                            <Typography 
+                                                variant="caption"
+                                                display="block"
+                                                gutterBottom
+                                                style={{
+                                                    width: '100%',
+                                                    marginTop: 10,
+                                                }}
+                                            >
+                                                Vamos a enviarte un mensaje para confirmar el número. Se aplican tarifas estándar para mensajes y uso de datos.
+                                            </Typography>
+                                            </>
+                                            :
+                                            <>
+                                            <Skeleton variant="text" width="100%"/>
+                                            <Skeleton variant="text" width="100%"/>
+                                            </>
+                                            }
+                                            <div align='center' id="recaptcha-container20" className='recaptchaClass'></div>
+                                            {!loadingCreated ? 
+                                            <Button 
+                                                variant='outlined'
+                                                className={classNameBtnContinuar}
+                                                onClick={handleClickContinuar}
+                                                style={{
+                                                    marginBottom: 10,
+                                                }}
+                                            >
+                                            {txtBtnContinuar}
+                                            </Button>
+                                            :
+                                            <Skeleton variant="text" width="100%"/>
+                                            }
+                                            <Divider/>
                                         </AccordionDetails>
                                     </Accordion>
                                     <Accordion
@@ -1440,6 +1873,118 @@ function PersonalInfo(details) {
                                             >
                                                 Tendrás que añadir un documento de identificación oficial Este paso nos sirve para comprobar que eres quien dices ser.
                                             </Typography>
+                                            <Typography 
+                                                variant="caption"
+                                                display="block"
+                                                gutterBottom
+                                                style={{
+                                                    width: '100%',
+                                                    marginTop: 10,
+                                                }}
+                                            >
+                                                Comprueba que las imágenes no estén borrosas y que en la parte delantera del documento de identidad se te vea bien la cara.
+                                            </Typography>
+                                            <Stack
+                                                direction={{ xs: 'column', sm: 'row' }}
+                                                spacing={{ xs: 1, }}
+                                                style={{
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    marginTop: '10px',
+                                                }}
+                                            >
+                                            <Box
+                                                onClick={()=>{
+                                                    console.log('click');
+                                                }}
+                                                maxWidth='250px'
+                                                minWidth='210px'
+                                                sx={{
+                                                    display: 'grid',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',                            
+                                                    width: '100%',
+                                                    height: 150,
+                                                    borderRadius: '10px',
+                                                    border: "1px dashed grey",
+                                                    '&:hover': {
+                                                        cursor: 'pointer',
+                                                        
+                                                    },
+                                                }}
+                                            >
+                                                <Img src={DniFront} sx={{mt: '50px'}}/>
+                                                <Typography 
+                                                    variant="subtitle1"
+                                                    display="block"
+                                                    gutterBottom
+                                                    style={{
+                                                        width: '100%',
+                                                    }}
+                                                >
+                                                    <strong>Sube la cara delantera</strong>    
+                                                </Typography>
+                                            </Box>
+                                            <Box
+                                                onClick={()=>{
+                                                    console.log('click');
+                                                }}
+                                                maxWidth='250px'
+                                                minWidth='210px'
+                                                sx={{
+                                                    display: 'grid',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',                            
+                                                    width: '100%',
+                                                    height: 150,
+                                                    borderRadius: '10px',
+                                                    border: "1px dashed grey",
+                                                    '&:hover': {
+                                                        cursor: 'pointer',
+                                                        
+                                                    },
+                                                }}
+                                            >
+                                                <Img src={DniBack} sx={{mt: '50px'}}/>
+                                                <Typography 
+                                                    variant="subtitle1"
+                                                    display="block"
+                                                    gutterBottom
+                                                    style={{
+                                                        width: '100%',
+                                                    }}
+                                                >
+                                                    <strong>Sube la cara trasera</strong>    
+                                                </Typography>
+                                            </Box>
+                                            </Stack>
+                                            <Stack direction='row'>
+                                                <LockIcon color="disabled" sx={{ mt: '10px', fontSize: '15px' }}/>
+                                                <Typography 
+                                                    variant="caption"
+                                                    display="block"
+                                                    gutterBottom
+                                                    style={{
+                                                        width: '100%',
+                                                        marginTop: 10,
+                                                        marginLeft: 5,
+                                                    }}
+                                                >
+                                                    
+                                                    Nuestro objetivo es garantizar la privacidad y la seguridad de los datos que nos proporcionas.&nbsp;
+                                                    <Link
+                                                        component="button"
+                                                        onClick={handlePoliticaIdentificación}
+                                                        sx={{
+                                                            textDecoration: "underline #5472AD",
+                                                            color: '#5472AD !important',
+                                                            fontSize: '12px',
+                                                        }} 
+                                                            >
+                                                        <strong>Cómo funciona</strong>
+                                                    </Link>
+                                                </Typography>
+                                            </Stack>
                                         <Divider/>
                                         </AccordionDetails>
                                     </Accordion>
@@ -1614,6 +2159,23 @@ function PersonalInfo(details) {
                     details={details}
                     open={openFormReautenticaConPhone}
                 />
+            :null}
+            {openFormVerificaCodigoPhone ?
+                <FormVerificaCodigoPhoneLink
+                    phoneNumber={valueInputPhone}
+                    code={countryCode}
+                    confirmationResult={confirmationResult}
+                    onGetReturn={handleReturnFormVerificaCodigoPhone}
+                    onGetLinked={handleLinkedPhone}
+                    actualizar={actualizarPhone}
+                    open={openFormVerificaCodigoPhone}
+                />
+            :null}
+            {openFormPoliticaIdentidad ?
+            <FormPoliticaIdentidad
+                onGetClose={handleCloseFormPoliticaIdentidad}
+                open={openFormPoliticaIdentidad}
+            />
             :null}
         </div>
     )

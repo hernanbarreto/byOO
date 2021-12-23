@@ -42,7 +42,7 @@ function CookieAcept() {
               }}
           >
               <strong>Tu privacidad</strong>
-              <LockIcon color='primary'/>
+              <LockIcon color='primary' sx={{fontSize: '20px', mt:'0px', mr: '5px'}}/>
           </Typography>
           </Stack>
           <Typography 

@@ -120,7 +120,8 @@ function InputName(props) {
 
     return (
         <div style={props.style}>
-            <TextField 
+            <TextField
+                disabled={props.disabled} 
                 error={stateErrorName}
                 value={valueInputName}
                 onChange={handleName} 
@@ -135,6 +136,7 @@ function InputName(props) {
                 inputProps={{ maxLength: 20 }}    
             />
             <TextField 
+                disabled={props.disabled} 
                 error={stateErrorLastName}
                 helperText={helperTextLastName}
                 value={valueInputLastName}

@@ -62,6 +62,7 @@ const [inputValue, setInputValue] = useState('');
     <div style={props.style}>
     {!props.close ?
       <Autocomplete
+        disabled={props.disabled} 
         value={value}
         disableClearable={true}
         required={true}

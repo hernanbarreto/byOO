@@ -48,6 +48,7 @@ import { RecaptchaVerifier,
          FacebookAuthProvider,
          signInWithPhoneNumber,
          fetchSignInMethodsForEmail,
+         sendEmailVerification,
          EmailAuthProvider, 
          onAuthStateChanged } from "firebase/auth";
 import Snackbar from '@mui/material/Snackbar';
@@ -71,6 +72,7 @@ const deleteUser = httpsCallable(functions, 'deleteUser');
 //const revokeRefreshTokens = httpsCallable(functions, 'revokeRefreshTokens');
 const getUser = httpsCallable(functions, 'getUser');
 const getUserByPhoneNumber = httpsCallable(functions, 'getUserByPhoneNumber');
+const updateUser = httpsCallable(functions, 'updateUser');
 
 const database = getFirestore();
 var sessions = [];
@@ -1019,7 +1021,7 @@ function LoginAndSecurity(details) {
                             //el usuario existe
                             setMsg('El número ' + String(valueInputPhoneFormPrincipal) + ' ya se encuentra asociado a otra cuenta.');
                         }
-                        setSeverityInfo('error');
+                        setSeverityInfo('info');
                         setOpenMsg(true);
                     }
                 })
@@ -1237,6 +1239,7 @@ function LoginAndSecurity(details) {
                             const auth = getAuth();
 //                            const antToken = auth.currentUser.accessToken;
                             const antToken = auth.currentUser.stsTokenManager.refreshToken;
+                            const antEmail = auth.currentUser.email;
                             fetchSignInMethodsForEmail(auth, userEmail)
                             .then(providers => {
                                 if (providers.length === 0){
@@ -1261,14 +1264,51 @@ function LoginAndSecurity(details) {
                                                 filtered[0].id = newToken;
                                                 await updateDoc(infoUser, {sessions: arrayUnion(filtered[0]) })
                                                     .then(()=>{
-                                                        emitCustomEvent('openLoadingPage', false);
-                                                        if (isMounted){
-                                                            clearStates();
-                                                            handleUpdateProfile();                    
-                                                            setMsg('Se han actualizado los datos de tu cuenta');
-                                                            setSeverityInfo('success');
-                                                            setOpenMsg(true);
-                                                        }        
+                                                        if (antEmail !== userEmail){
+                                                            updateUser([currentUser.uid, { emailVerified: false,}])
+                                                            .then((user) => {
+                                                                sendEmailVerification(auth.currentUser)
+                                                                .then(() => {
+                                                                    emitCustomEvent('openLoadingPage', false);
+                                                                    if (isMounted){
+                                                                        clearStates();
+                                                                        handleUpdateProfile();                    
+                                                                        setMsg('Se han actualizado los datos de tu cuenta. Ingresa a ' + auth.currentUser.email + ' para que verifiques tu cuenta.');
+                                                                        setSeverityInfo('success');
+                                                                        setOpenMsg(true);
+                                                                    }        
+                                                                })
+                                                                .catch((error)=>{
+                                                                    emitCustomEvent('openLoadingPage', false);
+                                                                    if (isMounted){
+                                                                        clearStates();
+                                                                        handleUpdateProfile();                    
+                                                                        setMsg('Se han actualizado los datos de tu cuenta, aunque no hemos podido enviar un correo de verificación a ' + auth.currentUser.email);
+                                                                        setSeverityInfo('error');
+                                                                        setOpenMsg(true);
+                                                                    }        
+                                                                });
+                                                            })
+                                                            .catch((error) => {
+                                                                emitCustomEvent('openLoadingPage', false);
+                                                                if (isMounted){
+                                                                    clearStates();
+                                                                    handleUpdateProfile();                    
+                                                                    setMsg('Ha ocurrido un error al intentar actualizar los datos de tu cuenta.');
+                                                                    setSeverityInfo('error');
+                                                                    setOpenMsg(true);
+                                                                }        
+                                                            });
+                                                        }else{
+                                                            emitCustomEvent('openLoadingPage', false);
+                                                            if (isMounted){
+                                                                clearStates();
+                                                                handleUpdateProfile();                    
+                                                                setMsg('Se han actualizado los datos de tu cuenta');
+                                                                setSeverityInfo('success');
+                                                                setOpenMsg(true);
+                                                            }        
+                                                        } 
                                                     })
                                                     .catch((error)=>{
                                                         logout()
@@ -1361,6 +1401,7 @@ function LoginAndSecurity(details) {
                                     //el mail esta asociado a alguna cuenta
                                     if ((auth.currentUser.email === userEmail)||(emailProvider)){
                                         //el mail es el mismo del usuario actual
+                                        const antEmail = auth.currentUser.email;
                                         const credential = EmailAuthProvider.credential(userEmail, valueInputPasswordFormRegistrate1);
                                         linkWithCredential(auth.currentUser, credential)
                                         .then(async() => {
@@ -1381,14 +1422,51 @@ function LoginAndSecurity(details) {
                                                     filtered[0].id = newToken;
                                                     await updateDoc(infoUser, {sessions: arrayUnion(filtered[0]) })
                                                         .then(()=>{
-                                                            emitCustomEvent('openLoadingPage', false);
-                                                            if (isMounted){
-                                                                clearStates();
-                                                                handleUpdateProfile();                    
-                                                                setMsg('Se han actualizado los datos de tu cuenta');
-                                                                setSeverityInfo('success');
-                                                                setOpenMsg(true);
-                                                            }        
+                                                            if (antEmail !== userEmail){
+                                                                updateUser([currentUser.uid, { emailVerified: false,}])
+                                                                .then((user) => {
+                                                                    sendEmailVerification(auth.currentUser)
+                                                                    .then(() => {
+                                                                        emitCustomEvent('openLoadingPage', false);
+                                                                        if (isMounted){
+                                                                            clearStates();
+                                                                            handleUpdateProfile();                    
+                                                                            setMsg('Se han actualizado los datos de tu cuenta. Ingresa a ' + auth.currentUser.email + ' para que verifiques tu cuenta.');
+                                                                            setSeverityInfo('success');
+                                                                            setOpenMsg(true);
+                                                                        }        
+                                                                    })
+                                                                    .catch((error)=>{
+                                                                        emitCustomEvent('openLoadingPage', false);
+                                                                        if (isMounted){
+                                                                            clearStates();
+                                                                            handleUpdateProfile();                    
+                                                                            setMsg('Se han actualizado los datos de tu cuenta, aunque no hemos podido enviar un correo de verificación a ' + auth.currentUser.email);
+                                                                            setSeverityInfo('error');
+                                                                            setOpenMsg(true);
+                                                                        }        
+                                                                    });
+                                                                })
+                                                                .catch((error) => {
+                                                                    emitCustomEvent('openLoadingPage', false);
+                                                                    if (isMounted){
+                                                                        clearStates();
+                                                                        handleUpdateProfile();                    
+                                                                        setMsg('Ha ocurrido un error al intentar actualizar los datos de tu cuenta.');
+                                                                        setSeverityInfo('error');
+                                                                        setOpenMsg(true);
+                                                                    }        
+                                                                });
+                                                            }else{
+                                                                emitCustomEvent('openLoadingPage', false);
+                                                                if (isMounted){
+                                                                    clearStates();
+                                                                    handleUpdateProfile();                    
+                                                                    setMsg('Se han actualizado los datos de tu cuenta');
+                                                                    setSeverityInfo('success');
+                                                                    setOpenMsg(true);
+                                                                }        
+                                                            } 
                                                         })
                                                         .catch((error)=>{
                                                             logout()
@@ -1658,6 +1736,7 @@ function LoginAndSecurity(details) {
         const auth = getAuth();
 //        const antToken = auth.currentUser.accessToken;
         const antToken = auth.currentUser.stsTokenManager.refreshToken;
+        const antEmail = auth.currentUser.email;
         const credential = EmailAuthProvider.credential(userEmail, valueInputPasswordFormRegistrate1);
         linkWithCredential(auth.currentUser, credential)
         .then(async() => {
@@ -1679,14 +1758,51 @@ function LoginAndSecurity(details) {
                     filtered[0].id = newToken;
                     await updateDoc(infoUser, {sessions: arrayUnion(filtered[0]) })
                         .then(()=>{
-                            emitCustomEvent('openLoadingPage', false);
-                            if (isMounted){
-                                clearStates();
-                                handleUpdateProfile();                    
-                                setMsg('Se han actualizado los datos de tu cuenta');
-                                setSeverityInfo('success');
-                                setOpenMsg(true);
-                            }        
+                            if (antEmail !== userEmail){
+                                updateUser([currentUser.uid, { emailVerified: false,}])
+                                .then((user) => {
+                                    sendEmailVerification(auth.currentUser)
+                                    .then(() => {
+                                        emitCustomEvent('openLoadingPage', false);
+                                        if (isMounted){
+                                            clearStates();
+                                            handleUpdateProfile();                    
+                                            setMsg('Se han actualizado los datos de tu cuenta. Ingresa a ' + auth.currentUser.email + ' para que verifiques tu cuenta.');
+                                            setSeverityInfo('success');
+                                            setOpenMsg(true);
+                                        }        
+                                    })
+                                    .catch((error)=>{
+                                        emitCustomEvent('openLoadingPage', false);
+                                        if (isMounted){
+                                            clearStates();
+                                            handleUpdateProfile();                    
+                                            setMsg('Se han actualizado los datos de tu cuenta, aunque no hemos podido enviar un correo de verificación a ' + auth.currentUser.email);
+                                            setSeverityInfo('error');
+                                            setOpenMsg(true);
+                                        }        
+                                    });
+                                })
+                                .catch((error) => {
+                                    emitCustomEvent('openLoadingPage', false);
+                                    if (isMounted){
+                                        clearStates();
+                                        handleUpdateProfile();                    
+                                        setMsg('Ha ocurrido un error al intentar actualizar los datos de tu cuenta.');
+                                        setSeverityInfo('error');
+                                        setOpenMsg(true);
+                                    }        
+                                });
+                            }else{
+                                emitCustomEvent('openLoadingPage', false);
+                                if (isMounted){
+                                    clearStates();
+                                    handleUpdateProfile();                    
+                                    setMsg('Se han actualizado los datos de tu cuenta');
+                                    setSeverityInfo('success');
+                                    setOpenMsg(true);
+                                }        
+                            }                               
                         })
                         .catch((error)=>{
                             logout()
@@ -1755,14 +1871,51 @@ function LoginAndSecurity(details) {
                                 filtered[0].id = newToken;
                                 await updateDoc(infoUser, {sessions: arrayUnion(filtered[0]) })
                                     .then(()=>{
-                                        emitCustomEvent('openLoadingPage', false);
-                                        if (isMounted){
-                                            clearStates();
-                                            handleUpdateProfile();                    
-                                            setMsg('Se han actualizado los datos de tu cuenta');
-                                            setSeverityInfo('success');
-                                            setOpenMsg(true);
-                                        }        
+                                        if (antEmail !== userEmail){
+                                            updateUser([currentUser.uid, { emailVerified: false,}])
+                                            .then((user) => {
+                                                sendEmailVerification(auth.currentUser)
+                                                .then(() => {
+                                                    emitCustomEvent('openLoadingPage', false);
+                                                    if (isMounted){
+                                                        clearStates();
+                                                        handleUpdateProfile();                    
+                                                        setMsg('Se han actualizado los datos de tu cuenta. Ingresa a ' + auth.currentUser.email + ' para que verifiques tu cuenta.');
+                                                        setSeverityInfo('success');
+                                                        setOpenMsg(true);
+                                                    }        
+                                                })
+                                                .catch((error)=>{
+                                                    emitCustomEvent('openLoadingPage', false);
+                                                    if (isMounted){
+                                                        clearStates();
+                                                        handleUpdateProfile();                    
+                                                        setMsg('Se han actualizado los datos de tu cuenta, aunque no hemos podido enviar un correo de verificación a ' + auth.currentUser.email);
+                                                        setSeverityInfo('error');
+                                                        setOpenMsg(true);
+                                                    }        
+                                                });
+                                            })
+                                            .catch((error) => {
+                                                emitCustomEvent('openLoadingPage', false);
+                                                if (isMounted){
+                                                    clearStates();
+                                                    handleUpdateProfile();                    
+                                                    setMsg('Ha ocurrido un error al intentar actualizar los datos de tu cuenta.');
+                                                    setSeverityInfo('error');
+                                                    setOpenMsg(true);
+                                                }        
+                                            });
+                                        }else{
+                                            emitCustomEvent('openLoadingPage', false);
+                                            if (isMounted){
+                                                clearStates();
+                                                handleUpdateProfile();                    
+                                                setMsg('Se han actualizado los datos de tu cuenta');
+                                                setSeverityInfo('success');
+                                                setOpenMsg(true);
+                                            }        
+                                        }  
                                     })
                                     .catch((error)=>{
                                         console.log(error);

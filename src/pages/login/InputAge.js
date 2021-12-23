@@ -77,6 +77,7 @@ function InputAge(props) {
         <div style={props.style}>
             <LocalizationProvider dateAdapter={AdapterDateFns} locale={esLocale}>
                 <DatePicker
+                    disabled={props.disabled} 
                     label="Fecha de nacimiento"
                     value={valueFechaNacimiento}
                     onChange={(newValue) => {
