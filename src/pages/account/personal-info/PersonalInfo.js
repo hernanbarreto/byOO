@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -58,6 +58,44 @@ import FormPoliticaIdentidad from './FormPoliticaIdentidad';
 import LockIcon from '@mui/icons-material/Lock';
 import DniFront from '../../../images/svg/dni_fron.svg';
 import DniBack from '../../../images/svg/dni_back.svg';
+import { getStorage, 
+    ref, 
+    uploadBytesResumable, 
+    getDownloadURL,
+    deleteObject } from "firebase/storage";
+import CircularProgress from '@mui/material/CircularProgress';
+import Chip from '@mui/material/Chip';
+
+import { 
+    GoogleMap,
+    Marker } from '@react-google-maps/api';
+import usePlacesAutocomplete, {
+    getGeocode,
+    getLatLng,
+} from 'use-places-autocomplete';
+import {
+    Combobox,
+    ComboboxInput,
+    ComboboxPopover,
+    ComboboxOption,
+    ComboboxList,
+  } from "@reach/combobox";
+import "@reach/combobox/styles.css";
+import Geocode from "react-geocode";
+import CloseIcon from '@mui/icons-material/Close';
+import IconButton from '@mui/material/IconButton';
+import LocationSearchingIcon from '@mui/icons-material/LocationSearching';
+import OutlinedInput from '@mui/material/OutlinedInput';
+
+const containerStyle = {
+  width: '100%',
+  paddingTop: '100%',
+};
+
+const optionsMap ={
+    disableDefaultUI: true,
+    zoomControl: true,
+};
 
 const functions = getFunctions();
 const getUser = httpsCallable(functions, 'getUser');        
@@ -70,14 +108,134 @@ const database = getFirestore();
 var recaptchaVerifier;
 var antTokenPhone;
 
-const Img = styled('img')({
-    margin: 'auto',
-    display: 'block',
-    maxWidth: '100%',
-    maxHeight: '150px',
-}); 
-
 function PersonalInfo(details) {
+
+    const [markers, setMarkers] = useState( {lat: null, lng: null});
+    const [address, setAddress] = useState('');
+    const [mapCenter, setMapCenter] = useState({lat: null, lng: null});
+
+    const putMarker = useCallback(async (latlng, type)=>{
+            setAddressDescription('');
+            if (latlng !== null){
+                if (type){
+                    setMarkers({
+                        lat: latlng.lat(),
+                        lng: latlng.lng()
+                    });
+                    Geocode.fromLatLng(latlng.lat(), latlng.lng())
+                    .then((response)=>{
+                        setAddress(response.results[0].formatted_address);
+                    })
+                    .catch((error)=>{
+                        setAddress('Lat: ' + String(latlng.lat()) + ', Lng: ' + String(latlng.lng()));
+                    });
+                }else{
+                    setMarkers({
+                        lat: latlng.coords.latitude,
+                        lng: latlng.coords.longitude,
+                    });
+                    Geocode.fromLatLng(latlng.coords.latitude, latlng.coords.longitude)
+                    .then((response)=>{
+                        setAddress(response.results[0].formatted_address);
+                    })
+                    .catch((error)=>{
+                        setAddress('Lat: ' + String(latlng.coords.latitude) + ', Lng: ' + String(latlng.coords.longitude));
+                    });
+                }
+            }else{
+                setMarkers({
+                    lat: null,
+                    lng: null
+                });
+                setAddress('');
+                try{
+                    const result = await getGeocode({address: details.user[0].country_name});
+                    const {lat, lng} = await getLatLng(result[0]);
+                    mapRef.current.panTo({lat, lng});
+                    mapRef.current.setZoom(3);                                
+                }catch(error){
+                    console.log(error);
+                }        
+            }
+    },[details.user]); 
+
+    const configGeocode = useCallback(async ()=>{
+        Geocode.setApiKey(process.env.REACT_APP_GOOGLE_MAP_API_KEY);
+        Geocode.setLocationType("ROOFTOP");
+        try{
+            const result = await getGeocode({address: details.user[0].country_name});
+            const {lat, lng} = await getLatLng(result[0]);
+            setMapCenter({lat: lat, lng: lng});
+        }catch(error){
+            console.log(error);
+        }
+    }, [details.user]);
+
+    const mapRef = useRef();
+    const onMapLoad = useCallback((map)=> {
+        mapRef.current = map;
+    }, []);
+
+    const panTo = useCallback(({lat, lng}) =>{
+        mapRef.current.panTo({lat, lng});
+        mapRef.current.setZoom(17);
+    }, []);
+
+    const [addressDescription, setAddressDescription] = useState('');
+
+    const handleEnterAddress = async () => {
+        emitCustomEvent('openLoadingPage', true);
+        const infoUser = doc(database, "users", currentUser.uid);
+        const docSnap = await getDoc(infoUser);
+        if (docSnap.exists()) {
+            if ((docSnap.data().address.lat !== markers.lat) || (docSnap.data().address.lng !== markers.lng) || (docSnap.data().address.description !== addressDescription)){
+                await updateDoc(infoUser, {
+                    address:{
+                        lat: markers.lat,
+                        lng: markers.lng,
+                        description: addressDescription,
+                    }
+                })
+                .then(()=>{
+                    emitCustomEvent('openLoadingPage', false);
+                    if (isMounted){
+                        setMsg('Se actualizó correctamente tu dirección');
+                        setSeverityInfo('success');
+                        setOpenMsg(true);
+                        clearStates();
+                        handleUpdateProfile();
+                    }
+                })
+                .catch(()=>{
+                    emitCustomEvent('openLoadingPage', false);
+                    if (isMounted){
+                        setMsg('Ha ocurrido un error al actualizar tu dirección');
+                        setSeverityInfo('error');
+                        setOpenMsg(true); 
+                        clearStates();
+                        handleUpdateProfile();
+                    }            
+                });
+            }else{
+                emitCustomEvent('openLoadingPage', false);
+                if (isMounted){
+                    setMsg('La dirección que estas intentando actualizar es la misma que tenés configurada actualmente.');
+                    setSeverityInfo('info');
+                    setOpenMsg(true);
+                } 
+            }
+        }else{
+            emitCustomEvent('openLoadingPage', false);
+            if (isMounted){
+                setMsg('Ha ocurrido un error al intentar acceder a tu información');
+                setSeverityInfo('error');
+                setOpenMsg(true); 
+                clearStates();
+                handleUpdateProfile();
+            }            
+        }
+    }
+
     const [ openMsg, setOpenMsg] = useState(false);
     const [severityInfo, setSeverityInfo] = useState('success');
     const [msg, setMsg] = useState('');
@@ -108,6 +266,15 @@ function PersonalInfo(details) {
         maxHeight: '100px',
     }); 
     
+    const ImgDNI = styled('img')({
+        pointerEvents: 'none',
+        userSelect: 'none',
+        margin: 'auto',
+        display: 'block',
+        maxWidth: '250px',
+        maxHeight: 150,
+    }); 
+
     const handleCuenta = () => {
         history.push('/account-settings');          
     }
@@ -149,7 +316,10 @@ function PersonalInfo(details) {
     const [actualizarPhone, setActualizarPhone] = useState(false);
     const [cerrarProbar, setCerrarProbar] = useState(false);
 
-
+    const [loadingDNIFront, setLoadingDNIFront] = useState(false);
+    const [loadingDNIBack, setLoadingDNIBack] = useState(false);
+    const [DNIFrontUploaded, setDNIFrontUploaded] = useState(null);
+    const [DNIBackUploaded, setDNIBackUploaded] = useState(null);
 
     const handleUpdateProfile = useCallback(async () => {
         const infoUser = doc(database, "users", currentUser.uid);
@@ -173,6 +343,23 @@ function PersonalInfo(details) {
                         setValueAge(docSnap.data().age);
                         setValueSex(docSnap.data().sex);
                         setAccountVerified(docSnap.data().accountVerified);
+                        setDNIFrontUploaded(docSnap.data().identificationFront);
+                        setDNIBackUploaded(docSnap.data().identificationBack);
+                        setMarkers({
+                            lat: docSnap.data().address.lat,
+                            lng: docSnap.data().address.lng
+                        });
+                        Geocode.fromLatLng(docSnap.data().address.lat, docSnap.data().address.lng)
+                        .then((response)=>{
+                            setAddress(response.results[0].formatted_address);
+                        })
+                        .catch((error)=>{
+                            setAddress('Lat: ' + String(docSnap.data().address.lat) + ', Lng: ' + String(docSnap.data().address.lng));
+                        });
+                        if (docSnap.data().address.lat !== null){
+                            panTo({lat: docSnap.data().address.lat, lng: docSnap.data().address.lng});
+                        }
+                        setAddressDescription(docSnap.data().address.description);
                         setLoadingCreated(false);
                     }
                 })
@@ -200,7 +387,7 @@ function PersonalInfo(details) {
             }
         }catch{
         } 
-    },[currentUser, isMounted]);
+    },[currentUser, isMounted, panTo]);
 
     const clearStates = useCallback(() => {
         if(isMounted){
@@ -218,6 +405,13 @@ function PersonalInfo(details) {
             setCountryCode(null);
             setPhoneNumber(null);
             setCerrarProbar(false);
+            setLoadingDNIFront(false);
+            setLoadingDNIBack(false);
+            setDNIFrontUploaded(null);
+            setDNIBackUploaded(null);
+            setMarkers({lat: null, lng: null});
+            setAddressDescription('');
+            setAddress('');
         }
     },[isMounted]);
 
@@ -227,10 +421,11 @@ function PersonalInfo(details) {
             if (state){
                 clearStates();
                 handleUpdateProfile();
+                configGeocode();
             }
         }
         return () => {setIsMounted(false)}
-    }, [state, handleUpdateProfile, clearStates]);
+    }, [state, handleUpdateProfile, clearStates, configGeocode]);
 
     /*variables del componente InputName*/
     const styleInputName = { marginTop: "20px" };
@@ -1383,6 +1578,310 @@ function PersonalInfo(details) {
         setOpenFormPoliticaIdentidad (false);
     }
 
+    const handleDNIFrontFileSelected = (file) => {
+        if (file !== undefined){
+            if (isMounted){
+                setLoadingDNIFront(true);
+            }
+
+            const auth = getAuth();
+            const storage = getStorage();
+            if (DNIFrontUploaded){
+                const storageRef = ref(storage, DNIFrontUploaded);        
+                deleteObject(storageRef)
+                .then(async () => {
+                    const storageRef = ref(storage, auth.currentUser.uid + '/identification/' + file.name);
+                    const uploadTask = uploadBytesResumable(storageRef, file);
+                    
+                    uploadTask.on('state_changed', 
+                    (snapshot) => {
+                    }, 
+                    (error) => {
+                        if (isMounted){
+                            setMsg('Ha ocurrido un error al cargar el archivo');
+                            setSeverityInfo('error');
+                            setOpenMsg(true);
+                            setLoadingDNIFront(false);
+                        }
+                    }, 
+                    () => {
+                        getDownloadURL(uploadTask.snapshot.ref)
+                        .then(async (downloadURL) => {
+                            const infoUser = doc(database, "users", auth.currentUser.uid);                                  
+                            const docSnap = await getDoc(infoUser);
+                            if (docSnap.exists()) {
+                                await updateDoc(infoUser, {
+                                    identificationFront: downloadURL,
+                                }).then(()=>{
+                                    if (isMounted){
+                                        setDNIFrontUploaded(downloadURL);
+                                        setLoadingDNIFront(false);
+                                    }
+                                }).catch(()=>{
+                                    emitCustomEvent('openLoadingPage', false);
+                                    if (isMounted){
+                                        setMsg('Ha ocurrido un error en la base de datos');
+                                        setSeverityInfo('error');
+                                        setOpenMsg(true);  
+                                        setLoadingDNIFront(false);
+                                    }
+                                });
+                            }
+                        });
+                    }
+                    );
+                }).catch((error) => {
+                    if (isMounted){
+                        setMsg('Ha ocurrido un error al borrar el archivo');
+                        setSeverityInfo('error');
+                        setOpenMsg(true);
+                        emitCustomEvent('openLoadingPage', false);
+                        setLoadingDNIFront(false);
+                    }
+                });        
+            }else{
+                const storageRef = ref(storage, auth.currentUser.uid + '/identification/' + file.name);
+                const uploadTask = uploadBytesResumable(storageRef, file);
+                
+                uploadTask.on('state_changed', 
+                (snapshot) => {
+                }, 
+                (error) => {
+                    if (isMounted){
+                        setMsg('Ha ocurrido un error al cargar el archivo');
+                        setSeverityInfo('error');
+                        setOpenMsg(true);
+                        setLoadingDNIFront(false);
+                    }
+                }, 
+                () => {
+                    getDownloadURL(uploadTask.snapshot.ref)
+                    .then(async (downloadURL) => {
+                        const infoUser = doc(database, "users", auth.currentUser.uid);                                  
+                        const docSnap = await getDoc(infoUser);
+                        if (docSnap.exists()) {
+                            await updateDoc(infoUser, {
+                                identificationFront: downloadURL,
+                            }).then(()=>{
+                                if (isMounted){
+                                    setDNIFrontUploaded(downloadURL);
+                                    setLoadingDNIFront(false);
+                                }
+                            }).catch(()=>{
+                                emitCustomEvent('openLoadingPage', false);
+                                if (isMounted){
+                                    setMsg('Ha ocurrido un error en la base de datos');
+                                    setSeverityInfo('error');
+                                    setOpenMsg(true);  
+                                    setLoadingDNIFront(false);
+                                }
+                            });
+                        }
+                    });
+                }
+                );
+            }            
+        }else{
+            if (isMounted){
+                setLoadingDNIFront(false);
+            }
+        }
+    }
+
+    const handleDNIBackFileSelected = (file) => {
+        if (file !== undefined){
+            if (isMounted){
+                setLoadingDNIBack(true);
+            }
+
+            const auth = getAuth();
+            const storage = getStorage();
+            if (DNIBackUploaded){
+                const storageRef = ref(storage, DNIBackUploaded);        
+                deleteObject(storageRef)
+                .then(async () => {
+                    const storageRef = ref(storage, auth.currentUser.uid + '/identification/' + file.name);
+                    const uploadTask = uploadBytesResumable(storageRef, file);
+                    
+                    uploadTask.on('state_changed', 
+                    (snapshot) => {
+                    }, 
+                    (error) => {
+                        if (isMounted){
+                            setMsg('Ha ocurrido un error al cargar el archivo');
+                            setSeverityInfo('error');
+                            setOpenMsg(true);
+                            setLoadingDNIBack(false);
+                        }
+                    }, 
+                    () => {
+                        getDownloadURL(uploadTask.snapshot.ref)
+                        .then(async (downloadURL) => {
+                            const infoUser = doc(database, "users", auth.currentUser.uid);                                  
+                            const docSnap = await getDoc(infoUser);
+                            if (docSnap.exists()) {
+                                await updateDoc(infoUser, {
+                                    identificationBack: downloadURL,
+                                }).then(()=>{
+                                    if (isMounted){
+                                        setDNIBackUploaded(downloadURL);
+                                        setLoadingDNIBack(false);
+                                    }
+                                }).catch(()=>{
+                                    emitCustomEvent('openLoadingPage', false);
+                                    if (isMounted){
+                                        setMsg('Ha ocurrido un error en la base de datos');
+                                        setSeverityInfo('error');
+                                        setOpenMsg(true);  
+                                        setLoadingDNIBack(false);
+                                    }
+                                });
+                            }
+                        });
+                    }
+                    );
+                }).catch((error) => {
+                    if (isMounted){
+                        setMsg('Ha ocurrido un error al borrar el archivo');
+                        setSeverityInfo('error');
+                        setOpenMsg(true);
+                        emitCustomEvent('openLoadingPage', false);
+                        setLoadingDNIBack(false);
+                    }
+                });        
+            }else{
+                const storageRef = ref(storage, auth.currentUser.uid + '/identification/' + file.name);
+                const uploadTask = uploadBytesResumable(storageRef, file);
+                
+                uploadTask.on('state_changed', 
+                (snapshot) => {
+                }, 
+                (error) => {
+                    if (isMounted){
+                        setMsg('Ha ocurrido un error al cargar el archivo');
+                        setSeverityInfo('error');
+                        setOpenMsg(true);
+                        setLoadingDNIBack(false);
+                    }
+                }, 
+                () => {
+                    getDownloadURL(uploadTask.snapshot.ref)
+                    .then(async (downloadURL) => {
+                        const infoUser = doc(database, "users", auth.currentUser.uid);                                  
+                        const docSnap = await getDoc(infoUser);
+                        if (docSnap.exists()) {
+                            await updateDoc(infoUser, {
+                                identificationBack: downloadURL,
+                            }).then(()=>{
+                                if (isMounted){
+                                    setDNIBackUploaded(downloadURL);
+                                    setLoadingDNIBack(false);
+                                }
+                            }).catch(()=>{
+                                emitCustomEvent('openLoadingPage', false);
+                                if (isMounted){
+                                    setMsg('Ha ocurrido un error en la base de datos');
+                                    setSeverityInfo('error');
+                                    setOpenMsg(true);  
+                                    setLoadingDNIBack(false);
+                                }
+                            });
+                        }
+                    });
+                }
+                );
+            }            
+        }else{
+            if (isMounted){
+                setLoadingDNIBack(false);
+            }
+        }
+    }
+
+    const handleClearDNIFront = () => {
+        if (isMounted){
+            setLoadingDNIFront(true);
+        }
+
+        const auth = getAuth();
+        const storage = getStorage();
+        const storageRef = ref(storage, DNIFrontUploaded);        
+        deleteObject(storageRef)
+        .then(async () => {
+            const infoUser = doc(database, "users", auth.currentUser.uid);                                  
+            const docSnap = await getDoc(infoUser);
+            if (docSnap.exists()) {
+                await updateDoc(infoUser, {
+                    identificationFront: null,
+                }).then(()=>{
+                    if (isMounted){
+                        setDNIFrontUploaded(null);
+                        setLoadingDNIFront(false);
+                    }
+                }).catch(()=>{
+                    emitCustomEvent('openLoadingPage', false);
+                    if (isMounted){
+                        setMsg('Ha ocurrido un error en la base de datos');
+                        setSeverityInfo('error');
+                        setOpenMsg(true);  
+                        setDNIFrontUploaded(null);
+                        setLoadingDNIFront(false);
+                    }
+                });
+            }
+        }).catch((error) => {
+            if (isMounted){
+                setMsg('Ha ocurrido un error al borrar el archivo');
+                setSeverityInfo('error');
+                setOpenMsg(true);
+                emitCustomEvent('openLoadingPage', false);
+                setLoadingDNIFront(false);
+            }
+        });         
+    }
+
+    const handleClearDNIBack = () => {
+        if (isMounted){
+            setLoadingDNIBack(true);
+        }
+
+        const auth = getAuth();
+        const storage = getStorage();
+        const storageRef = ref(storage, DNIBackUploaded);        
+        deleteObject(storageRef)
+        .then(async () => {
+            const infoUser = doc(database, "users", auth.currentUser.uid);                                  
+            const docSnap = await getDoc(infoUser);
+            if (docSnap.exists()) {
+                await updateDoc(infoUser, {
+                    identificationBack: null,
+                }).then(()=>{
+                    if (isMounted){
+                        setDNIBackUploaded(null);
+                        setLoadingDNIBack(false);
+                    }
+                }).catch(()=>{
+                    emitCustomEvent('openLoadingPage', false);
+                    if (isMounted){
+                        setMsg('Ha ocurrido un error en la base de datos');
+                        setSeverityInfo('error');
+                        setOpenMsg(true);  
+                        setDNIBackUploaded(null);
+                        setLoadingDNIBack(false);
+                    }
+                });
+            }
+        }).catch((error) => {
+            if (isMounted){
+                setMsg('Ha ocurrido un error al borrar el archivo');
+                setSeverityInfo('error');
+                setOpenMsg(true);
+                emitCustomEvent('openLoadingPage', false);
+                setLoadingDNIBack(false);
+            }
+        });         
+    }
+
     return (
         <div>
             <Container maxWidth="lg">
@@ -1468,7 +1967,12 @@ function PersonalInfo(details) {
                                                 <strong>Nombre legal</strong>
                                             </Typography>
                                             <Typography 
-                                                variant="caption"
+                                                fontSize={{
+                                                    lg: 15,
+                                                    md: 15,
+                                                    sm: 12,
+                                                    xs: 12,
+                                                }}                                                                                
                                                 display="block"
                                                 gutterBottom
                                                 style={{
@@ -1545,7 +2049,12 @@ function PersonalInfo(details) {
                                                 <strong>Sexo</strong>
                                             </Typography>
                                             <Typography 
-                                                variant="caption"
+                                                fontSize={{
+                                                    lg: 15,
+                                                    md: 15,
+                                                    sm: 12,
+                                                    xs: 12,
+                                                }}                                                                                
                                                 display="block"
                                                 gutterBottom
                                                 style={{
@@ -1622,7 +2131,12 @@ function PersonalInfo(details) {
                                                 <strong>Fecha de nacimiento</strong>
                                             </Typography>
                                             <Typography 
-                                                variant="caption"
+                                                fontSize={{
+                                                    lg: 15,
+                                                    md: 15,
+                                                    sm: 12,
+                                                    xs: 12,
+                                                }}                                                                                
                                                 display="block"
                                                 gutterBottom
                                                 style={{
@@ -1698,7 +2212,12 @@ function PersonalInfo(details) {
                                                 <strong>Dirección de correo electrónico</strong>
                                             </Typography>
                                             <Typography 
-                                                variant="caption"
+                                                fontSize={{
+                                                    lg: 15,
+                                                    md: 15,
+                                                    sm: 12,
+                                                    xs: 12,
+                                                }}                                                                                
                                                 display="block"
                                                 gutterBottom
                                                 style={{
@@ -1770,7 +2289,12 @@ function PersonalInfo(details) {
                                                 <strong>Número de teléfono</strong>
                                             </Typography>
                                             <Typography 
-                                                variant="caption"
+                                                fontSize={{
+                                                    lg: 15,
+                                                    md: 15,
+                                                    sm: 12,
+                                                    xs: 12,
+                                                }}                                                                                
                                                 display="block"
                                                 gutterBottom
                                                 style={{
@@ -1796,7 +2320,12 @@ function PersonalInfo(details) {
                                                 close={cerrarProbar}
                                             />
                                             <Typography 
-                                                variant="caption"
+                                                fontSize={{
+                                                    lg: 15,
+                                                    md: 15,
+                                                    sm: 12,
+                                                    xs: 12,
+                                                }}                                                                                
                                                 display="block"
                                                 gutterBottom
                                                 style={{
@@ -1863,7 +2392,12 @@ function PersonalInfo(details) {
                                                 <strong>Identificación oficial</strong>
                                             </Typography>
                                             <Typography 
-                                                variant="caption"
+                                                fontSize={{
+                                                    lg: 15,
+                                                    md: 15,
+                                                    sm: 12,
+                                                    xs: 12,
+                                                }}                                                                                
                                                 display="block"
                                                 gutterBottom
                                                 style={{
@@ -1874,7 +2408,12 @@ function PersonalInfo(details) {
                                                 Tendrás que añadir un documento de identificación oficial Este paso nos sirve para comprobar que eres quien dices ser.
                                             </Typography>
                                             <Typography 
-                                                variant="caption"
+                                                fontSize={{
+                                                    lg: 15,
+                                                    md: 15,
+                                                    sm: 12,
+                                                    xs: 12,
+                                                }}                                                                                
                                                 display="block"
                                                 gutterBottom
                                                 style={{
@@ -1893,75 +2432,406 @@ function PersonalInfo(details) {
                                                     marginTop: '10px',
                                                 }}
                                             >
-                                            <Box
-                                                onClick={()=>{
-                                                    console.log('click');
-                                                }}
-                                                maxWidth='250px'
-                                                minWidth='210px'
-                                                sx={{
-                                                    display: 'grid',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',                            
-                                                    width: '100%',
-                                                    height: 150,
-                                                    borderRadius: '10px',
-                                                    border: "1px dashed grey",
-                                                    '&:hover': {
-                                                        cursor: 'pointer',
-                                                        
-                                                    },
-                                                }}
-                                            >
-                                                <Img src={DniFront} sx={{mt: '50px'}}/>
-                                                <Typography 
-                                                    variant="subtitle1"
-                                                    display="block"
-                                                    gutterBottom
-                                                    style={{
-                                                        width: '100%',
-                                                    }}
-                                                >
-                                                    <strong>Sube la cara delantera</strong>    
-                                                </Typography>
-                                            </Box>
-                                            <Box
-                                                onClick={()=>{
-                                                    console.log('click');
-                                                }}
-                                                maxWidth='250px'
-                                                minWidth='210px'
-                                                sx={{
-                                                    display: 'grid',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',                            
-                                                    width: '100%',
-                                                    height: 150,
-                                                    borderRadius: '10px',
-                                                    border: "1px dashed grey",
-                                                    '&:hover': {
-                                                        cursor: 'pointer',
-                                                        
-                                                    },
-                                                }}
-                                            >
-                                                <Img src={DniBack} sx={{mt: '50px'}}/>
-                                                <Typography 
-                                                    variant="subtitle1"
-                                                    display="block"
-                                                    gutterBottom
-                                                    style={{
-                                                        width: '100%',
-                                                    }}
-                                                >
-                                                    <strong>Sube la cara trasera</strong>    
-                                                </Typography>
-                                            </Box>
+                                                {!accountVerified ?
+                                                <>
+                                                    {!loadingDNIFront ?
+                                                    <>
+                                                        {DNIFrontUploaded ?
+                                                        <label htmlFor="uploadPhotoFront" cursor='pointer'>
+                                                        <Box
+                                                            maxWidth='250px'
+                                                            minWidth='210px'
+                                                            sx={{
+                                                                display: 'grid',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',                            
+                                                                width: '100%',
+                                                                height: 150,
+                                                                borderRadius: '10px',
+                                                                border: "1px dashed grey",
+                                                                cursor: 'pointer',                                                        
+                                                            }}
+                                                        >
+                                                            <input
+                                                                style={{ display: "none" }}
+                                                                id="uploadPhotoFront"
+                                                                name="uploadPhotoFront"
+                                                                type="file"
+                                                                accept="image/jpeg, image/png, image/jpg"
+                                                                onChange={(e)=> {handleDNIFrontFileSelected(e.target.files[0])}}
+                                                            />                                
+                                                            <ImgDNI
+                                                                src={DNIFrontUploaded} 
+                                                            />
+                                                        </Box>
+                                                        <Chip 
+                                                            size='small' 
+                                                            color='info' 
+                                                            label="Cara delantera" 
+                                                            sx={{
+                                                                fontSize:'11px', 
+                                                                maxWidth: '100px', 
+                                                            }}
+                                                        />
+                                                        <Button 
+                                                            variant='outlined'
+                                                            className='button__log__BW'
+                                                            onClick={handleClearDNIFront}
+                                                        >
+                                                            Borrar
+                                                        </Button>
+                                                        </label>
+                                                        :
+                                                        <label htmlFor="uploadPhotoFront" cursor='pointer'>
+                                                        <Box
+                                                            maxWidth='250px'
+                                                            minWidth='210px'
+                                                            sx={{
+                                                                display: 'grid',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',                            
+                                                                width: '100%',
+                                                                height: 150,
+                                                                borderRadius: '10px',
+                                                                border: "1px dashed grey",
+                                                                cursor: 'pointer',                                                        
+                                                            }}
+                                                        >
+                                                            <input
+                                                                style={{ display: "none" }}
+                                                                id="uploadPhotoFront"
+                                                                name="uploadPhotoFront"
+                                                                type="file"
+                                                                accept="image/jpeg, image/png, image/jpg"
+                                                                onChange={(e)=> {handleDNIFrontFileSelected(e.target.files[0])}}
+                                                            />                                
+                                                            <Img 
+                                                                src={DniFront} 
+                                                                sx={{
+                                                                    mt: '50px',
+                                                                }}
+                                                            />
+                                                            <Typography 
+                                                                cursor='pointer'
+                                                                variant="subtitle1"
+                                                                display="block"
+                                                                gutterBottom
+                                                                style={{
+                                                                    width: '100%',
+                                                                }}
+                                                            >
+                                                                <strong>Sube la cara delantera</strong>    
+                                                            </Typography>
+                                                        </Box>
+                                                        <Chip 
+                                                            size='small' 
+                                                            color='info' 
+                                                            label="Cara delantera" 
+                                                            sx={{
+                                                                fontSize:'11px', 
+                                                                maxWidth: '100px', 
+                                                            }}
+                                                        />
+                                                        </label>
+                                                        }
+                                                    </>
+                                                    :
+                                                    <label htmlFor="u">
+                                                    <Box
+                                                        maxWidth='250px'
+                                                        minWidth='210px'
+                                                        sx={{
+                                                            display: 'grid',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',                            
+                                                            width: '100%',
+                                                            height: 150,
+                                                            borderRadius: '10px',
+                                                            border: "1px dashed grey",
+                                                        }}
+                                                    >
+                                                        <CircularProgress color="inherit"/>
+                                                    </Box>
+                                                    <Chip 
+                                                        size='small' 
+                                                        color='info' 
+                                                        label="Cara delantera" 
+                                                        sx={{
+                                                            fontSize:'11px', 
+                                                            maxWidth: '100px', 
+                                                        }}
+                                                    />
+                                                    </label>
+                                                    }
+                                                </>
+                                                :
+                                                <>
+                                                {DNIFrontUploaded ?
+                                                    <label htmlFor="u">
+                                                    <Box
+                                                        maxWidth='250px'
+                                                        minWidth='210px'
+                                                        sx={{
+                                                            display: 'grid',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',                            
+                                                            width: '100%',
+                                                            height: 150,
+                                                            borderRadius: '10px',
+                                                            border: "1px dashed grey",
+                                                        }}
+                                                    >
+                                                        <ImgDNI
+                                                            src={DNIFrontUploaded} 
+                                                        />
+                                                    </Box>
+                                                    <Chip 
+                                                        size='small' 
+                                                        color='info' 
+                                                        label="Cara delantera" 
+                                                        sx={{
+                                                            fontSize:'11px', 
+                                                            maxWidth: '100px', 
+                                                        }}
+                                                    />
+                                                    </label>
+                                                :
+                                                <label htmlFor="u">
+                                                    <Box
+                                                        maxWidth='250px'
+                                                        minWidth='210px'
+                                                        sx={{
+                                                            display: 'grid',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',                            
+                                                            width: '100%',
+                                                            height: 150,
+                                                            borderRadius: '10px',
+                                                            border: "1px dashed grey",
+                                                        }}
+                                                    >
+                                                        <ImgDNI
+                                                            src={DniFront} 
+                                                        />
+                                                    </Box>
+                                                    <Chip 
+                                                        size='small' 
+                                                        color='info' 
+                                                        label="Cara delantera" 
+                                                        sx={{
+                                                            fontSize:'11px', 
+                                                            maxWidth: '100px', 
+                                                        }}
+                                                    />
+                                                </label>
+                                                }
+                                                </>
+                                                }
+                                                {!accountVerified ?
+                                                <>
+                                                    {!loadingDNIBack ?
+                                                    <>
+                                                        {DNIBackUploaded ?
+                                                        <label htmlFor="uploadPhotoBack" cursor='pointer'>
+                                                        <Box
+                                                            maxWidth='250px'
+                                                            minWidth='210px'
+                                                            sx={{
+                                                                display: 'grid',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',                            
+                                                                width: '100%',
+                                                                height: 150,
+                                                                borderRadius: '10px',
+                                                                border: "1px dashed grey",
+                                                                cursor: 'pointer',                                                        
+                                                            }}
+                                                        >
+                                                            <input
+                                                                style={{ display: "none" }}
+                                                                id="uploadPhotoBack"
+                                                                name="uploadPhotoBack"
+                                                                type="file"
+                                                                accept="image/jpeg, image/png, image/jpg"
+                                                                onChange={(e)=> {handleDNIBackFileSelected(e.target.files[0])}}
+                                                            />                                
+                                                            <ImgDNI
+                                                                src={DNIBackUploaded} 
+                                                            />
+                                                        </Box>
+                                                        <Chip 
+                                                            size='small' 
+                                                            color='info' 
+                                                            label="Cara trasera" 
+                                                            sx={{
+                                                                fontSize:'11px', 
+                                                                maxWidth: '100px', 
+                                                            }}
+                                                        />
+                                                        <Button 
+                                                            variant='outlined'
+                                                            className='button__log__BW'
+                                                            onClick={handleClearDNIBack}
+                                                        >
+                                                            Borrar
+                                                        </Button>
+                                                        </label>
+                                                        :
+                                                        <label htmlFor="uploadPhotoBack" cursor='pointer'>
+                                                        <Box
+                                                            maxWidth='250px'
+                                                            minWidth='210px'
+                                                            sx={{
+                                                                display: 'grid',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',                            
+                                                                width: '100%',
+                                                                height: 150,
+                                                                borderRadius: '10px',
+                                                                border: "1px dashed grey",
+                                                                cursor: 'pointer',                                                        
+                                                            }}
+                                                        >
+                                                            <input
+                                                                style={{ display: "none" }}
+                                                                id="uploadPhotoBack"
+                                                                name="uploadPhotoBack"
+                                                                type="file"
+                                                                accept="image/jpeg, image/png, image/jpg"
+                                                                onChange={(e)=> {handleDNIBackFileSelected(e.target.files[0])}}
+                                                            />                                
+                                                            <Img 
+                                                                src={DniBack} 
+                                                                sx={{
+                                                                    mt: '50px',
+                                                                }}
+                                                            />
+                                                            <Typography 
+                                                                cursor='pointer'
+                                                                variant="subtitle1"
+                                                                display="block"
+                                                                gutterBottom
+                                                                style={{
+                                                                    width: '100%',
+                                                                }}
+                                                            >
+                                                                <strong>Sube la cara trasera</strong>    
+                                                            </Typography>
+                                                        </Box>
+                                                        <Chip 
+                                                            size='small' 
+                                                            color='info' 
+                                                            label="Cara trasera" 
+                                                            sx={{
+                                                                fontSize:'11px', 
+                                                                maxWidth: '100px', 
+                                                            }}
+                                                        />
+                                                        </label>
+                                                        }
+                                                    </>
+                                                    :
+                                                    <label htmlFor="u">
+                                                    <Box
+                                                        maxWidth='250px'
+                                                        minWidth='210px'
+                                                        sx={{
+                                                            display: 'grid',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',                            
+                                                            width: '100%',
+                                                            height: 150,
+                                                            borderRadius: '10px',
+                                                            border: "1px dashed grey",
+                                                        }}
+                                                    >
+                                                        <CircularProgress color="inherit"/>
+                                                    </Box>
+                                                    <Chip 
+                                                        size='small' 
+                                                        color='info' 
+                                                        label="Cara trasera" 
+                                                        sx={{
+                                                            fontSize:'11px', 
+                                                            maxWidth: '100px', 
+                                                        }}
+                                                    />
+                                                    </label>
+                                                    }
+                                                </>
+                                                :
+                                                <>
+                                                {DNIBackUploaded ?
+                                                    <label htmlFor="u">
+                                                    <Box
+                                                        maxWidth='250px'
+                                                        minWidth='210px'
+                                                        sx={{
+                                                            display: 'grid',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',                            
+                                                            width: '100%',
+                                                            height: 150,
+                                                            borderRadius: '10px',
+                                                            border: "1px dashed grey",
+                                                        }}
+                                                    >
+                                                        <ImgDNI 
+                                                            src={DNIBackUploaded} 
+                                                        />
+                                                    </Box>
+                                                    <Chip 
+                                                        size='small' 
+                                                        color='info' 
+                                                        label="Cara trasera" 
+                                                        sx={{
+                                                            fontSize:'11px', 
+                                                            maxWidth: '100px', 
+                                                        }}
+                                                    />
+                                                    </label>
+                                                :
+                                                <label htmlFor="u">
+                                                    <Box
+                                                        maxWidth='250px'
+                                                        minWidth='210px'
+                                                        sx={{
+                                                            display: 'grid',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',                            
+                                                            width: '100%',
+                                                            height: 150,
+                                                            borderRadius: '10px',
+                                                            border: "1px dashed grey",
+                                                        }}
+                                                    >
+                                                        <ImgDNI 
+                                                            src={DniBack} 
+                                                        />
+                                                    </Box>
+                                                    <Chip 
+                                                        size='small' 
+                                                        color='info' 
+                                                        label="Cara trasera" 
+                                                        sx={{
+                                                            fontSize:'11px', 
+                                                            maxWidth: '100px', 
+                                                        }}
+                                                    />
+                                                </label>
+                                                }
+                                                </>
+                                                }
                                             </Stack>
                                             <Stack direction='row'>
                                                 <LockIcon color="disabled" sx={{ mt: '10px', fontSize: '15px' }}/>
                                                 <Typography 
-                                                    variant="caption"
+                                                    fontSize={{
+                                                        lg: 15,
+                                                        md: 15,
+                                                        sm: 12,
+                                                        xs: 12,
+                                                    }}                                                                                
                                                     display="block"
                                                     gutterBottom
                                                     style={{
@@ -2020,7 +2890,12 @@ function PersonalInfo(details) {
                                                 <strong>Dirección</strong>
                                             </Typography>
                                             <Typography 
-                                                variant="caption"
+                                                fontSize={{
+                                                    lg: 15,
+                                                    md: 15,
+                                                    sm: 12,
+                                                    xs: 12,
+                                                }}                                                                                
                                                 display="block"
                                                 gutterBottom
                                                 style={{
@@ -2028,8 +2903,189 @@ function PersonalInfo(details) {
                                                     marginTop: 10,
                                                 }}
                                             >
-                                                Usá una dirección fija.
+                                                Identificá tu dirección con un marcador en el mapa.
                                             </Typography>
+                                            <Typography 
+                                                fontSize={{
+                                                    lg: 15,
+                                                    md: 15,
+                                                    sm: 12,
+                                                    xs: 12,
+                                                }}                                                                                
+                                                display="block"
+                                                gutterBottom
+                                                style={{
+                                                    width: '100%',
+                                                    marginTop: 10,
+                                                }}
+                                            >
+                                                Podés buscar tu dirección (o utilizar tu posición actual) y aparecerá el marcador en la dirección seleccionada, si el marcador no aparece en la ubicación correcta, podés moverlo y posicionarlo correctamente.
+                                            </Typography>
+                                            <Typography 
+                                                fontSize={{
+                                                    lg: 15,
+                                                    md: 15,
+                                                    sm: 12,
+                                                    xs: 12,
+                                                }}                                                                                
+                                                display="block"
+                                                gutterBottom
+                                                style={{
+                                                    width: '100%',
+                                                    marginTop: 10,
+                                                }}
+                                            >
+                                                También podes seleccionar el punto manualmente aciendo click en el mapa.
+                                            </Typography>
+                                            <Typography 
+                                                fontSize={{
+                                                    lg: 15,
+                                                    md: 15,
+                                                    sm: 12,
+                                                    xs: 12,
+                                                }}                                                                                
+                                                display="block"
+                                                gutterBottom
+                                                style={{
+                                                    width: '100%',
+                                                    marginTop: 10,
+                                                }}
+                                            >
+                                                Si deseas borrar el punto presioná el botón X.
+                                            </Typography>
+                                            {mapCenter.lat ?
+                                            <GoogleMap
+                                                mapContainerStyle={containerStyle}
+                                                center={mapCenter}
+                                                zoom={3}
+                                                options={optionsMap}
+                                                onClick={(e)=> putMarker(e.latLng, true)}
+                                                onLoad={onMapLoad}
+                                            >
+                                                <Search panTo={panTo} putMarker={putMarker}/>                                            
+                                                <Locate panTo={panTo} putMarker={putMarker}/>                                            
+                                                {markers.lat ?
+                                                    <Marker 
+                                                        position={{
+                                                            lat: markers.lat,
+                                                            lng: markers.lng,
+                                                        }}
+                                                        draggable={true}
+                                                        title='Mi dirección'
+                                                        clickable={true}
+                                                        onDragEnd={(e)=>{
+                                                            putMarker(e.latLng, true);
+                                                            setAddressDescription('');
+                                                        }}
+                                                    />
+                                                :
+                                                null}
+                                            </GoogleMap>
+                                            :
+                                            null
+                                            }
+                                            <Typography 
+                                                fontSize={{
+                                                    lg: 15,
+                                                    md: 15,
+                                                    sm: 12,
+                                                    xs: 12,
+                                                }}                                                                                
+                                                display="block"
+                                                gutterBottom
+                                                style={{
+                                                    width: '100%',
+                                                    marginTop: 10,
+                                                }}
+                                            >
+                                                Tu dirección: 
+                                            </Typography>
+                                            {markers.lat ? 
+                                            <>
+                                                <Typography 
+                                                    fontSize={{
+                                                        lg: 15,
+                                                        md: 15,
+                                                        sm: 12,
+                                                        xs: 12,
+                                                    }}                                                                                
+                                                    display="block"
+                                                    gutterBottom
+                                                    style={{
+                                                        width: '100%',
+                                                        marginTop: 10,
+                                                    }}
+                                                >
+                                                    <strong>{address}</strong> 
+                                                </Typography>
+                                                <OutlinedInput 
+                                                    fullWidth 
+                                                    placeholder="Si consideras necesario, agrega información adicional que ayude a identificar tu dirección como Barrio, edificio, piso, depto, etc." 
+                                                    multiline
+                                                    rows={4}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            e.target.blur();
+                                                            handleEnterAddress();
+                                                        }
+                                                    }}
+                                                    value={addressDescription}
+                                                    onChange={(e)=>{
+                                                        setAddressDescription(e.target.value);
+                                                    }}
+                                                />
+                                            </>
+                                            :
+                                            <>
+                                                <Typography 
+                                                    fontSize={{
+                                                        lg: 15,
+                                                        md: 15,
+                                                        sm: 12,
+                                                        xs: 12,
+                                                    }}                                                                                
+                                                    display="block"
+                                                    gutterBottom
+                                                    style={{
+                                                        width: '100%',
+                                                        marginTop: 10,
+                                                    }}
+                                                >
+                                                    <strong>No proporcionada</strong> 
+                                                </Typography>
+                                            </>
+                                            }
+                                            <Button 
+                                                variant='outlined'
+                                                className='button__log__continuar'
+                                                onClick={handleEnterAddress}
+                                                style={{
+                                                    marginBottom: 10,
+                                                }}
+                                            >
+                                                Actualizar
+                                            </Button>
+                                            <Stack direction='row'>
+                                                <LockIcon color="disabled" sx={{ mt: '10px', fontSize: '15px' }}/>
+                                                <Typography 
+                                                    fontSize={{
+                                                        lg: 15,
+                                                        md: 15,
+                                                        sm: 12,
+                                                        xs: 12,
+                                                    }}                                                                                
+                                                    display="block"
+                                                    gutterBottom
+                                                    style={{
+                                                        width: '100%',
+                                                        marginTop: 10,
+                                                        marginLeft: 5,
+                                                    }}
+                                                >
+                                                    
+                                                    No compartiremos tu dirección con ningún integrante de la comunidad. Solo la utilizaremos para buscar servicios de cercanía, y además como opción para destino de tus servicios.
+                                                </Typography>
+                                            </Stack>
                                         <Divider/>
                                         </AccordionDetails>
                                     </Accordion>
@@ -2182,3 +3238,115 @@ function PersonalInfo(details) {
 }
 
 export default PersonalInfo
+
+function Locate ({panTo, putMarker}){
+    return (
+        <div className='locate'>
+            <IconButton 
+                aria-label="limpiar dirección" 
+                component="span"
+                onClick={()=>{
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            putMarker(position, false);
+                            panTo({
+                                lat: position.coords.latitude,
+                                lng: position.coords.longitude,
+                            });
+                        }, 
+                        ()=> null
+                    );
+                }}
+            >
+                <LocationSearchingIcon
+                    style={{
+                        backgroundColor: 'black',
+                        color: 'white',
+                        fontSize: '20px',
+                        borderRadius: '50px'
+                    }} 
+                />
+            </IconButton>
+        </div>  
+    );
+}
+
+function Search ({ panTo, putMarker }){
+    const {
+        ready, 
+        value,
+        suggestions: { status, data},
+        setValue,
+        clearSuggestions,
+    } = usePlacesAutocomplete({
+        requestOptions: {
+            location: {
+                lat: () => -36.63302550954505,
+                lng: () => -60.67893498238992,
+            },
+            radius: 200*1000,
+        }
+    });
+
+    return (
+        <div className='search'>
+        <Stack direction='row'>
+        <Combobox
+            style={{
+                height: '30px'
+            }}
+            onSelect={async (address)=>{
+                setValue('');
+//                setValue(address, false);
+                clearSuggestions();
+                try{
+                    const result = await getGeocode({address});
+                    const {lat, lng} = await getLatLng(result[0]);
+                    putMarker(result[0].geometry.location, true);
+                    panTo({lat, lng});
+                }catch(error){
+                    console.log(error);
+                }
+            }}
+        >
+            <ComboboxInput
+                value={value}
+                onChange={(e)=>{
+                    setValue(e.target.value);
+                }}
+                disabled={!ready}
+                placeholder='Busca tu dirección'
+            />
+            <ComboboxPopover
+                style={{zIndex: 2}}
+            >
+                <ComboboxList>
+                    {status === 'OK' &&
+                        data.map(({ id, description }) => {
+                            return (<ComboboxOption key={description} value={description}/>)
+                        })
+                    }
+                </ComboboxList>
+            </ComboboxPopover>
+            <IconButton 
+                    aria-label="limpiar dirección" 
+                    component="span"
+                    onClick={() => {
+                        setValue('');
+                        putMarker(null, false);
+                    }}
+            >
+                <CloseIcon
+                    style={{
+                        backgroundColor: 'black',
+                        color: 'white',
+                        fontSize: '20px',
+                        borderRadius: '50px'
+                    }} 
+                />
+            </IconButton>  
+        </Combobox>
+        </Stack>
+        </div>
+    )
+}

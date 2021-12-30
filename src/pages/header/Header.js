@@ -227,7 +227,67 @@ const handleUpdateProfile = useCallback(async () => {
                 return element.id === currentUser1.stsTokenManager.refreshToken;
             });
             if (filtered.length === 0){
-                await updateDoc(infoUser, {
+                await updateDoc(infoUser, { 
+                    
+                    
+
+//                    notifications:{
+//                        preferences:{
+//                            tips_news:{
+//                                tips_services:{
+//                                    email: false,
+//                                    textMessage: false,
+//                                    browser: false,
+//                                },
+//                                tips_budget:{
+//                                    email: false,
+//                                    textMessage: false,
+//                                    browser: false,
+//                                },
+//                                news:{
+//                                    email: false,
+//                                    textMessage: false,
+//                                    browser: false,
+//                                },
+//                                comments:{
+//                                    email: false,
+//                                    textMessage: false,
+//                                    browser: false,
+//                                },
+//                                normative:{
+//                                    email: false,
+//                                    textMessage: false,
+//                                    browser: false,
+//                                },
+//                            },
+//                            account:{
+//                                activity:{
+//                                    email: false,
+//                                    textMessage: false,
+//                                    browser: false,
+//                                },
+//                                policy:{
+//                                    email: false,
+//                                    textMessage: false,
+//                                    browser: false,
+//                                },
+//                                reminder:{
+//                                    email: false,
+//                                    textMessage: false,
+//                                    browser: false,
+//                                },
+//                                messages:{
+//                                    email: false,
+//                                    textMessage: false,
+//                                    browser: false,
+//                                },
+//                            },
+//                        },
+//                        messages:[],
+//                    },
+        
+
+
                         sessions: arrayUnion(                
                             {
                                 id: currentUser1.stsTokenManager.refreshToken,

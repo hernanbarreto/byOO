@@ -63,3 +63,17 @@
     transform-origin:50% 50%;
     -webkit-transform-origin:50% 50%;
 }
+
+.search{
+    position: absolute;
+    top: 0px;
+    left: 1px;
+    width: 100%;
+    z-index: 1;
+}
+
+.locate{
+    position: absolute;
+    top: 30px;
+    z-index: 1;
+}

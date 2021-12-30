@@ -235,7 +235,6 @@ function FormLogin(props) {
                         setTxtBtnContinuar('Continuar');
                         setClassNameBtnContinuar('button__log__continuar');
                         }
-                        console.log([valueInputPhoneFormPrincipal, countryCode]);
                         props.onGetPhoneNumber([valueInputPhoneFormPrincipal, countryCode]);
                         props.onGetConfirmationResult(confirmationResult);
                         props.onGetOpenFormVerificaCodigoPhone(true);

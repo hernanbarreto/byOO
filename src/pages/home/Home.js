@@ -3,7 +3,9 @@ import { useInitPage } from '../useInitPage';
 import Container from '@mui/material/Container';
 import './Home.css';
 //import ImageHome from '../../images/svg/undraw_team_work_k-80-m.svg';
-import ImageHome from '../../images/svg/undraw_new_ideas_jdea.svg';
+//import ImageHome from '../../images/svg/undraw_new_ideas_jdea.svg';
+import ImageHome from '../../images/svg/city.png';
+//import ImageHome from '../../images/svg/city.jpg';
 //import ImageHome from '../../images/svg/undraw_best_place_r685.svg';
 //import ImageHome from '../../images/svg/undraw_community_re_cyrm.svg';
 import { styled } from '@mui/material/styles';
@@ -18,7 +20,8 @@ function Home() {
         margin: 'auto',
         display: 'block',
         width: '100%',
-        maxHeight: '800px'
+        height: '100%',
+        borderRadius: '20px', 
     });     
 
     useEffect(() => {     
@@ -31,11 +34,14 @@ function Home() {
     return (
         <div className='home'>
             <Container maxWidth='xl'>
-                <Box sx={{ bgcolor: 'black'}}>
+                <Box 
+                    sx={{ 
+                        bgcolor: 'black'
+                    }}
+                >
                     <Stack spacing={'50px'}>
                         <Paper elevation={0}/>
-                        {/*<Paper elevation={0} sx={{borderRadius: '20px', bgcolor: '#3f3d56'}}>*/}
-                        <Paper elevation={0} sx={{borderRadius: '20px', bgcolor: 'white'}}>
+                        <Paper elevation={0} sx={{borderRadius: '20px', bgcolor: 'black'}}>
                             <Img src={ImageHome} />
                         </Paper>
                         <Paper elevation={0}/>

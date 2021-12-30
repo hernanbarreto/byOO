@@ -1089,6 +1089,7 @@ function FormCreaTuPerfil(props) {
         }else{
             if (isMounted){
             setLoading(false);
+            setFilePhoto(null);
             }
         }
     }

@@ -11,9 +11,10 @@ import FormVerificaCodigoPhone from './FormVerificaCodigoPhone';
 import FormExisteCuenta from './FormExisteCuenta';
 import FormCreaTuPerfil from './FormCreaTuPerfil';
 import './Login.css';
-import { getFirestore } from "firebase/firestore";
-import { doc, setDoc } from "firebase/firestore";
-import {auth} from '../../services/firebase';
+import { getFirestore, doc, setDoc, updateDoc } from "firebase/firestore";
+import { auth, logout} from '../../services/firebase';
+import { getAuth } from "firebase/auth";
+import { emitCustomEvent } from 'react-custom-events';
 
 function Login(props) {
     const [isMounted, setIsMounted] = useState(true);
@@ -325,6 +326,10 @@ function Login(props) {
             apellido += apellidos[i][0].toUpperCase() + apellidos[i].slice(1) + ' ';
         }
         apellido = apellido.slice(0,-1);
+        let em = false;
+        if (profile.email !== null) em = true;
+        let ph = false;
+        if (profile.phoneNumber !== null) ph = true;
 
         await setDoc(doc(database, "users", profile.uid), {
             userId: profile.uid,
@@ -338,6 +343,13 @@ function Login(props) {
             facebookPhoto: null,
             promotions: promotions,
             accountVerified: false,
+            identificationFront: null,
+            identificationBack: null,
+            address:{
+                lat: null,
+                lng: null,
+                description: '',
+            },
             account:{
                 created:{
                     date: auth.currentUser.metadata.createdAt,
@@ -360,6 +372,60 @@ function Login(props) {
                 },
             },
             sessions:[],
+            notifications:{
+                preferences:{
+                    tips_news:{
+                        tips_services:{
+                            email: promotions && em,
+                            textMessage: promotions && ph,
+                            browser: promotions,
+                        },
+                        tips_budget:{
+                            email: promotions && em,
+                            textMessage: promotions && ph,
+                            browser: promotions,
+                        },
+                        news:{
+                            email: promotions && em,
+                            textMessage: promotions && ph,
+                            browser: promotions,
+                        },
+                        comments:{
+                            email: promotions && em,
+                            textMessage: promotions && ph,
+                            browser: promotions,
+                        },
+                        normative:{
+                            email: em,
+                            textMessage: ph,
+                            browser: true,
+                        },
+                    },
+                    account:{
+                        activity:{
+                            email: em,
+                            textMessage: ph,
+                            browser: true,
+                        },
+                        policy:{
+                            email: em,
+                            textMessage: ph,
+                            browser: true,
+                        },
+                        reminder:{
+                            email: em,
+                            textMessage: ph,
+                            browser: true,
+                        },
+                        messages:{
+                            email: em,
+                            textMessage: ph,
+                            browser: true,
+                        },
+                    },
+                },
+                messages:[],
+            },
         })
         .then(()=>{
             if (isMounted){
@@ -419,10 +485,68 @@ function Login(props) {
         }
     }
 
-    const handleFinish = () => {
+    const handleFinish = async () => {
         if (isMounted)
-        setOpenFormCreaTuPerfil(false);
-        props.onGetUpdateProfile();
+            setOpenFormCreaTuPerfil(false);
+        
+        const auth = getAuth();
+        const currentUser1 = auth.currentUser;
+        const infoUser = doc(database, "users", currentUser1.uid);
+
+        let em = false;
+        if (currentUser1.email !== null) em = true;
+        let ph = false;
+        if (currentUser1.phoneNumber !== null) ph = true;
+
+        await updateDoc(infoUser, {
+            'notifications.preferences.tips_news.tips_services.email': promotions && em,
+            'notifications.preferences.tips_news.tips_services.textMessage': promotions && ph,
+            'notifications.preferences.tips_news.tips_services.browser': promotions,
+
+            'notifications.preferences.tips_news.tips_budget.email': promotions && em,
+            'notifications.preferences.tips_news.tips_budget.textMessage': promotions && ph,
+            'notifications.preferences.tips_news.tips_budget.browser': promotions,
+
+            'notifications.preferences.tips_news.news.email': promotions && em,
+            'notifications.preferences.tips_news.news.textMessage': promotions && ph,
+            'notifications.preferences.tips_news.news.browser': promotions,
+
+            'notifications.preferences.tips_news.comments.email': promotions && em,
+            'notifications.preferences.tips_news.comments.textMessage': promotions && ph,
+            'notifications.preferences.tips_news.comments.browser': promotions,
+
+            'notifications.preferences.tips_news.normative.email': em,
+            'notifications.preferences.tips_news.normative.textMessage': ph,
+            'notifications.preferences.tips_news.normative.browser': true,
+
+            'notifications.preferences.account.activity.email': em,
+            'notifications.preferences.account.activity.textMessage': ph,
+            'notifications.preferences.account.activity.browser': true,
+
+            'notifications.preferences.account.policy.email': em,
+            'notifications.preferences.account.policy.textMessage': ph,
+            'notifications.preferences.account.policy.browser': true,
+
+            'notifications.preferences.account.reminder.email': em,
+            'notifications.preferences.account.reminder.textMessage': ph,
+            'notifications.preferences.account.reminder.browser': true,
+
+            'notifications.preferences.account.messages.email': em,
+            'notifications.preferences.account.messages.textMessage': ph,
+            'notifications.preferences.account.messages.browser': true,            
+        })
+        .then(()=>{
+            props.onGetUpdateProfile();
+        })
+        .catch(()=>{
+            logout()
+            .then(()=>{
+                emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta, tenés que volver a registrarte/error');
+            })
+            .catch((error)=>{
+                emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta, tenés que volver a registrarte/error');
+            });
+        });
     }
 
     const handleUpdateProfile = () => {

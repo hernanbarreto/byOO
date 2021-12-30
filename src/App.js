@@ -7,6 +7,7 @@ import Privacity from './pages/privacity/Privacity';
 import Account from './pages/account/Account';
 import LoginAndSecurity from './pages/account/login-and-security/LoginAndSecurity';
 import PersonalInfo from './pages/account/personal-info/PersonalInfo';
+import Notifications from './pages/account/notifications/Notifications';
 import Footer from './pages/footer/Footer';
 import { AuthProvider } from './services/firebase'; 
 import PrivateRoute from './pages/PrivateRoute';
@@ -15,7 +16,6 @@ import { useUserAgent } from '@oieduardorabelo/use-user-agent';
 import Axios from 'axios';
 import LoadingPage from './pages/login/LoadingPage';
 import CookieAcept from './pages/CookieAcept';
-
 
 function App() {
   const details = useUserAgent();
@@ -49,6 +49,9 @@ function App() {
             </PrivateRoute>
             <PrivateRoute exact path='/account-settings/personal-info'>
                 <PersonalInfo user={userDetails}/>
+            </PrivateRoute>
+            <PrivateRoute exact path='/account-settings/notifications'>
+                <Notifications user={userDetails}/>
             </PrivateRoute>
             <Route exact path='/'>
                 <Home />

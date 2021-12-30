@@ -513,7 +513,7 @@ function LoginAndSecurity(details) {
                     :null
                     }
                     <Typography key={(4*index)+1}><strong>{sessions[index].os.name}&nbsp;{sessions[index].os.version}</strong>&nbsp;•&nbsp;{sessions[index].browser}</Typography>                                    
-                    <Typography key={(4*index)+2}>{sessions[index].location.city}&nbsp;•&nbsp;{sessions[index].location.region}&nbsp;•&nbsp;{sessions[index].location.country}</Typography>                                    
+                    <Typography key={(4*index)+2}>{sessions[index].location.region}&nbsp;•&nbsp;{sessions[index].location.country}</Typography>                                    
                     <Typography key={(4*index)+3}>{new Date(parseInt(sessions[index].date)).toLocaleDateString(sessions[index].location.lenguaje, options)}&nbsp;a las&nbsp;{new Date(parseInt(sessions[index].date)).toLocaleTimeString(sessions[index].location.lenguaje)}</Typography>
                     <Link
                         key={(4*index)+4}
@@ -884,9 +884,19 @@ function LoginAndSecurity(details) {
                 const infoUser = doc(database, "users", auth.currentUser.uid);  
                 await updateDoc(infoUser, {
                     countryCode: null,
+                    'notifications.preferences.tips_news.tips_services.textMessage': false,
+                    'notifications.preferences.tips_news.tips_budget.textMessage': false,
+                    'notifications.preferences.tips_news.news.textMessage': false,
+                    'notifications.preferences.tips_news.comments.textMessage': false,
+                    'notifications.preferences.tips_news.normative.textMessage': false,
+                    'notifications.preferences.account.activity.textMessage': false,
+                    'notifications.preferences.account.policy.textMessage': false,
+                    'notifications.preferences.account.reminder.textMessage': false,
+                    'notifications.preferences.account.messages.textMessage': false,        
                 })
                 .then(()=>{
                     emitCustomEvent('openLoadingPage', false);
+                    console.log(auth.currentUser);
                     if (isMounted){
                         clearStates();
                         handleUpdateProfile();                    
@@ -2148,7 +2158,12 @@ function LoginAndSecurity(details) {
                                             {!loadingCreated ? 
                                             <>
                                                 <Typography 
-                                                    variant="caption"
+                                                    fontSize={{
+                                                        lg: 15,
+                                                        md: 15,
+                                                        sm: 12,
+                                                        xs: 12,
+                                                    }}                                                                                
                                                     display="block"
                                                     gutterBottom
                                                     style={{
@@ -2168,7 +2183,12 @@ function LoginAndSecurity(details) {
                                                     onGetEnter={handleEnterEmail}
                                                 />
                                                 <Typography 
-                                                    variant="caption"
+                                                    fontSize={{
+                                                        lg: 15,
+                                                        md: 15,
+                                                        sm: 12,
+                                                        xs: 12,
+                                                    }}                                                                                
                                                     display="block"
                                                     gutterBottom
                                                     style={{
@@ -2188,7 +2208,12 @@ function LoginAndSecurity(details) {
                                                     close={false}
                                                 />
                                                 <Typography 
-                                                    variant="caption"
+                                                    fontSize={{
+                                                        lg: 15,
+                                                        md: 15,
+                                                        sm: 12,
+                                                        xs: 12,
+                                                    }}                                                                                
                                                     display="block"
                                                     gutterBottom
                                                     style={{
@@ -2214,7 +2239,12 @@ function LoginAndSecurity(details) {
                                             {!loadingCreated && passwordProvider ?
                                             <>
                                                 <Typography 
-                                                    variant="caption"
+                                                    fontSize={{
+                                                        lg: 15,
+                                                        md: 15,
+                                                        sm: 12,
+                                                        xs: 12,
+                                                    }}                                                                                
                                                     display="block"
                                                     gutterBottom
                                                     style={{
@@ -2303,7 +2333,12 @@ function LoginAndSecurity(details) {
                                                 close={cerrarProbar}
                                             />
                                             <Typography 
-                                                variant="caption"
+                                                fontSize={{
+                                                    lg: 15,
+                                                    md: 15,
+                                                    sm: 12,
+                                                    xs: 12,
+                                                }}                                                                                
                                                 display="block"
                                                 gutterBottom
                                                 style={{
@@ -2519,7 +2554,7 @@ function LoginAndSecurity(details) {
                                         }}
                                     >
                                             <Typography><strong>{createdOsName}&nbsp;{createdOsVersion}</strong>&nbsp;•&nbsp;{createdBrowser}</Typography>                                    
-                                            <Typography>{createdLocationCity}&nbsp;•&nbsp;{createdLocationRegion}&nbsp;•&nbsp;{createdLocationCountry}</Typography>                                    
+                                            <Typography>{createdLocationRegion}&nbsp;•&nbsp;{createdLocationCountry}</Typography>                                    
                                             <Typography>{new Date(parseInt(createdDate)).toLocaleDateString(createdlenguaje, options)}&nbsp;a las&nbsp;{new Date(parseInt(createdDate)).toLocaleTimeString(createdlenguaje)}</Typography>
                                             <Button 
                                                 variant='outlined'
