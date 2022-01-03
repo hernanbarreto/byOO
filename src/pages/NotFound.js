@@ -27,16 +27,16 @@ function NotFound () {
 
 return (
     <div>
-        <Container maxWidth="xl">
-            <Box sx={{ flexGrow: 10 }}>
+            <Container maxWidth='xl'>
+                <Box sx={{minHeight: '100vh'}}>
                 <Stack
                     direction={{ xs: 'column', sm: 'row' }}
                     spacing={{ xs: 3, sm: 10, md: 15 }}
                     style={{
                         alignItems: 'center',
                         justifyContent: 'center',
-                        marginTop: '100px',
-                        marginBottom: '100px',
+                        paddingTop: '100px',
+                        paddingBottom: '100px',
                     }}
                 >
                     <Container maxWidth="xl">
@@ -72,7 +72,7 @@ return (
                         </Stack>
                     </Container>
                 </Stack>
-            </Box>
+                </Box>
         </Container>
   </div>
 )

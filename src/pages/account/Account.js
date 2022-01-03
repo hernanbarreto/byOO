@@ -11,7 +11,6 @@ import notifications from '../../images/svg/undraw_selection_re_ycpo.svg';
 import social from '../../images/svg/undraw_Social_bio_re_0t9u.svg';
 import generalPreferences from '../../images/svg/undraw_Active_options_re_8rj3.svg';
 import professionalTools from '../../images/svg/undraw_qa_engineers_dg-5-p.svg';
-import profile from '../../images/svg/undraw_Profile_re_4a55.svg';
 import { auth } from '../../services/firebase';
 import Link from '@mui/material/Link';
 import { useHistory } from 'react-router-dom';
@@ -34,6 +33,7 @@ const Img = styled('img')({
     maxHeight: '150px',
 }); 
 
+const elevation = 5;
 const functions = getFunctions();
 const deleteUser = httpsCallable(functions, 'deleteUser');
 
@@ -95,7 +95,7 @@ function Account() {
     const history = useHistory ();
 
     const handlePerfil = () => {
-        history.push('/users/show');          
+        history.push('/users?show='+String(currentUser.uid));          
     }
 
     const handlePersonalInfo = () => {
@@ -171,12 +171,12 @@ function Account() {
                 onGetClose={handleClose}
                 onGetEliminar={handleEliminar}
             />
-            <Container maxWidth="md">
-                <Box sx={{ flexGrow: 10 }}>
+            <Container maxWidth='md'>
+                <Box sx={{minHeight: '100vh'}}>
                     <Typography 
                         variant='h4'
                         sx={{
-                            marginTop: '50px',
+                            pt: '50px',
                         }}
                     >
                         <strong>Cuenta</strong>
@@ -238,7 +238,7 @@ function Account() {
                         <Grid item xs={2} sm={4} md={4} key={1}>
                             <Paper 
                                 onClick={handlePersonalInfo}
-                                elevation={3}
+                                elevation={elevation}
                                 sx={{ 
                                     p: 2, 
                                     margin: 'auto', 
@@ -276,7 +276,7 @@ function Account() {
                         <Grid item xs={2} sm={4} md={4} key={2} >
                             <Paper 
                                 onClick={handleSesionAndSeg}
-                                elevation={3}
+                                elevation={elevation}
                                 sx={{ 
                                     p: 2, 
                                     margin: 'auto', 
@@ -314,7 +314,7 @@ function Account() {
                         <Grid item xs={2} sm={4} md={4} key={3} >
                             <Paper 
                                 onClick={handleNotifications}
-                                elevation={3}
+                                elevation={elevation}
                                 sx={{ 
                                     p: 2, 
                                     margin: 'auto', 
@@ -352,7 +352,7 @@ function Account() {
                         <Grid item xs={2} sm={4} md={4} key={4} >
                             <Paper 
                                 onClick={handleSocial}
-                                elevation={3}
+                                elevation={elevation}
                                 sx={{ 
                                     p: 2, 
                                     margin: 'auto', 
@@ -390,7 +390,7 @@ function Account() {
                         <Grid item xs={2} sm={4} md={4} key={5} >
                             <Paper 
                                 onClick={handlePreferences}
-                                elevation={3}
+                                elevation={elevation}
                                 sx={{ 
                                     p: 2, 
                                     margin: 'auto', 
@@ -428,7 +428,7 @@ function Account() {
                         <Grid item xs={2} sm={4} md={4} key={6} >
                             <Paper 
                                 onClick={handleProfesionalTools}
-                                elevation={3}
+                                elevation={elevation}
                                 sx={{ 
                                     p: 2, 
                                     margin: 'auto', 
@@ -456,44 +456,6 @@ function Account() {
                                                 </Typography>
                                                 <Typography variant="body2" gutterBottom>
                                                 Conseguí herramientas para profesionales que byOO tiene a tu disposición.
-                                                </Typography>
-                                            </Grid>
-                                        </Grid>
-                                    </Grid>
-                                </Grid>
-                            </Paper>
-                        </Grid>
-                        <Grid item xs={2} sm={4} md={4} key={7} >
-                            <Paper 
-                                onClick={handlePerfil}
-                                elevation={3}
-                                sx={{ 
-                                    p: 2, 
-                                    margin: 'auto', 
-                                    maxWidth: 500, 
-                                    flexGrow: 1, 
-                                    cursor: 'pointer', 
-                                    borderRadius: '10px'
-                                }}
-                            >
-                                <Grid container spacing={2} direction="column"
-                                    style={{
-                                        display: 'flex',
-                                        justifyContent: 'center',
-                                        minHeight: 320,    
-                                    }}                                                                
-                                >
-                                    <Grid item>
-                                        <Img src={profile} />
-                                    </Grid>
-                                    <Grid item sm container>
-                                        <Grid item container direction="column" spacing={2}>
-                                            <Grid item >
-                                                <Typography gutterBottom variant="h6" component="div">
-                                                    <strong>Tu perfil</strong>
-                                                </Typography>
-                                                <Typography variant="body2" gutterBottom>
-                                                    Configurá tu perfil para que la comunidad byOO te conozca.
                                                 </Typography>
                                             </Grid>
                                         </Grid>

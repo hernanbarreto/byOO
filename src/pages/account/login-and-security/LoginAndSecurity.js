@@ -109,7 +109,6 @@ function LoginAndSecurity(details) {
 
     const [createdOsName, setCreatedOsName] = useState(null);
     const [createdOsVersion, setCreatedOsVersion] = useState(null);
-    const [createdLocationCity, setCreatedLocationCity] = useState(null);
     const [createdLocationCountry, setCreatedLocationCountry] = useState(null);
     const [createdLocationRegion, setCreatedLocationRegion] = useState(null);
     const [createdBrowser, setCreatedBrowser] = useState(null);
@@ -183,7 +182,6 @@ function LoginAndSecurity(details) {
                         setCreatedLenguaje(docSnap.data().account.created.location.lenguaje)
                         setCreatedOsName(docSnap.data().account.created.os.name);
                         setCreatedOsVersion(docSnap.data().account.created.os.version);
-                        setCreatedLocationCity(docSnap.data().account.created.location.city);
                         setCreatedLocationCountry(docSnap.data().account.created.location.country);
                         setCreatedLocationRegion(docSnap.data().account.created.location.region);
                         setCreatedBrowser(docSnap.data().account.created.browser);
@@ -235,7 +233,6 @@ function LoginAndSecurity(details) {
         listItems = null;
         setCreatedOsName(null);
         setCreatedOsVersion(null);
-        setCreatedLocationCity(null);
         setCreatedLocationCountry(null);
         setCreatedLocationRegion(null);
         setCreatedBrowser(null);
@@ -322,7 +319,7 @@ function LoginAndSecurity(details) {
           sx={{
             color: '#222222 !important',
             textDecoration: "underline #222222",
-            fontSize: '14px',
+            fontSize: '16px',
             cursor: 'pointer'
         }} 
         >
@@ -2057,13 +2054,13 @@ function LoginAndSecurity(details) {
                 onGetClose={handleClose}
                 onGetEliminar={handleEliminar}
             />
-            <Container maxWidth="lg">
-                <Box sx={{ flexGrow: 10 }}>
+            <Container maxWidth='lg'>
+                <Box sx={{minHeight: '100vh'}}>
                     <Paper
                         variant='string' 
                         sx={{ 
-                            marginTop: '50px', 
-                            marginBottom: '50px', 
+                            pt: '50px', 
+                            pb: '50px', 
                         }}
                     >
                         <Stack
@@ -2581,7 +2578,8 @@ function LoginAndSecurity(details) {
                                     </Paper> 
                                 </Box>
                             </Container>
-                            <Container maxWidth="md"
+                            <Container 
+                                maxWidth="md"
                                 style={{
                                     display: 'flex',
                                     alignItems: 'flex-start',

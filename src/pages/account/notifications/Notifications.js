@@ -85,7 +85,7 @@ function Notifications(details) {
           sx={{
             color: '#222222 !important',
             textDecoration: "underline #222222",
-            fontSize: '14px',
+            fontSize: '16px',
             cursor: 'pointer'
         }} 
         >
@@ -262,13 +262,13 @@ function Notifications(details) {
 
     return (
         <div>
-            <Container maxWidth="lg">
-                <Box sx={{ flexGrow: 10 }}>
+            <Container maxWidth='lg'>
+                <Box sx={{minHeight: '100vh'}}>
                     <Paper
                         variant='string' 
                         sx={{ 
-                            marginTop: '50px', 
-                            marginBottom: '50px', 
+                            pt: '50px', 
+                            pb: '50px', 
                         }}
                     >
                         <Stack
@@ -357,7 +357,7 @@ function Notifications(details) {
                                                 sx={{
                                                     marginTop: '20px',
                                                     marginBottom: '20px',
-                                                }}                                    
+                                                }}
                                             >
                                             <AccordionSummary
                                                 expandIcon={<ExpandMoreIcon />}
@@ -394,7 +394,6 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={tipsServicesEmail}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     if (currentUser.email !== null){
                                                         const infoUser = doc(database, "users", currentUser.uid);
                                                         try{                                  
@@ -402,13 +401,11 @@ function Notifications(details) {
                                                                 'notifications.preferences.tips_news.tips_services.email': e,
                                                             })
                                                             .then(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setTipsServicesEmail(e);                                            
                                                                 }
                                                             })
                                                             .catch(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                     setSeverityInfo('error');
@@ -416,7 +413,6 @@ function Notifications(details) {
                                                                 }                                       
                                                             });
                                                         }catch{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                                 setSeverityInfo('error');
@@ -424,7 +420,6 @@ function Notifications(details) {
                                                             }                                        
                                                         } 
                                                     }else{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('No es posible actualizar la información porque no tenés un correo asociado a tu cuenta');
                                                             setSeverityInfo('error');
@@ -438,7 +433,6 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={tipsServicesText}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     if (currentUser.phoneNumber !== null){
                                                         const infoUser = doc(database, "users", currentUser.uid);
                                                         try{                                  
@@ -446,13 +440,11 @@ function Notifications(details) {
                                                                 'notifications.preferences.tips_news.tips_services.textMessage': e,
                                                             })
                                                             .then(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setTipsServicesText(e);                                            
                                                                 }
                                                             })
                                                             .catch(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                     setSeverityInfo('error');
@@ -460,7 +452,6 @@ function Notifications(details) {
                                                                 }                                        
                                                             });
                                                         }catch{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                                 setSeverityInfo('error');
@@ -468,7 +459,6 @@ function Notifications(details) {
                                                             }                                        
                                                         } 
                                                     }else{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('No es posible actualizar la información porque no tenés un número telefónico asociado a tu cuenta');
                                                             setSeverityInfo('error');
@@ -482,20 +472,17 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={tipsServicesBrowser}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     const infoUser = doc(database, "users", currentUser.uid);
                                                     try{                                  
                                                         await updateDoc(infoUser, {
                                                             'notifications.preferences.tips_news.tips_services.browser': e,
                                                         })
                                                         .then(()=>{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setTipsServicesBrowser(e);                                            
                                                             }
                                                         })
                                                         .catch(()=>{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                 setSeverityInfo('error');
@@ -503,7 +490,6 @@ function Notifications(details) {
                                                             }                                        
                                                         });
                                                     }catch{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                             setSeverityInfo('error');
@@ -564,7 +550,6 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={tipsBudgetEmail}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     if (currentUser.email !== null){
                                                         const infoUser = doc(database, "users", currentUser.uid);
                                                         try{                                  
@@ -572,13 +557,11 @@ function Notifications(details) {
                                                                 'notifications.preferences.tips_news.tips_budget.email': e,
                                                             })
                                                             .then(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setTipsBudgetEmail(e);                                            
                                                                 }
                                                             })
                                                             .catch(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                     setSeverityInfo('error');
@@ -586,7 +569,6 @@ function Notifications(details) {
                                                                 }                                       
                                                             });
                                                         }catch{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                                 setSeverityInfo('error');
@@ -594,7 +576,6 @@ function Notifications(details) {
                                                             }                                        
                                                         } 
                                                     }else{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('No es posible actualizar la información porque no tenés un correo asociado a tu cuenta');
                                                             setSeverityInfo('error');
@@ -607,7 +588,6 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={tipsBudgetText}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     if (currentUser.phoneNumber !== null){
                                                         const infoUser = doc(database, "users", currentUser.uid);
                                                         try{                                  
@@ -615,13 +595,11 @@ function Notifications(details) {
                                                                 'notifications.preferences.tips_news.tips_budget.textMessage': e,
                                                             })
                                                             .then(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setTipsBudgetText(e);                                            
                                                                 }
                                                             })
                                                             .catch(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                     setSeverityInfo('error');
@@ -629,7 +607,6 @@ function Notifications(details) {
                                                                 }                                        
                                                             });
                                                         }catch{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                                 setSeverityInfo('error');
@@ -637,7 +614,6 @@ function Notifications(details) {
                                                             }                                        
                                                         } 
                                                     }else{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('No es posible actualizar la información porque no tenés un número telefónico asociado a tu cuenta');
                                                             setSeverityInfo('error');
@@ -651,20 +627,17 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={tipsBudgetBrowser}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     const infoUser = doc(database, "users", currentUser.uid);
                                                     try{                                  
                                                         await updateDoc(infoUser, {
                                                             'notifications.preferences.tips_news.tips_budget.browser': e,
                                                         })
                                                         .then(()=>{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setTipsBudgetBrowser(e);                                            
                                                             }
                                                         })
                                                         .catch(()=>{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                 setSeverityInfo('error');
@@ -672,7 +645,6 @@ function Notifications(details) {
                                                             }                                        
                                                         });
                                                     }catch{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                             setSeverityInfo('error');
@@ -763,7 +735,6 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={tipsNewsEmail}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     if (currentUser.email !== null){
                                                         const infoUser = doc(database, "users", currentUser.uid);
                                                         try{                                  
@@ -771,13 +742,11 @@ function Notifications(details) {
                                                                 'notifications.preferences.tips_news.news.email': e,
                                                             })
                                                             .then(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setTipsNewsEmail(e);                                            
                                                                 }
                                                             })
                                                             .catch(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                     setSeverityInfo('error');
@@ -785,7 +754,6 @@ function Notifications(details) {
                                                                 }                                       
                                                             });
                                                         }catch{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                                 setSeverityInfo('error');
@@ -793,7 +761,6 @@ function Notifications(details) {
                                                             }                                        
                                                         } 
                                                     }else{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('No es posible actualizar la información porque no tenés un correo asociado a tu cuenta');
                                                             setSeverityInfo('error');
@@ -807,7 +774,6 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={tipsNewsText}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     if (currentUser.phoneNumber !== null){
                                                         const infoUser = doc(database, "users", currentUser.uid);
                                                         try{                                  
@@ -815,13 +781,11 @@ function Notifications(details) {
                                                                 'notifications.preferences.tips_news.news.textMessage': e,
                                                             })
                                                             .then(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setTipsNewsText(e);                                            
                                                                 }
                                                             })
                                                             .catch(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                     setSeverityInfo('error');
@@ -829,7 +793,6 @@ function Notifications(details) {
                                                                 }                                        
                                                             });
                                                         }catch{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                                 setSeverityInfo('error');
@@ -837,7 +800,6 @@ function Notifications(details) {
                                                             }                                        
                                                         } 
                                                     }else{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('No es posible actualizar la información porque no tenés un número telefónico asociado a tu cuenta');
                                                             setSeverityInfo('error');
@@ -851,20 +813,17 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={tipsNewsBrowser}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     const infoUser = doc(database, "users", currentUser.uid);
                                                     try{                                  
                                                         await updateDoc(infoUser, {
                                                             'notifications.preferences.tips_news.news.browser': e,
                                                         })
                                                         .then(()=>{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setTipsNewsBrowser(e);                                            
                                                             }
                                                         })
                                                         .catch(()=>{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                 setSeverityInfo('error');
@@ -872,7 +831,6 @@ function Notifications(details) {
                                                             }                                        
                                                         });
                                                     }catch{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                             setSeverityInfo('error');
@@ -933,7 +891,6 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={tipsCommentsEmail}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     if (currentUser.email !== null){
                                                         const infoUser = doc(database, "users", currentUser.uid);
                                                         try{                                  
@@ -941,13 +898,11 @@ function Notifications(details) {
                                                                 'notifications.preferences.tips_news.comments.email': e,
                                                             })
                                                             .then(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setTipsCommentsEmail(e);                                            
                                                                 }
                                                             })
                                                             .catch(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                     setSeverityInfo('error');
@@ -955,7 +910,6 @@ function Notifications(details) {
                                                                 }                                       
                                                             });
                                                         }catch{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                                 setSeverityInfo('error');
@@ -963,7 +917,6 @@ function Notifications(details) {
                                                             }                                        
                                                         } 
                                                     }else{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('No es posible actualizar la información porque no tenés un correo asociado a tu cuenta');
                                                             setSeverityInfo('error');
@@ -977,7 +930,6 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={tipsCommentsText}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     if (currentUser.phoneNumber !== null){
                                                         const infoUser = doc(database, "users", currentUser.uid);
                                                         try{                                  
@@ -985,13 +937,11 @@ function Notifications(details) {
                                                                 'notifications.preferences.tips_news.comments.textMessage': e,
                                                             })
                                                             .then(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setTipsCommentsText(e);                                            
                                                                 }
                                                             })
                                                             .catch(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                     setSeverityInfo('error');
@@ -999,7 +949,6 @@ function Notifications(details) {
                                                                 }                                        
                                                             });
                                                         }catch{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                                 setSeverityInfo('error');
@@ -1007,7 +956,6 @@ function Notifications(details) {
                                                             }                                        
                                                         } 
                                                     }else{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('No es posible actualizar la información porque no tenés un número telefónico asociado a tu cuenta');
                                                             setSeverityInfo('error');
@@ -1021,20 +969,17 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={tipsCommentsBrowser}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     const infoUser = doc(database, "users", currentUser.uid);
                                                     try{                                  
                                                         await updateDoc(infoUser, {
                                                             'notifications.preferences.tips_news.comments.browser': e,
                                                         })
                                                         .then(()=>{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setTipsCommentsBrowser(e);                                            
                                                             }
                                                         })
                                                         .catch(()=>{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                 setSeverityInfo('error');
@@ -1042,7 +987,6 @@ function Notifications(details) {
                                                             }                                        
                                                         });
                                                     }catch{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                             setSeverityInfo('error');
@@ -1103,7 +1047,6 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={tipsNormativeEmail}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     if (currentUser.email !== null){
                                                         const infoUser = doc(database, "users", currentUser.uid);
                                                         try{                                  
@@ -1111,13 +1054,11 @@ function Notifications(details) {
                                                                 'notifications.preferences.tips_news.normative.email': e,
                                                             })
                                                             .then(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setTipsNormativeEmail(e);                                            
                                                                 }
                                                             })
                                                             .catch(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                     setSeverityInfo('error');
@@ -1125,7 +1066,6 @@ function Notifications(details) {
                                                                 }                                       
                                                             });
                                                         }catch{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                                 setSeverityInfo('error');
@@ -1133,7 +1073,6 @@ function Notifications(details) {
                                                             }                                        
                                                         } 
                                                     }else{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('No es posible actualizar la información porque no tenés un correo asociado a tu cuenta');
                                                             setSeverityInfo('error');
@@ -1147,7 +1086,6 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={tipsNormativeText}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     if (currentUser.phoneNumber !== null){
                                                         const infoUser = doc(database, "users", currentUser.uid);
                                                         try{                                  
@@ -1155,13 +1093,11 @@ function Notifications(details) {
                                                                 'notifications.preferences.tips_news.normative.textMessage': e,
                                                             })
                                                             .then(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setTipsNormativeText(e);                                            
                                                                 }
                                                             })
                                                             .catch(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                     setSeverityInfo('error');
@@ -1169,7 +1105,6 @@ function Notifications(details) {
                                                                 }                                        
                                                             });
                                                         }catch{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                                 setSeverityInfo('error');
@@ -1177,7 +1112,6 @@ function Notifications(details) {
                                                             }                                        
                                                         } 
                                                     }else{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('No es posible actualizar la información porque no tenés un número telefónico asociado a tu cuenta');
                                                             setSeverityInfo('error');
@@ -1191,20 +1125,17 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={tipsNormativeBrowser}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     const infoUser = doc(database, "users", currentUser.uid);
                                                     try{                                  
                                                         await updateDoc(infoUser, {
                                                             'notifications.preferences.tips_news.normative.browser': e,
                                                         })
                                                         .then(()=>{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setTipsNormativeBrowser(e);                                            
                                                             }
                                                         })
                                                         .catch(()=>{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                 setSeverityInfo('error');
@@ -1212,7 +1143,6 @@ function Notifications(details) {
                                                             }                                        
                                                         });
                                                     }catch{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                             setSeverityInfo('error');
@@ -1305,7 +1235,6 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={accountActivityEmail}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     if (currentUser.email !== null){
                                                         const infoUser = doc(database, "users", currentUser.uid);
                                                         try{                                  
@@ -1313,13 +1242,11 @@ function Notifications(details) {
                                                                 'notifications.preferences.account.activity.email': e,
                                                             })
                                                             .then(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setAccountActivityEmail(e);                                            
                                                                 }
                                                             })
                                                             .catch(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                     setSeverityInfo('error');
@@ -1327,7 +1254,6 @@ function Notifications(details) {
                                                                 }                                       
                                                             });
                                                         }catch{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                                 setSeverityInfo('error');
@@ -1335,7 +1261,6 @@ function Notifications(details) {
                                                             }                                        
                                                         } 
                                                     }else{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('No es posible actualizar la información porque no tenés un correo asociado a tu cuenta');
                                                             setSeverityInfo('error');
@@ -1349,7 +1274,6 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={accountActivityText}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     if (currentUser.phoneNumber !== null){
                                                         const infoUser = doc(database, "users", currentUser.uid);
                                                         try{                                  
@@ -1357,13 +1281,11 @@ function Notifications(details) {
                                                                 'notifications.preferences.account.activity.textMessage': e,
                                                             })
                                                             .then(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setAccountActivityText(e);                                            
                                                                 }
                                                             })
                                                             .catch(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                     setSeverityInfo('error');
@@ -1371,7 +1293,6 @@ function Notifications(details) {
                                                                 }                                        
                                                             });
                                                         }catch{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                                 setSeverityInfo('error');
@@ -1379,7 +1300,6 @@ function Notifications(details) {
                                                             }                                        
                                                         } 
                                                     }else{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('No es posible actualizar la información porque no tenés un número telefónico asociado a tu cuenta');
                                                             setSeverityInfo('error');
@@ -1393,20 +1313,17 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={accountActivityBrowser}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     const infoUser = doc(database, "users", currentUser.uid);
                                                     try{                                  
                                                         await updateDoc(infoUser, {
                                                             'notifications.preferences.account.activity.browser': e,
                                                         })
                                                         .then(()=>{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setAccountActivityBrowser(e);                                            
                                                             }
                                                         })
                                                         .catch(()=>{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                 setSeverityInfo('error');
@@ -1414,7 +1331,6 @@ function Notifications(details) {
                                                             }                                        
                                                         });
                                                     }catch{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                             setSeverityInfo('error');
@@ -1475,7 +1391,6 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={accountPolicyEmail}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     if (currentUser.email !== null){
                                                         const infoUser = doc(database, "users", currentUser.uid);
                                                         try{                                  
@@ -1483,13 +1398,11 @@ function Notifications(details) {
                                                                 'notifications.preferences.account.policy.email': e,
                                                             })
                                                             .then(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setAccountPolicyEmail(e);                                            
                                                                 }
                                                             })
                                                             .catch(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                     setSeverityInfo('error');
@@ -1497,7 +1410,6 @@ function Notifications(details) {
                                                                 }                                       
                                                             });
                                                         }catch{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                                 setSeverityInfo('error');
@@ -1505,7 +1417,6 @@ function Notifications(details) {
                                                             }                                        
                                                         } 
                                                     }else{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('No es posible actualizar la información porque no tenés un correo asociado a tu cuenta');
                                                             setSeverityInfo('error');
@@ -1519,7 +1430,6 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={accountPolicyText}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     if (currentUser.phoneNumber !== null){
                                                         const infoUser = doc(database, "users", currentUser.uid);
                                                         try{                                  
@@ -1527,13 +1437,11 @@ function Notifications(details) {
                                                                 'notifications.preferences.account.policy.textMessage': e,
                                                             })
                                                             .then(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setAccountPolicyText(e);                                            
                                                                 }
                                                             })
                                                             .catch(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                     setSeverityInfo('error');
@@ -1541,7 +1449,6 @@ function Notifications(details) {
                                                                 }                                        
                                                             });
                                                         }catch{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                                 setSeverityInfo('error');
@@ -1549,7 +1456,6 @@ function Notifications(details) {
                                                             }                                        
                                                         } 
                                                     }else{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('No es posible actualizar la información porque no tenés un número telefónico asociado a tu cuenta');
                                                             setSeverityInfo('error');
@@ -1563,20 +1469,17 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={accountPolicyBrowser}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     const infoUser = doc(database, "users", currentUser.uid);
                                                     try{                                  
                                                         await updateDoc(infoUser, {
                                                             'notifications.preferences.account.policy.browser': e,
                                                         })
                                                         .then(()=>{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setAccountPolicyBrowser(e);                                            
                                                             }
                                                         })
                                                         .catch(()=>{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                 setSeverityInfo('error');
@@ -1584,7 +1487,6 @@ function Notifications(details) {
                                                             }                                        
                                                         });
                                                     }catch{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                             setSeverityInfo('error');
@@ -1675,7 +1577,6 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={accountReminderEmail}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     if (currentUser.email !== null){
                                                         const infoUser = doc(database, "users", currentUser.uid);
                                                         try{                                  
@@ -1683,13 +1584,11 @@ function Notifications(details) {
                                                                 'notifications.preferences.account.reminder.email': e,
                                                             })
                                                             .then(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setAccountReminderEmail(e);                                            
                                                                 }
                                                             })
                                                             .catch(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                     setSeverityInfo('error');
@@ -1697,7 +1596,6 @@ function Notifications(details) {
                                                                 }                                       
                                                             });
                                                         }catch{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                                 setSeverityInfo('error');
@@ -1705,7 +1603,6 @@ function Notifications(details) {
                                                             }                                        
                                                         } 
                                                     }else{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('No es posible actualizar la información porque no tenés un correo asociado a tu cuenta');
                                                             setSeverityInfo('error');
@@ -1719,7 +1616,6 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={accountReminderText}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     if (currentUser.phoneNumber !== null){
                                                         const infoUser = doc(database, "users", currentUser.uid);
                                                         try{                                  
@@ -1727,13 +1623,11 @@ function Notifications(details) {
                                                                 'notifications.preferences.account.reminder.textMessage': e,
                                                             })
                                                             .then(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setAccountReminderText(e);                                            
                                                                 }
                                                             })
                                                             .catch(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                     setSeverityInfo('error');
@@ -1741,7 +1635,6 @@ function Notifications(details) {
                                                                 }                                        
                                                             });
                                                         }catch{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                                 setSeverityInfo('error');
@@ -1749,7 +1642,6 @@ function Notifications(details) {
                                                             }                                        
                                                         } 
                                                     }else{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('No es posible actualizar la información porque no tenés un número telefónico asociado a tu cuenta');
                                                             setSeverityInfo('error');
@@ -1763,20 +1655,17 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={accountReminderBrowser}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     const infoUser = doc(database, "users", currentUser.uid);
                                                     try{                                  
                                                         await updateDoc(infoUser, {
                                                             'notifications.preferences.account.reminder.browser': e,
                                                         })
                                                         .then(()=>{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setAccountReminderBrowser(e);                                            
                                                             }
                                                         })
                                                         .catch(()=>{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                 setSeverityInfo('error');
@@ -1784,7 +1673,6 @@ function Notifications(details) {
                                                             }                                        
                                                         });
                                                     }catch{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                             setSeverityInfo('error');
@@ -1875,7 +1763,6 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={accountMessagesEmail}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     if (currentUser.email !== null){
                                                         const infoUser = doc(database, "users", currentUser.uid);
                                                         try{                                  
@@ -1883,13 +1770,11 @@ function Notifications(details) {
                                                                 'notifications.preferences.account.messages.email': e,
                                                             })
                                                             .then(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setAccountMessagesEmail(e);                                            
                                                                 }
                                                             })
                                                             .catch(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                     setSeverityInfo('error');
@@ -1897,7 +1782,6 @@ function Notifications(details) {
                                                                 }                                       
                                                             });
                                                         }catch{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                                 setSeverityInfo('error');
@@ -1905,7 +1789,6 @@ function Notifications(details) {
                                                             }                                        
                                                         } 
                                                     }else{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('No es posible actualizar la información porque no tenés un correo asociado a tu cuenta');
                                                             setSeverityInfo('error');
@@ -1919,7 +1802,6 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={accountMessagesText}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     if (currentUser.phoneNumber !== null){
                                                         const infoUser = doc(database, "users", currentUser.uid);
                                                         try{                                  
@@ -1927,13 +1809,11 @@ function Notifications(details) {
                                                                 'notifications.preferences.account.messages.textMessage': e,
                                                             })
                                                             .then(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setAccountMessagesText(e);                                            
                                                                 }
                                                             })
                                                             .catch(()=>{
-                                                                emitCustomEvent('openLoadingPage', false);
                                                                 if (isMounted){
                                                                     setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                     setSeverityInfo('error');
@@ -1941,7 +1821,6 @@ function Notifications(details) {
                                                                 }                                        
                                                             });
                                                         }catch{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                                 setSeverityInfo('error');
@@ -1949,7 +1828,6 @@ function Notifications(details) {
                                                             }                                        
                                                         } 
                                                     }else{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('No es posible actualizar la información porque no tenés un número telefónico asociado a tu cuenta');
                                                             setSeverityInfo('error');
@@ -1963,20 +1841,17 @@ function Notifications(details) {
                                                 strong={false}
                                                 checked={accountMessagesBrowser}
                                                 onGetChange={async (e)=>{
-                                                    emitCustomEvent('openLoadingPage', true);
                                                     const infoUser = doc(database, "users", currentUser.uid);
                                                     try{                                  
                                                         await updateDoc(infoUser, {
                                                             'notifications.preferences.account.messages.browser': e,
                                                         })
                                                         .then(()=>{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setAccountMessagesBrowser(e);                                            
                                                             }
                                                         })
                                                         .catch(()=>{
-                                                            emitCustomEvent('openLoadingPage', false);
                                                             if (isMounted){
                                                                 setMsg('Ha ocurrido un error al intentar actualizar tu información');
                                                                 setSeverityInfo('error');
@@ -1984,7 +1859,6 @@ function Notifications(details) {
                                                             }                                        
                                                         });
                                                     }catch{
-                                                        emitCustomEvent('openLoadingPage', false);
                                                         if (isMounted){
                                                             setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
                                                             setSeverityInfo('error');

@@ -426,6 +426,11 @@ function Login(props) {
                 },
                 messages:[],
             },
+            privacy_and_sharing:{
+                facebook: true,
+                instagram: true,
+                google: true,
+            }
         })
         .then(()=>{
             if (isMounted){

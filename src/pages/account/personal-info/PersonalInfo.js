@@ -287,7 +287,7 @@ function PersonalInfo(details) {
           sx={{
             color: '#222222 !important',
             textDecoration: "underline #222222",
-            fontSize: '14px',
+            fontSize: '16px',
             cursor: 'pointer'
         }} 
         >
@@ -1884,13 +1884,13 @@ function PersonalInfo(details) {
 
     return (
         <div>
-            <Container maxWidth="lg">
-                <Box sx={{ flexGrow: 10 }}>
+            <Container maxWidth='lg'>
+                <Box sx={{minHeight: '100vh'}}>
                     <Paper
                         variant='string' 
                         sx={{ 
-                            marginTop: '50px', 
-                            marginBottom: '50px', 
+                            pt: '50px', 
+                            pb: '50px', 
                         }}
                     >
                         <Stack

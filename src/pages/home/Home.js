@@ -36,7 +36,8 @@ function Home() {
             <Container maxWidth='xl'>
                 <Box 
                     sx={{ 
-                        bgcolor: 'black'
+                        bgcolor: 'black',
+                        minHeight: '100vh'
                     }}
                 >
                     <Stack spacing={'50px'}>
