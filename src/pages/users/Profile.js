@@ -34,7 +34,6 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import { useInitPage } from '../useInitPage';
 import Button from '@mui/material/Button';
 import OutlinedInput from '@mui/material/OutlinedInput';
-import Link from '@mui/material/Link';
 
 const database = getFirestore();
 const sizeAvatarNotPressed = '150px';
@@ -45,8 +44,6 @@ const marginBadgeNotPressed = '-79px';
 const marginBadgePressed = '-81px';
 const marginDotNotPressed = '-10px';
 const marginDotPressed = '-14px';
-
-let regExpress=/[^a-zA-Z0-9ñÑáéíóúÁÉÍÓÚ\s]/g;
 
 function useQuery() {
     return new URLSearchParams(useLocation().search);
@@ -596,10 +593,12 @@ function Profile() {
                                 />
                                 <Stack
                                     direction={'row'}
+                                    spacing={1}
                                     justifyContent="space-between"
                                     alignItems="flex-end"
                                     style={{
                                         marginTop: '120px',
+                                        marginBottom: '-120px',
                                     }}
                                 >
                                     <Button
@@ -653,18 +652,21 @@ function Profile() {
                     :
                         <>
                         {canEdit ?
-                                <Link
+                                <Typography
                                     align='center'
-                                    component="button"
-                                    top= '120px'
                                     onClick={handleAgregarPresentacion}
                                     sx={{
-                                        color: '#5472AD !important',
+                                        marginTop: '130px',
+                                        marginBottom: '-110px',
+                                        color: '#1876f3 !important',
                                         fontSize: '16px',
+                                        '&:hover':{
+                                            cursor: 'pointer',
+                                        }
                                     }} 
                                 >
                                     <strong>Agregar presentación</strong>
-                                </Link>
+                                </Typography>
                             :
                             null 
                         }
