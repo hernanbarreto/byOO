@@ -334,6 +334,7 @@ function Login(props) {
         await setDoc(doc(database, "users", profile.uid), {
             userId: profile.uid,
             name: nombre,
+            description: null,
             countryCode: countryCodeFormLogin,
             lastName: apellido,
             age: valueAgeFormRegistrate,

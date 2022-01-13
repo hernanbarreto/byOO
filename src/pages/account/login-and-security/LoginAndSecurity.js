@@ -1083,6 +1083,8 @@ function LoginAndSecurity(details) {
                     setSeverityInfo('error');
                     setOpenMsg(true);
                 }                    
+                clearStates();
+                handleUpdateProfile();                                                
             }
             setVariableEstadoCargadoNewValuePhoneFormPrincipal(false);       
         }         

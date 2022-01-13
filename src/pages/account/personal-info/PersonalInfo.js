@@ -1481,6 +1481,8 @@ function PersonalInfo(details) {
                     setSeverityInfo('error');
                     setOpenMsg(true);
                 }                    
+                clearStates();
+                handleUpdateProfile();                                                
             }
             setVariableEstadoCargadoNewValuePhone(false);       
         }         

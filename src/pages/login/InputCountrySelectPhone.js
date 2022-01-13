@@ -323,9 +323,24 @@ function InputCountrySelectPhone(props) {
                     setStateErrorPhone(true);
                     props.onGetValuePhone(['','']);
                 }else{
-                    if (isMounted)
-                    setStateErrorPhone(false);
-                    props.onGetValuePhone([String(valuePhone) + String(valueInputPhone.replace(/[^ 0-9]/g, '')), valueCountri]);
+                    console.log(valueCountri.code);
+                    if (valueCountri.code === 'AR'){
+                        if ((valueInputPhone.replace(/[^ 0-9]/g, '').length === 10) && (valueInputPhone.replace(/[^ 0-9]/g, '').substring(0,2) === '15')){
+                            if (isMounted){
+                                setStateErrorPhone(true);
+                                sethelperTextPhone('El número telefónico debe ser 11' + String(valueInputPhone.replace(/[^ 0-9]/g, '').substring(2,valueInputPhone.replace(/[^ 0-9]/g, '').length)));
+                            }
+                            props.onGetValuePhone(['','']);
+                        }else{
+                            if (isMounted)
+                                setStateErrorPhone(false);
+                            props.onGetValuePhone([String(valuePhone) + String(valueInputPhone.replace(/[^ 0-9]/g, '')), valueCountri]);
+                        }
+                    }else{
+                        if (isMounted)
+                            setStateErrorPhone(false);
+                        props.onGetValuePhone([String(valuePhone) + String(valueInputPhone.replace(/[^ 0-9]/g, '')), valueCountri]);
+                    }
                 }         
             }else{
                 if (isMounted){
