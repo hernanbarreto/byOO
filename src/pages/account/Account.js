@@ -34,6 +34,7 @@ const Img = styled('img')({
 }); 
 
 const elevation = 5;
+const minHeight = 320;
 const functions = getFunctions();
 const deleteUser = httpsCallable(functions, 'deleteUser');
 
@@ -171,7 +172,7 @@ function Account() {
                 onGetClose={handleClose}
                 onGetEliminar={handleEliminar}
             />
-            <Container maxWidth='md'>
+            <Container maxWidth='lg'>
                 <Box sx={{minHeight: '100vh'}}>
                     <Typography 
                         variant='h4'
@@ -232,7 +233,7 @@ function Account() {
                     <Grid 
                         container 
                         spacing={{ xs: 2, md: 3 }} 
-                        columns={{ xs: 4, sm: 8, md: 12 }}
+                        columns={{ xs: 1, sm: 8, md: 12 }}
                         direction={{ xs: 'column', sm: 'row' }}
                     >
                         <Grid item xs={2} sm={4} md={4} key={1}>
@@ -252,7 +253,7 @@ function Account() {
                                     style={{
                                         display: 'flex',
                                         justifyContent: 'center',
-                                        minHeight: 320,    
+                                        minHeight: minHeight,    
                                     }}                                                                
                                 >
                                     <Grid item>
@@ -290,7 +291,7 @@ function Account() {
                                     style={{
                                         display: 'flex',
                                         justifyContent: 'center',   
-                                        minHeight: 320,                                            
+                                        minHeight: minHeight,                                            
                                     }}                                                                
                                 >
                                     <Grid item >
@@ -328,7 +329,7 @@ function Account() {
                                     style={{
                                         display: 'flex',
                                         justifyContent: 'center',
-                                        minHeight: 320,    
+                                        minHeight: minHeight,    
                                     }}                                
                                 >
                                     <Grid item>
@@ -366,7 +367,7 @@ function Account() {
                                     style={{
                                         display: 'flex',
                                         justifyContent: 'center',
-                                        minHeight: 320,    
+                                        minHeight: minHeight,    
                                     }}                                                                
                                 >
                                     <Grid item>
@@ -404,7 +405,7 @@ function Account() {
                                     style={{
                                         display: 'flex',
                                         justifyContent: 'center',
-                                        minHeight: 320,    
+                                        minHeight: minHeight,    
                                     }}                                                                
                                 >
                                     <Grid item>
@@ -442,7 +443,7 @@ function Account() {
                                     style={{
                                         display: 'flex',
                                         justifyContent: 'center',
-                                        minHeight: 320,    
+                                        minHeight: minHeight,    
                                     }}                                                                
                                 >
                                     <Grid item>

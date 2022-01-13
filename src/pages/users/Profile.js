@@ -31,9 +31,11 @@ import IconButton from '@mui/material/IconButton';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
+import CleaningServicesIcon from '@mui/icons-material/CleaningServices';
 import { useInitPage } from '../useInitPage';
 import Button from '@mui/material/Button';
 import OutlinedInput from '@mui/material/OutlinedInput';
+import FormEditIcons from './FormEditIcons';
 
 const database = getFirestore();
 const sizeAvatarNotPressed = '150px';
@@ -74,9 +76,11 @@ function Profile() {
     const [marginBadge, setMarginBadge] = useState(marginBadgeNotPressed);
     const [marginDot, setMarginDot] = useState(marginDotNotPressed);
     const [editDescription, setEditDescription] = useState(false);
+    const [userShow, setUserShow] = useState(null);
+    const [openEditIcons, setOpenEditIcons] = useState(false);
     
     const getUser = useCallback(async ()=>{
-        console.log('pase');
+        window.scrollTo(0,0);
         const uid = query.get("show");
         const infoUser = doc(database, "users", uid);
         try{
@@ -108,7 +112,8 @@ function Profile() {
     },[query]); 
 
     useEffect(() => {
-        if (!loadedPage){
+        if ((!loadedPage)||(query.get("show") !== userShow)){
+            setUserShow(query.get("show"));
             getUser();
             setLoadedPage(true);
         }
@@ -121,8 +126,8 @@ function Profile() {
 
 
     const [width, setWidth]=useState(()=>{
-        if (window.innerWidth >= 900){
-            return (window.innerWidth - 900)/2;
+        if (window.innerWidth >= 1200){
+            return (window.innerWidth - 1200)/2;
         } 
         else{
             console.log(window.innerWidth);
@@ -130,7 +135,7 @@ function Profile() {
         } 
     });
     const updateDimensions = () => {
-        setWidth((window.innerWidth - 900)/2);
+        setWidth((window.innerWidth - 1200)/2);
     }
 
     useEffect(() => {
@@ -139,17 +144,17 @@ function Profile() {
     }, []);
 
     const BoxStyled = styled('div')(({ theme }) => ({
-          [theme.breakpoints.down('md')]: {
+          [theme.breakpoints.down('lg')]: {
             height: '200px',
             background: 'linear-gradient(0deg, black, rgb(240, 242, 245))',
             },
-          [theme.breakpoints.up('md')]: {
+          [theme.breakpoints.up('lg')]: {
                 height: '300px',
                 borderBottomRightRadius: '20px',
                 borderBottomLeftRadius: '20px',
                 background: 'linear-gradient(0deg, black, rgb(240, 242, 245))',
                 marginLeft: width,
-                maxWidth: '900px',
+                maxWidth: '1200px',
             },
     }));
 
@@ -167,24 +172,27 @@ function Profile() {
     const handleSaveDescription = async() => {
         const infoUser = doc(database, "users", currentUser.uid);
         if (/^\s*$/.test(description)){ 
-            setDescription(null);
             await updateDoc(infoUser, {
                 description: null,
             })
             .then(()=>{
+                setDescription(null);
+                setEditDescription(false);
             })
             .catch(()=>{
+                setEditDescription(false);
             });
         }else{
             await updateDoc(infoUser, {
                 description: description,
             })
             .then(()=>{
+                setEditDescription(false);
             })
             .catch(()=>{
+                setEditDescription(false);
             });
         }
-        setEditDescription(false);
     }
 
     const handleAgregarPresentacion = () => {
@@ -192,7 +200,20 @@ function Profile() {
         setEditDescription(true);
     }
 
+    const handleClearDescription = () => {
+        setDescription('');
+    }
+
+    const handleEditIcons = () => {
+        setOpenEditIcons(true);
+    }
+
+    const handleCloseFormEditIcons = () => {
+        setOpenEditIcons(false);
+    }
+
     return (
+        <>
         <div>
             <Stack
                 direction='column'
@@ -224,7 +245,7 @@ function Profile() {
                 </IconButton>
                 )}
             </BoxStyled>
-            <Container maxWidth='md'>
+            <Container maxWidth='lg'>
                 <Box>
                     <Badge
                         invisible={!canEdit} 
@@ -486,7 +507,7 @@ function Profile() {
                         />
                         {canEdit && (
                         <IconButton aria-label="load-image"
-                            onClick={() => {console.log('click');}}
+                            onClick={handleEditIcons}
                             style={{
                                 border: '1px solid gray',
                                 backgroundColor: '#F0F2F5',
@@ -518,7 +539,7 @@ function Profile() {
                                 overflowWrap: 'anywhere',
                             }}
                         >
-                            <strong>Información:</strong>
+                            <strong>Información</strong>
                         </Typography>
                         {!editDescription ? (
                         <Typography
@@ -534,6 +555,7 @@ function Profile() {
                                 position: 'relative',
                                 top: '120px',
                                 overflowWrap: 'anywhere',
+                                whiteSpace: "pre-line",
                             }}
                         >
                             {description}
@@ -580,6 +602,7 @@ function Profile() {
                                         setDescription(e.target.value);
                                     }}
                                     sx={{
+                                        whiteSpace: "pre",
                                         position: 'relative',
                                         top: '120px',
                                         overflowWrap: 'anywhere',
@@ -616,6 +639,12 @@ function Profile() {
                                             color: 'white',                                
                                         }}
                                         sx={{
+                                            fontSize: {
+                                                lg: 15,
+                                                md: 15,
+                                                sm: 12,
+                                                xs: 12,
+                                            },                                                                                
                                             '&:hover': {
                                                 borderColor: 'gray',
                                             },                               
@@ -623,6 +652,37 @@ function Profile() {
                                     >
                                         Guardar
                                     </Button>
+                                    <Button
+                                        onClick={handleClearDescription}
+                                        variant='outlined'
+                                        startIcon={<CleaningServicesIcon/>}
+                                        disableElevation
+                                        style={{
+                                            marginTop: '10px',
+                                            width: '200px',
+                                            height: '50px',
+                                            textTransform: 'inherit',
+                                            borderRadius: '10px',
+                                            backgroundColor: 'rgb(0, 0, 0, 1)',
+                                            color: 'white',                                
+                                        }}
+                                        sx={{
+                                            fontSize: {
+                                                lg: 15,
+                                                md: 15,
+                                                sm: 12,
+                                                xs: 12,
+                                            },                                                                                
+                                            '&:hover': {
+                                                borderColor: 'gray',
+                                            },                               
+                                        }}
+                                    >
+                                        Limpiar
+                                    </Button>
+
+
+
                                     <Button
                                         onClick={handleCancelDescription}
                                         variant='outlined'
@@ -638,6 +698,12 @@ function Profile() {
                                             color: 'white',                                
                                         }}
                                         sx={{
+                                            fontSize: {
+                                                lg: 15,
+                                                md: 15,
+                                                sm: 12,
+                                                xs: 12,
+                                            },                                                                                
                                             '&:hover': {
                                                 borderColor: 'gray',
                                             },                               
@@ -653,8 +719,8 @@ function Profile() {
                         <>
                         {canEdit ?
                                 <Typography
-                                    align='center'
                                     onClick={handleAgregarPresentacion}
+                                    align='center'
                                     sx={{
                                         marginTop: '130px',
                                         marginBottom: '-110px',
@@ -662,6 +728,7 @@ function Profile() {
                                         fontSize: '16px',
                                         '&:hover':{
                                             cursor: 'pointer',
+                                            textDecoration: "underline #1876f3",
                                         }
                                     }} 
                                 >
@@ -673,12 +740,21 @@ function Profile() {
                         </>
                     }
                 </Box>
-                <Box sx={{mt: '140px', height: '800px', backgroundColor: '#F0F2F5'}}>
-                    <Divider/>
+                </Container>
+                </Stack>
+        </div>
+        <div className='profile'>
+            <Divider/>
+            <Container maxWidth='lg'>
+                <Box sx={{height: '800px', backgroundColor: 'yellow'}}>
                 </Box>
             </Container>
-            </Stack>
         </div>
+        <FormEditIcons
+            open={openEditIcons}
+            onGetClose={handleCloseFormEditIcons}
+        />
+        </>
     )
 }
 
