@@ -272,7 +272,7 @@ function FormReautenticaConPhone(props) {
                 <Alert onClose={handleCloseMsg} severity={severityInfo}>{msg}</Alert>
             </Snackbar>
             </Dialog>
-            {openFormVerificaCodigoPhone ?
+            {openFormVerificaCodigoPhone && (
                 <FormReautenticaCodigoPhone
                     phoneNumber={valueInputPhoneFormPrincipal[0]}
                     details={props.details}
@@ -281,7 +281,7 @@ function FormReautenticaConPhone(props) {
                     onGetUpdateProfile={handleLinkedPhone}
                     open={openFormVerificaCodigoPhone}
                 />
-            :null}          
+            )}          
         </div>
     )
 }

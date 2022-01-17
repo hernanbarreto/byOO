@@ -431,7 +431,25 @@ function Login(props) {
                 facebook: true,
                 instagram: true,
                 google: true,
-            }
+            },
+            profileIcons:{
+                facebook:{
+                    show: false,
+                    url: '',
+                },
+                instagram:{
+                    show: false,
+                    url: '',
+                },
+                twitter:{
+                    show: false,
+                    url: '',
+                },
+                linkedin:{
+                    show: false,
+                    url: '',
+                },
+            },
         })
         .then(()=>{
             if (isMounted){
@@ -603,7 +621,7 @@ function Login(props) {
 
     return (
         <div>
-        {openFormLogin ?
+        {openFormLogin && (
         <FormLogin
             onGetClose={handleCloseFormLogin}
             onGetOpenFormRegistrate={handleOpenFormRegistrate}
@@ -626,8 +644,8 @@ function Login(props) {
             lenguaje={props.userDetails.user[0].languages.split(',')[0]}
             open={openFormLogin}
         />
-        :null}
-        {openFormRegistrate ?
+        )}
+        {openFormRegistrate && (
         <FormRegistrate
             email={valueInputEmailFormPrincipal}
             onGetReturn={handleReturnFormRegistrate}
@@ -638,8 +656,8 @@ function Login(props) {
             onGetPromotions={handlePromotions} 
             open={openFormRegistrate}
         />
-        :null}
-        {openFormTerminaDeRegistrarte ?
+        )}
+        {openFormTerminaDeRegistrarte && (
         <FormTerminaDeRegistrate
             nombre={nombreFormTerminaDeRegistrarte}
             email={emailFormTerminaDeRegistrarte}
@@ -651,8 +669,8 @@ function Login(props) {
             onGetPromotions={handlePromotions} 
             open={openFormTerminaDeRegistrarte}
         />
-        :null}
-        {openFormVerificaCodigoPhone ?
+        )}
+        {openFormVerificaCodigoPhone && (
         <FormVerificaCodigoPhone
             phoneNumber={phoneNumberFormLogin}
             name={valueInputNameFormRegistrate}
@@ -663,8 +681,8 @@ function Login(props) {
             onGetUpdateProfile={handleUpdateProfile}
             open={openFormVerificaCodigoPhone}
         />
-        :null}
-        {openFormVerificaCodigoPhoneRegistro ?
+        )}
+        {openFormVerificaCodigoPhoneRegistro && (
         <FormVerificaCodigoPhone
             phoneNumber={phoneNumberFormLogin}
             name={valueInputNameFormRegistrate}
@@ -674,8 +692,8 @@ function Login(props) {
             onGetRegistred={handleRegistredRegistro}
             open={openFormVerificaCodigoPhoneRegistro}
         />
-        :null}
-        {openFormTerminaDeRegistrartePhone ?
+        )}
+        {openFormTerminaDeRegistrartePhone && (
         <FormTerminaDeRegistratePhone
             onGetReturn={handleReturnFormTerminaDeRegistrartePhone}
             onGetClose={handleCloseFormTerminaDeRegistrartePhone}
@@ -684,8 +702,8 @@ function Login(props) {
             onGetPromotions={handlePromotions}             
             open={openFormTerminaDeRegistrartePhone}
         />
-        :null}
-        {openFormUniteComunidad ?
+        )}
+        {openFormUniteComunidad && (
         <FormUniteComunidad
             name={valueInputNameFormRegistrate.split('/')[0]}
             lastName={valueInputNameFormRegistrate.split('/')[1]}
@@ -702,15 +720,15 @@ function Login(props) {
             lenguaje={props.userDetails.user[0].languages.split(',')[0]}
             open={openFormUniteComunidad}
         />
-        :null}
-        {openFormBienvenidos ?
+        )}
+        {openFormBienvenidos && (
         <FormBienvenidos 
             onGetContinuar={handleContinuarFormBienvenidos}
             name={valueInputNameFormRegistrate.split('/')[0].split(' ')[0][0].toUpperCase() + valueInputNameFormRegistrate.split('/')[0].split(' ')[0].slice(1)}
             open={openFormBienvenidos}
         />
-        :null}
-        {openFormIniciarSesion ?
+        )}
+        {openFormIniciarSesion && (
         <FormIniciarSesion
             email={valueInputEmailFormPrincipal}
             onGetClose={handleCloseFormIniciarSesion}
@@ -719,16 +737,16 @@ function Login(props) {
             onGetUpdateProfile={handleUpdateProfile}
             open={openFormIniciarSesion}
         />
-        :null}
-        {openFormRecoveryPassword ?
+        )}
+        {openFormRecoveryPassword && (
         <FormRecoveryPassword
             onGetClose={handleCloseFormRecoveryPassword}
             onGetReturn={handleReturnFormRecoveryPassword}
             email={valueInputEmailFormPrincipal}
             open={openFormRecoveryPassword}
         />
-        :null}
-        {openFormExisteCuenta ?
+        )}
+        {openFormExisteCuenta && (
         <FormExisteCuenta
             providers={providers}
             lenguaje={props.userDetails.user[0].languages.split(',')[0]}
@@ -745,16 +763,16 @@ function Login(props) {
             onGetEmailFormTerminaDeRegistrarte={handleEmailFormTerminaDeRegistrarte}
             onGetUpdateProfile={handleUpdateProfile}
         />
-        :null}
-        {openFormRecoveryPasswordFromExisteCuenta ?
+        )}
+        {openFormRecoveryPasswordFromExisteCuenta && (
         <FormRecoveryPassword
             onGetClose={handleCloseFormRecoveryPasswordFromExisteCuenta}
             onGetReturn={handleReturnFormRecoveryPasswordFromExisteCuenta}
             email={''}
             open={openFormRecoveryPasswordFromExisteCuenta}
         />
-        :null}
-        {openFormCreaTuPerfil ?
+        )}
+        {openFormCreaTuPerfil && (
         <FormCreaTuPerfil
             open={openFormCreaTuPerfil}
             onGetFinish={handleFinish}
@@ -767,7 +785,7 @@ function Login(props) {
             country={props.userDetails.user[0].country}
             lenguaje={props.userDetails.user[0].languages.split(',')[0]}
         />
-        :null}
+        )}
         </div>
     
     );

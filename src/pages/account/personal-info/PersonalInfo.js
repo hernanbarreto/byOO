@@ -3169,7 +3169,8 @@ function PersonalInfo(details) {
                     <Alert onClose={handleCloseMsg} severity={severityInfo}>{msg}</Alert>
                 </Snackbar>            
             </Container>
-            {openFormReautenticaConPassword ?
+            <>
+            {openFormReautenticaConPassword && (
                 <FormReautenticaConPassword
                     email={currentUser.email}
                     onGetClose={handleCloseReautenticaConPassword}
@@ -3179,16 +3180,16 @@ function PersonalInfo(details) {
                     open={openFormReautenticaConPassword}
                     details={details}
                 />
-            :null}
-            {openFormRecoveryPassword ?
+            )}
+            {openFormRecoveryPassword && (
                 <FormRecoveryPassword
                     onGetClose={handleCloseFormRecoveryPassword}
                     onGetReturn={handleReturnFormRecoveryPassword}
                     email={currentUser.email}
                     open={openFormRecoveryPassword}
                 />
-            :null}
-            {openFormReautenticaConGoogle ?
+            )}
+            {openFormReautenticaConGoogle && (
                 <FormReautenticaConGoogle
                     onGetReturn={handleCloseReautenticaConGoogle}
                     onGetUpdateProfile={handleCredentialOKGoogle}
@@ -3197,8 +3198,8 @@ function PersonalInfo(details) {
                     details={details}
                     open={openFormReautenticaConGoogle}
                 />
-            :null}
-            {openFormReautenticaConFacebook ?
+            )}
+            {openFormReautenticaConFacebook && (
                 <FormReautenticaConFacebook
                     onGetReturn={handleCloseReautenticaConFacebook}
                     onGetUpdateProfile={handleCredentialOKFacebook}
@@ -3207,8 +3208,8 @@ function PersonalInfo(details) {
                     details={details}
                     open={openFormReautenticaConFacebook}
                 />
-            :null}
-            {openFormReautenticaConPhone ?
+            )}
+            {openFormReautenticaConPhone && (
                 <FormReautenticaConPhone
                     onGetReturn={handleCloseReautenticaConPhone}
                     onGetReautenticatedPhone={handleCredentialOKPassword}
@@ -3217,8 +3218,8 @@ function PersonalInfo(details) {
                     details={details}
                     open={openFormReautenticaConPhone}
                 />
-            :null}
-            {openFormVerificaCodigoPhone ?
+            )}
+            {openFormVerificaCodigoPhone && (
                 <FormVerificaCodigoPhoneLink
                     phoneNumber={valueInputPhone}
                     code={countryCode}
@@ -3228,13 +3229,14 @@ function PersonalInfo(details) {
                     actualizar={actualizarPhone}
                     open={openFormVerificaCodigoPhone}
                 />
-            :null}
-            {openFormPoliticaIdentidad ?
+            )}
+            {openFormPoliticaIdentidad && (
             <FormPoliticaIdentidad
                 onGetClose={handleCloseFormPoliticaIdentidad}
                 open={openFormPoliticaIdentidad}
             />
-            :null}
+            )}
+            </>
         </div>
     )
 }

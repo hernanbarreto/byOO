@@ -2050,12 +2050,15 @@ function LoginAndSecurity(details) {
 
     return (
         <div>
+            <>
+            {openFormEliminarCuenta && (
             <FormEliminarCuenta
                 open={openFormEliminarCuenta}
                 name={userName}
                 onGetClose={handleClose}
                 onGetEliminar={handleEliminar}
             />
+            )}
             <Container maxWidth='lg'>
                 <Box sx={{minHeight: '100vh'}}>
                     <Paper
@@ -2635,7 +2638,9 @@ function LoginAndSecurity(details) {
                     <Alert onClose={handleCloseMsg} severity={severityInfo}>{msg}</Alert>
                 </Snackbar>            
             </Container>
-            {openFormVerificaCodigoPhone ?
+            </>
+            <>
+            {openFormVerificaCodigoPhone && (
                 <FormVerificaCodigoPhoneLink
                     phoneNumber={valueInputPhoneFormPrincipal}
                     code={countryCode}
@@ -2645,8 +2650,8 @@ function LoginAndSecurity(details) {
                     actualizar={actualizarPhone}
                     open={openFormVerificaCodigoPhone}
                 />
-            :null}
-            {openFormReautenticaConPassword ?
+            )}
+            {openFormReautenticaConPassword && (
                 <FormReautenticaConPassword
                     email={currentUser.email}
                     onGetClose={handleCloseReautenticaConPassword}
@@ -2656,8 +2661,8 @@ function LoginAndSecurity(details) {
                     open={openFormReautenticaConPassword}
                     details={details}
                 />
-            :null}
-            {openFormReautenticaConPasswordDesvincular ?
+            )}
+            {openFormReautenticaConPasswordDesvincular && (
                 <FormReautenticaConPassword
                     email={currentUser.email}
                     onGetClose={handleCloseReautenticaConPasswordDesvincular}
@@ -2667,24 +2672,24 @@ function LoginAndSecurity(details) {
                     open={openFormReautenticaConPasswordDesvincular}
                     details={details}
                 />
-            :null}
-            {openFormRecoveryPassword ?
+            )}
+            {openFormRecoveryPassword && (
                 <FormRecoveryPassword
                     onGetClose={handleCloseFormRecoveryPassword}
                     onGetReturn={handleReturnFormRecoveryPassword}
                     email={currentUser.email}
                     open={openFormRecoveryPassword}
                 />
-            :null}
-            {openFormRecoveryPasswordDesvincular ?
+            )}
+            {openFormRecoveryPasswordDesvincular && (
                 <FormRecoveryPassword
                     onGetClose={handleCloseFormRecoveryPasswordDesvincular}
                     onGetReturn={handleReturnFormRecoveryPasswordDesvincular}
                     email={currentUser.email}
                     open={openFormRecoveryPasswordDesvincular}
                 />
-            :null}
-            {openFormReautenticaConGoogle ?
+            )}
+            {openFormReautenticaConGoogle && (
                 <FormReautenticaConGoogle
                     onGetReturn={handleCloseReautenticaConGoogle}
                     onGetUpdateProfile={handleCredentialOKGoogle}
@@ -2693,8 +2698,8 @@ function LoginAndSecurity(details) {
                     details={details}
                     open={openFormReautenticaConGoogle}
                 />
-            :null}
-            {openFormReautenticaConFacebook ?
+            )}
+            {openFormReautenticaConFacebook && (
                 <FormReautenticaConFacebook
                     onGetReturn={handleCloseReautenticaConFacebook}
                     onGetUpdateProfile={handleCredentialOKFacebook}
@@ -2703,8 +2708,8 @@ function LoginAndSecurity(details) {
                     details={details}
                     open={openFormReautenticaConFacebook}
                 />
-            :null}
-            {openFormReautenticaConPhone ?
+            )}
+            {openFormReautenticaConPhone && (
                 <FormReautenticaConPhone
                     onGetReturn={handleCloseReautenticaConPhone}
                     onGetReautenticatedPhone={handleCredentialOKPassword}
@@ -2713,7 +2718,8 @@ function LoginAndSecurity(details) {
                     details={details}
                     open={openFormReautenticaConPhone}
                 />
-            :null}
+            )}
+            </>
         </div>
     )
 }

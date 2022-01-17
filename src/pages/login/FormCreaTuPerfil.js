@@ -1689,7 +1689,7 @@ function FormCreaTuPerfil(props) {
                 </Snackbar>            
                 </Dialog>                
             :null}
-            {openFormVerificaCodigoPhone ?
+            {openFormVerificaCodigoPhone && (
                 <FormVerificaCodigoPhoneLink
                     phoneNumber={valueInputPhoneFormPrincipal}
                     code={countryCodeFormPrincipal}
@@ -1698,7 +1698,7 @@ function FormCreaTuPerfil(props) {
                     onGetLinked={handleNextPhone}
                     open={openFormVerificaCodigoPhone}
                 />
-            :null}
+            )}
         </div>
     )
 }

@@ -36,6 +36,7 @@ import { useInitPage } from '../useInitPage';
 import Button from '@mui/material/Button';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import FormEditIcons from './FormEditIcons';
+import Tooltip from '@mui/material/Tooltip';
 
 const database = getFirestore();
 const sizeAvatarNotPressed = '150px';
@@ -79,6 +80,30 @@ function Profile() {
     const [userShow, setUserShow] = useState(null);
     const [openEditIcons, setOpenEditIcons] = useState(false);
     
+    const [showFacebookLink, setShowFacebookLink] = useState(false);
+    const [urlFacebookLink, setUrlFacebookLink] = useState('');
+    
+    const handleUpdateIconsState = async(uid) => {
+        const infoUser = doc(database, "users", uid);
+        try{
+            const docSnap = await getDoc(infoUser);
+            if (docSnap.exists()) {
+                setShowFacebookLink(docSnap.data().profileIcons.facebook.show);
+                setUrlFacebookLink(docSnap.data().profileIcons.facebook.url);
+            }else{
+                history.push('/404');          
+            }
+        }catch(error){
+            if (error.code === 'permission-denied'){
+                console.log('se debe logear');
+                console.log('que mostramos aca');
+            }else{
+                console.log(error.code);
+                history.push('/');          
+            }
+        }
+    }
+
     const getUser = useCallback(async ()=>{
         window.scrollTo(0,0);
         const uid = query.get("show");
@@ -97,6 +122,7 @@ function Profile() {
                 setName(docSnap.data().name + ' ' + docSnap.data().lastName);
                 setPhotoURL(docSnap.data().profilePhoto);
                 setDescription(docSnap.data().description);
+                handleUpdateIconsState(uid);
             }else{
                 history.push('/404');          
             }
@@ -210,6 +236,7 @@ function Profile() {
 
     const handleCloseFormEditIcons = () => {
         setOpenEditIcons(false);
+        handleUpdateIconsState(currentUser.uid);
     }
 
     return (
@@ -385,7 +412,15 @@ function Profile() {
                             top: '100px',
                         }}
                     >
+                        {showFacebookLink && (
+                        <Tooltip 
+                            title={String('Ver perfil de facebook de ' + name)}
+                            placement="top"
+                        >
                             <FacebookIcon
+                                variant="contained" 
+                                href={urlFacebookLink}
+                                onClick={event =>  window.open(urlFacebookLink, '_blank')} 
                                 sx={{
                                     width: {
                                         sm: 30,
@@ -400,6 +435,8 @@ function Profile() {
                                     },                                                                                                                        
                                 }}                            
                             />
+                        </Tooltip>
+                        )}
                         <InstagramIcon
                                 sx={{
                                     width: {
@@ -750,10 +787,12 @@ function Profile() {
                 </Box>
             </Container>
         </div>
+        {openEditIcons && (
         <FormEditIcons
             open={openEditIcons}
             onGetClose={handleCloseFormEditIcons}
         />
+        )}
         </>
     )
 }
