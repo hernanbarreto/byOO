@@ -317,7 +317,7 @@ function PrivacyAndSharing(details) {
                                         <strong>Incluir mi perfil y mis servicios en los buscadores</strong>
                                     </Typography>
                                     {!loadingCreated ?
-                                        <CustomizedSwitch
+                                    <CustomizedSwitch
                                         label='Al activar esta opción, los motores de búsqueda como Google van a mostrar las páginas de tu perfil y tus servicios en sus resultados.'
                                         strong={false}
                                         checked={sharedGoogle}
