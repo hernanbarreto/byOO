@@ -82,6 +82,12 @@ function Profile() {
     
     const [showFacebookLink, setShowFacebookLink] = useState(false);
     const [urlFacebookLink, setUrlFacebookLink] = useState('');
+    const [showInstagramLink, setShowInstagramLink] = useState(false);
+    const [urlInstagramLink, setUrlInstagramLink] = useState('');
+    const [showTwitterLink, setShowTwitterLink] = useState(false);
+    const [urlTwitterLink, setUrlTwitterLink] = useState('');
+    const [showLinkedinLink, setShowLinkedinLink] = useState(false);
+    const [urlLinkedinLink, setUrlLinkedinLink] = useState('');
     
     const handleUpdateIconsState = async(uid) => {
         const infoUser = doc(database, "users", uid);
@@ -90,6 +96,12 @@ function Profile() {
             if (docSnap.exists()) {
                 setShowFacebookLink(docSnap.data().profileIcons.facebook.show);
                 setUrlFacebookLink(docSnap.data().profileIcons.facebook.url);
+                setShowInstagramLink(docSnap.data().profileIcons.instagram.show);
+                setUrlInstagramLink(docSnap.data().profileIcons.instagram.url);
+                setShowTwitterLink(docSnap.data().profileIcons.twitter.show);
+                setUrlTwitterLink(docSnap.data().profileIcons.twitter.url);
+                setShowLinkedinLink(docSnap.data().profileIcons.linkedin.show);
+                setUrlLinkedinLink(docSnap.data().profileIcons.linkedin.url);
             }else{
                 history.push('/404');          
             }
@@ -98,7 +110,7 @@ function Profile() {
                 console.log('se debe logear');
                 console.log('que mostramos aca');
             }else{
-                console.log(error.code);
+                console.log(error);
                 history.push('/');          
             }
         }
@@ -414,7 +426,7 @@ function Profile() {
                     >
                         {showFacebookLink && (
                         <Tooltip 
-                            title={String('Ver perfil de facebook de ' + name)}
+                            title={String('ver perfil de Facebook de ' + name)}
                             placement="top"
                         >
                             <FacebookIcon
@@ -437,51 +449,81 @@ function Profile() {
                             />
                         </Tooltip>
                         )}
-                        <InstagramIcon
-                                sx={{
-                                    width: {
-                                        sm: 30,
-                                        md: 35,
-                                    }, 
-                                    height: {
-                                        xs: 30,
-                                        md: 35,
-                                    },
-                                    '&:hover': {
-                                        cursor: 'pointer',
-                                    },                                                                                                                        
-                                }}                            
-                        />
-                        <TwitterIcon
-                                sx={{
-                                    width: {
-                                        sm: 30,
-                                        md: 35,
-                                    }, 
-                                    height: {
-                                        xs: 30,
-                                        md: 35,
-                                    },
-                                    '&:hover': {
-                                        cursor: 'pointer',
-                                    },                                                                                                                        
-                                }}                            
-                        />
-                        <LinkedInIcon
-                                sx={{
-                                    width: {
-                                        sm: 30,
-                                        md: 35,
-                                    }, 
-                                    height: {
-                                        xs: 30,
-                                        md: 35,
-                                    },
-                                    '&:hover': {
-                                        cursor: 'pointer',
-                                    },                                                                                                                        
-                                }}                            
-                        />
+                        {showInstagramLink && (
+                        <Tooltip 
+                            title={String('ver perfil de Instagram de ' + name)}
+                            placement="top"
+                        >
+                            <InstagramIcon
+                                    variant="contained" 
+                                    href={urlInstagramLink}
+                                    onClick={event =>  window.open(urlInstagramLink, '_blank')} 
+                                    sx={{
+                                        width: {
+                                            sm: 30,
+                                            md: 35,
+                                        }, 
+                                        height: {
+                                            xs: 30,
+                                            md: 35,
+                                        },
+                                        '&:hover': {
+                                            cursor: 'pointer',
+                                        },                                                                                                                        
+                                    }}                            
+                            />
+                        </Tooltip>
+                        )}
+                        {showTwitterLink && (
+                        <Tooltip 
+                            title={String('ver perfil de Twitter de ' + name)}
+                            placement="top"
+                        >
+                            <TwitterIcon
+                                    variant="contained" 
+                                    href={urlTwitterLink}
+                                    onClick={event =>  window.open(urlTwitterLink, '_blank')} 
+                                    sx={{
+                                        width: {
+                                            sm: 30,
+                                            md: 35,
+                                        }, 
+                                        height: {
+                                            xs: 30,
+                                            md: 35,
+                                        },
+                                        '&:hover': {
+                                            cursor: 'pointer',
+                                        },                                                                                                                        
+                                    }}                            
+                            />
+                        </Tooltip>
+                        )}
+                        {showLinkedinLink && (
+                        <Tooltip 
+                            title={String('ver perfil de LinkedIn de ' + name)}
+                            placement="top"
+                        >
+                            <LinkedInIcon
+                                    variant="contained" 
+                                    href={urlLinkedinLink}
+                                    onClick={event =>  window.open(urlLinkedinLink, '_blank')} 
+                                    sx={{
+                                        width: {
+                                            sm: 30,
+                                            md: 35,
+                                        }, 
+                                        height: {
+                                            xs: 30,
+                                            md: 35,
+                                        },
+                                        '&:hover': {
+                                            cursor: 'pointer',
+                                        },                                                                                                                        
+                                    }}                            
+                            />
+                        </Tooltip>
+                        )}
                         <WhatsAppIcon 
                                 sx={{
                                     width: {
