@@ -101,10 +101,12 @@ function PrivacyAndSharing(details) {
                 logout()
                 .then(()=>{
                     emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
+                    emitCustomEvent('loged', false);
                     console.log('error')
                 })
                 .catch((error)=>{
                     emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
+                    emitCustomEvent('loged', false);
                     console.log('error')
                 });
             }

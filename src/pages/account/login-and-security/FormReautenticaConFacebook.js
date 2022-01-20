@@ -132,9 +132,11 @@ function FormReautenticaConFacebook(props) {
                                 logout()
                                 .then(()=>{
                                     emitCustomEvent('openLoadingPage', false);
+                                    emitCustomEvent('loged', false);
                                 })
                                 .catch((error)=>{
                                     emitCustomEvent('openLoadingPage', false);
+                                    emitCustomEvent('loged', false);
                                 });                                
                             });
                     })
@@ -142,10 +144,12 @@ function FormReautenticaConFacebook(props) {
                         console.log(error);
                         logout()
                         .then(()=>{
+                            emitCustomEvent('loged', false);
                             emitCustomEvent('openLoadingPage', false);
                         })
                         .catch((error)=>{
                             emitCustomEvent('openLoadingPage', false);
+                            emitCustomEvent('loged', false);
                         });                        
                     });
                 }else{ 
@@ -153,9 +157,11 @@ function FormReautenticaConFacebook(props) {
                     logout()
                     .then(()=>{
                         emitCustomEvent('openLoadingPage', false);
+                        emitCustomEvent('loged', false);
                     })
                     .catch((error)=>{
                         emitCustomEvent('openLoadingPage', false);
+                        emitCustomEvent('loged', false);
                     });                    
                 }
                 }else{
@@ -163,9 +169,11 @@ function FormReautenticaConFacebook(props) {
                     logout()
                     .then(()=>{
                         emitCustomEvent('openLoadingPage', false);
+                        emitCustomEvent('loged', false);
                     })
                     .catch((error)=>{
                         emitCustomEvent('openLoadingPage', false);
+                        emitCustomEvent('loged', false);
                     });                    
                 }
             })

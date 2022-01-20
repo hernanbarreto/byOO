@@ -162,9 +162,11 @@ function FormReautenticaCodigoPhone(props) {
                                     logout()
                                     .then(()=>{
                                         emitCustomEvent('openLoadingPage', false);
+                                        emitCustomEvent('loged', false);
                                     })
                                     .catch((error)=>{
                                         emitCustomEvent('openLoadingPage', false);
+                                        emitCustomEvent('loged', false);
                                     });                                
                                 });
                         })
@@ -173,9 +175,11 @@ function FormReautenticaCodigoPhone(props) {
                             logout()
                             .then(()=>{
                                 emitCustomEvent('openLoadingPage', false);
+                                emitCustomEvent('loged', false);
                             })
                             .catch((error)=>{
                                 emitCustomEvent('openLoadingPage', false);
+                                emitCustomEvent('loged', false);
                             });                        
                         });
                       }else{ 
@@ -183,9 +187,11 @@ function FormReautenticaCodigoPhone(props) {
                         logout()
                         .then(()=>{
                             emitCustomEvent('openLoadingPage', false);
+                            emitCustomEvent('loged', false);
                         })
                         .catch((error)=>{
                             emitCustomEvent('openLoadingPage', false);
+                            emitCustomEvent('loged', false);
                         });                    
                       }
                     }else{
@@ -193,9 +199,11 @@ function FormReautenticaCodigoPhone(props) {
                         logout()
                         .then(()=>{
                             emitCustomEvent('openLoadingPage', false);
+                            emitCustomEvent('loged', false);
                         })
                         .catch((error)=>{
                             emitCustomEvent('openLoadingPage', false);
+                            emitCustomEvent('loged', false);
                         });                    
                     }
                 })

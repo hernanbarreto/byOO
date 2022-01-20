@@ -174,9 +174,11 @@ function FormReautenticaConPassword(props) {
                                         logout()
                                         .then(()=>{
                                             emitCustomEvent('openLoadingPage', false);
+                                            emitCustomEvent('loged', false);
                                         })
                                         .catch((error)=>{
                                             emitCustomEvent('openLoadingPage', false);
+                                            emitCustomEvent('loged', false);
                                         });                                
                                     });
                             })
@@ -185,9 +187,11 @@ function FormReautenticaConPassword(props) {
                                 logout()
                                 .then(()=>{
                                     emitCustomEvent('openLoadingPage', false);
+                                    emitCustomEvent('loged', false);
                                 })
                                 .catch((error)=>{
                                     emitCustomEvent('openLoadingPage', false);
+                                    emitCustomEvent('loged', false);
                                 });                        
                             });
                           }else{ 
@@ -195,9 +199,11 @@ function FormReautenticaConPassword(props) {
                             logout()
                             .then(()=>{
                                 emitCustomEvent('openLoadingPage', false);
+                                emitCustomEvent('loged', false);
                             })
                             .catch((error)=>{
                                 emitCustomEvent('openLoadingPage', false);
+                                emitCustomEvent('loged', false);
                             });                    
                           }
                         }else{
@@ -205,9 +211,11 @@ function FormReautenticaConPassword(props) {
                             logout()
                             .then(()=>{
                                 emitCustomEvent('openLoadingPage', false);
+                                emitCustomEvent('loged', false);
                             })
                             .catch((error)=>{
                                 emitCustomEvent('openLoadingPage', false);
+                                emitCustomEvent('loged', false);
                             });                    
                         }
                     })

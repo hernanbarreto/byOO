@@ -32,11 +32,24 @@ import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 import CleaningServicesIcon from '@mui/icons-material/CleaningServices';
+import TelegramIcon from '@mui/icons-material/Telegram';
 import { useInitPage } from '../useInitPage';
 import Button from '@mui/material/Button';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import FormEditIcons from './FormEditIcons';
 import Tooltip from '@mui/material/Tooltip';
+import {
+    EmailShareButton,
+    FacebookShareButton,
+    LinkedinShareButton,
+    TelegramShareButton,
+    TwitterShareButton,
+    WhatsappShareButton,
+  } from "react-share";
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import { useCustomEventListener } from 'react-custom-events';
 
 const database = getFirestore();
 const sizeAvatarNotPressed = '150px';
@@ -53,14 +66,16 @@ function useQuery() {
 }
 
 function Profile() {
-    const {state} = useInitPage();
+//    const {state} = useInitPage();
+    const [anchorEl, setAnchorEl] = useState(null);
+    const openMenuShare = Boolean(anchorEl); 
 
-    useEffect(() => {     
-        if (state !== null){
-            if (state){
-            }
-        }             
-    }, [state]);
+//    useEffect(() => {     
+//        if (state !== null){
+//            if (state){
+//            }
+//        }             
+//    }, [state]);
 
     let query = useQuery();
     const history = useHistory ();
@@ -119,35 +134,63 @@ function Profile() {
     const getUser = useCallback(async ()=>{
         window.scrollTo(0,0);
         const uid = query.get("show");
-        const infoUser = doc(database, "users", uid);
-        try{
-            const docSnap = await getDoc(infoUser);
-            if (docSnap.exists()) {
-                setLoadingAvatar(true);
-                if (currentUser.uid === uid){
-                    console.log('Perfil del usuario logeado');
-                    setCanEdit(true);
+        if ((uid!==null)&&(uid!=='')&&(uid!==undefined)){
+            const infoUser = doc(database, "users", uid);
+            try{
+                const docSnap = await getDoc(infoUser);
+                if (docSnap.exists()) {
+                    setLoadingAvatar(true);
+                    if (currentUser.uid === uid){
+                        console.log('Perfil del usuario logeado');
+                        setCanEdit(true);
+                    }else{
+                        console.log('Perfil de otro usuario');
+                        setCanEdit(false);
+                    }
+                    setName(docSnap.data().name + ' ' + docSnap.data().lastName);
+                    setPhotoURL(docSnap.data().profilePhoto);
+                    setDescription(docSnap.data().description);
+                    handleUpdateIconsState(uid);
                 }else{
-                    console.log('Perfil de otro usuario');
-                    setCanEdit(false);
+                    history.push('/404');          
                 }
-                setName(docSnap.data().name + ' ' + docSnap.data().lastName);
-                setPhotoURL(docSnap.data().profilePhoto);
-                setDescription(docSnap.data().description);
-                handleUpdateIconsState(uid);
-            }else{
-                history.push('/404');          
+            }catch(error){
+                if (error.code === 'permission-denied'){
+                    console.log('se debe logear');
+                    console.log('que mostramos aca');
+                }else{
+                    console.log(error.code);
+                    history.push('/');          
+                }
             }
-        }catch(error){
-            if (error.code === 'permission-denied'){
-                console.log('se debe logear');
-                console.log('que mostramos aca');
-            }else{
-                console.log(error.code);
-                history.push('/');          
-            }
+        }else{
+            history.push('/404');          
         }
     },[query]); 
+
+    const getDefaultStates = () => {
+        setName(null);
+        setDescription(null); 
+        setPhotoURL(null);
+        setLoadingAvatar(false);
+        setLoadedPage(false);
+        setCanEdit(false);
+        setSizeAvatar(sizeAvatarNotPressed);
+        setBorderAvatar(borderAvatarNotPressed);
+        setMarginBadge(marginBadgeNotPressed);
+        setMarginDot(marginDotNotPressed);
+        setEditDescription(false);
+        setUserShow(null);
+        setOpenEditIcons(false);
+        setShowFacebookLink(false);
+        setUrlFacebookLink('');
+        setShowInstagramLink(false);
+        setUrlInstagramLink('');
+        setShowTwitterLink(false);
+        setUrlTwitterLink('');
+        setShowLinkedinLink(false);
+        setUrlLinkedinLink('');    
+    }
 
     useEffect(() => {
         if ((!loadedPage)||(query.get("show") !== userShow)){
@@ -156,6 +199,17 @@ function Profile() {
             setLoadedPage(true);
         }
     }, [getUser]);
+
+    useCustomEventListener('loged', data => {
+        if (data){
+            setUserShow(query.get("show"));
+            getUser();
+        }else{
+            getDefaultStates();
+            getUser();
+        }
+    });
+
 
     const avatarLoaded = () => {
         console.log('avatar cargado');
@@ -249,6 +303,14 @@ function Profile() {
     const handleCloseFormEditIcons = () => {
         setOpenEditIcons(false);
         handleUpdateIconsState(currentUser.uid);
+    }
+
+    const handleOpenMenuShare = (event) => {      
+        setAnchorEl(event.currentTarget);
+    }
+    
+    const handleCloseMenuShare = () => {
+        setAnchorEl(null);
     }
 
     return (
@@ -569,21 +631,130 @@ function Profile() {
                                     },                                                                                    
                                 }}                            
                         />
-                        <ShareIcon 
-                                sx={{
-                                    width: {
-                                        sm: 30,
-                                        md: 35,
-                                    }, 
-                                    height: {
-                                        xs: 30,
-                                        md: 35,
-                                    },
-                                    '&:hover': {
-                                        cursor: 'pointer',
-                                    },                                                                                    
-                                }}                            
-                        />
+                        <Tooltip 
+                            title={String('Compartir perfil')}
+                            placement="top"
+                        >
+                            <ShareIcon
+                                    onClick={handleOpenMenuShare} 
+                                    sx={{
+                                        width: {
+                                            sm: 30,
+                                            md: 35,
+                                        }, 
+                                        height: {
+                                            xs: 30,
+                                            md: 35,
+                                        },
+                                        '&:hover': {
+                                            cursor: 'pointer',
+                                        },                                                                                    
+                                    }}                            
+                            />
+                        </Tooltip>
+
+
+
+                        <Menu
+                            anchorEl={anchorEl}
+                            keepMounted
+                            id="account-menu"
+                            open={openMenuShare}
+                            onClose={handleCloseMenuShare}
+                            PaperProps={{
+                                elevation: 0,
+                                sx: {
+                                overflow: 'visible',
+                                filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+                                mt: 1.5,
+                                '& .MuiAvatar-root': {
+                                    width: 32,
+                                    height: 32,
+                                    ml: -0.5,
+                                    mr: 1,
+                                },
+                                },
+                            }}
+                            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                        >
+                            <MenuItem>
+                                <FacebookShareButton 
+                                    url={"http://byoo.com.ar/users?show=" + String(query.get("show"))}
+                                    quote={'Perfil de byOO - ' + name}
+                                    hashtag="#byOO"
+                                    onClick={handleCloseMenuShare}
+                                >
+                                    <ListItemIcon>
+                                        <FacebookIcon fontSize="medium" />
+                                    </ListItemIcon>
+                                </FacebookShareButton>
+                            </MenuItem>
+                            <MenuItem>
+                                <TwitterShareButton 
+                                    url={"http://byoo.com.ar/users?show=" + String(query.get("show"))}
+                                    quote={'Perfil de byOO - ' + name}
+                                    hashtag="#byOO"
+                                    onClick={handleCloseMenuShare}
+                                >
+                                    <ListItemIcon>
+                                        <TwitterIcon fontSize="medium" />
+                                    </ListItemIcon>
+                                </TwitterShareButton>
+                            </MenuItem>
+                            <MenuItem>
+                                <LinkedinShareButton 
+                                    url={"http://byoo.com.ar/users?show=" + String(query.get("show"))}
+                                    quote={'Perfil de byOO - ' + name}
+                                    hashtag="#byOO"
+                                    onClick={handleCloseMenuShare}
+                                >
+                                    <ListItemIcon>
+                                        <LinkedInIcon fontSize="medium" />
+                                    </ListItemIcon>
+                                </LinkedinShareButton>
+                            </MenuItem>
+                            <MenuItem>
+                                <WhatsappShareButton 
+                                    url={"http://byoo.com.ar/users?show=" + String(query.get("show"))}
+                                    quote={'Perfil de byOO - ' + name}
+                                    hashtag="#byOO"
+                                    onClick={handleCloseMenuShare}
+                                >
+                                    <ListItemIcon>
+                                        <WhatsAppIcon fontSize="medium" />
+                                    </ListItemIcon>
+                                </WhatsappShareButton>
+                            </MenuItem>
+                            <MenuItem>
+                                <TelegramShareButton 
+                                    url={"http://byoo.com.ar/users?show=" + String(query.get("show"))}
+                                    quote={'Perfil de byOO - ' + name}
+                                    hashtag="#byOO"
+                                    onClick={handleCloseMenuShare}
+                                >
+                                    <ListItemIcon>
+                                        <TelegramIcon fontSize="medium" />
+                                    </ListItemIcon>
+                                </TelegramShareButton>
+                            </MenuItem>
+                            <MenuItem>
+                                <EmailShareButton 
+                                    url={"http://byoo.com.ar/users?show=" + String(query.get("show"))}
+                                    quote={'Perfil de byOO - ' + name}
+                                    hashtag="#byOO"
+                                    onClick={handleCloseMenuShare}
+                                >
+                                    <ListItemIcon>
+                                        <EmailIcon fontSize="medium" />
+                                    </ListItemIcon>
+                                </EmailShareButton>
+                            </MenuItem>
+                        </Menu>
+
+
+
+                        
                         {canEdit && (
                         <IconButton aria-label="load-image"
                             onClick={handleEditIcons}
@@ -759,9 +930,6 @@ function Profile() {
                                     >
                                         Limpiar
                                     </Button>
-
-
-
                                     <Button
                                         onClick={handleCancelDescription}
                                         variant='outlined'

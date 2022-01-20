@@ -566,9 +566,11 @@ function Login(props) {
             logout()
             .then(()=>{
                 emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta, tenés que volver a registrarte/error');
+                emitCustomEvent('loged', false);
             })
             .catch((error)=>{
                 emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta, tenés que volver a registrarte/error');
+                emitCustomEvent('loged', false);
             });
         });
     }

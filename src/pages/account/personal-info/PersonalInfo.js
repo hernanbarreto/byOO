@@ -367,10 +367,12 @@ function PersonalInfo(details) {
                     logout()
                     .then(()=>{
                         emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
+                        emitCustomEvent('loged', false);
                         console.log('error')
                     })
                     .catch((error)=>{
                         emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
+                        emitCustomEvent('loged', false);
                         console.log('error')
                     });    
                 })
@@ -378,11 +380,13 @@ function PersonalInfo(details) {
                 logout()
                 .then(()=>{
                     emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
+                    emitCustomEvent('loged', false);
                     console.log('error')
                 })
                 .catch((error)=>{
                     emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
                     console.log('error')
+                    emitCustomEvent('loged', false);
                 });
             }
         }catch{
@@ -653,9 +657,11 @@ function PersonalInfo(details) {
                                                 logout()
                                                 .then(()=>{
                                                     emitCustomEvent('openLoadingPage', false);
+                                                    emitCustomEvent('loged', false);
                                                 })
                                                 .catch((error)=>{
                                                     emitCustomEvent('openLoadingPage', false);
+                                                    emitCustomEvent('loged', false);
                                                 });                                
                                             });
                                     })
@@ -664,9 +670,11 @@ function PersonalInfo(details) {
                                         logout()
                                         .then(()=>{
                                             emitCustomEvent('openLoadingPage', false);
+                                            emitCustomEvent('loged', false);
                                         })
                                         .catch((error)=>{
                                             emitCustomEvent('openLoadingPage', false);
+                                            emitCustomEvent('loged', false);
                                         });                        
                                     });
                                 }else{ 
@@ -674,9 +682,11 @@ function PersonalInfo(details) {
                                     logout()
                                     .then(()=>{
                                         emitCustomEvent('openLoadingPage', false);
+                                        emitCustomEvent('loged', false);
                                     })
                                     .catch((error)=>{
                                         emitCustomEvent('openLoadingPage', false);
+                                        emitCustomEvent('loged', false);
                                     });                    
                                 }
                                 }else{
@@ -684,9 +694,11 @@ function PersonalInfo(details) {
                                     logout()
                                     .then(()=>{
                                         emitCustomEvent('openLoadingPage', false);
+                                        emitCustomEvent('loged', false);
                                     })
                                     .catch((error)=>{
                                         emitCustomEvent('openLoadingPage', false);
+                                        emitCustomEvent('loged', false);
                                     });                    
                                 }
                             })
@@ -826,9 +838,11 @@ function PersonalInfo(details) {
                                                     logout()
                                                     .then(()=>{
                                                         emitCustomEvent('openLoadingPage', false);
+                                                        emitCustomEvent('loged', false);
                                                     })
                                                     .catch((error)=>{
                                                         emitCustomEvent('openLoadingPage', false);
+                                                        emitCustomEvent('loged', false);
                                                     });                                
                                                 });
                                         })
@@ -837,9 +851,11 @@ function PersonalInfo(details) {
                                             logout()
                                             .then(()=>{
                                                 emitCustomEvent('openLoadingPage', false);
+                                                emitCustomEvent('loged', false);
                                             })
                                             .catch((error)=>{
                                                 emitCustomEvent('openLoadingPage', false);
+                                                emitCustomEvent('loged', false);
                                             });                        
                                         });
                                       }else{ 
@@ -847,9 +863,11 @@ function PersonalInfo(details) {
                                         logout()
                                         .then(()=>{
                                             emitCustomEvent('openLoadingPage', false);
+                                            emitCustomEvent('loged', false);
                                         })
                                         .catch((error)=>{
                                             emitCustomEvent('openLoadingPage', false);
+                                            emitCustomEvent('loged', false);
                                         });                    
                                       }
                                     }else{
@@ -857,9 +875,11 @@ function PersonalInfo(details) {
                                         logout()
                                         .then(()=>{
                                             emitCustomEvent('openLoadingPage', false);
+                                            emitCustomEvent('loged', false);
                                         })
                                         .catch((error)=>{
                                             emitCustomEvent('openLoadingPage', false);
+                                            emitCustomEvent('loged', false);
                                         });                    
                                     }
                                 })
@@ -1036,9 +1056,11 @@ function PersonalInfo(details) {
                             logout()
                             .then(()=>{
                                 emitCustomEvent('openLoadingPage', false);
+                                emitCustomEvent('loged', false);
                             })
                             .catch((error)=>{
                                 emitCustomEvent('openLoadingPage', false);
+                                emitCustomEvent('loged', false);
                             });                                
                         });
                 })
@@ -1047,9 +1069,11 @@ function PersonalInfo(details) {
                     logout()
                     .then(()=>{
                         emitCustomEvent('openLoadingPage', false);
+                        emitCustomEvent('loged', false);
                     })
                     .catch((error)=>{
                         emitCustomEvent('openLoadingPage', false);
+                        emitCustomEvent('loged', false);
                     });                        
                 });
               }else{ 
@@ -1057,9 +1081,11 @@ function PersonalInfo(details) {
                 logout()
                 .then(()=>{
                     emitCustomEvent('openLoadingPage', false);
+                    emitCustomEvent('loged', false);
                 })
                 .catch((error)=>{
                     emitCustomEvent('openLoadingPage', false);
+                    emitCustomEvent('loged', false);
                 });                    
               }
             }else{
@@ -1067,9 +1093,11 @@ function PersonalInfo(details) {
                 logout()
                 .then(()=>{
                     emitCustomEvent('openLoadingPage', false);
+                    emitCustomEvent('loged', false);
                 })
                 .catch((error)=>{
                     emitCustomEvent('openLoadingPage', false);
+                    emitCustomEvent('loged', false);
                 });                    
             }
         })
@@ -1526,9 +1554,11 @@ function PersonalInfo(details) {
                         logout()
                         .then(()=>{
                             emitCustomEvent('openLoadingPage', false);
+                            emitCustomEvent('loged', false);
                         })
                         .catch((error)=>{
                             emitCustomEvent('openLoadingPage', false);
+                            emitCustomEvent('loged', false);
                         });                                
                     });
             })
@@ -1536,27 +1566,33 @@ function PersonalInfo(details) {
                 logout()
                 .then(()=>{
                     emitCustomEvent('openLoadingPage', false);
+                    emitCustomEvent('loged', false);
                 })
                 .catch((error)=>{
                     emitCustomEvent('openLoadingPage', false);
+                    emitCustomEvent('loged', false);
                 });                        
             });
           }else{ 
             logout()
             .then(()=>{
                 emitCustomEvent('openLoadingPage', false);
+                emitCustomEvent('loged', false);
             })
             .catch((error)=>{
                 emitCustomEvent('openLoadingPage', false);
+                emitCustomEvent('loged', false);
             });                    
           }
         }else{
             logout()
             .then(()=>{
                 emitCustomEvent('openLoadingPage', false);
+                emitCustomEvent('loged', false);
             })
             .catch((error)=>{
                 emitCustomEvent('openLoadingPage', false);
+                emitCustomEvent('loged', false);
             });                    
         }
     }

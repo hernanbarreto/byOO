@@ -129,13 +129,14 @@ useEffect(() => {
                         setState(false);
                         }
                         emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
+                        emitCustomEvent('loged', false);
                     })
                     .catch((error)=>{
                         if (isSubscribed){
                         setState(false);
                         }
-                        console.log('aca');
                         emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
+                        emitCustomEvent('loged', false);
                     });    
                 }
             }else{
@@ -144,15 +145,15 @@ useEffect(() => {
                     if (isSubscribed){
                     setState(false);
                     }
-                    console.log('aca');
                     emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
+                    emitCustomEvent('loged', false);
                 })
                 .catch((error)=>{
                     if (isSubscribed){
                     setState(false);
                     }
-                    console.log('aca');
                     emitCustomEvent('showMsg', 'Se ha cerrado la sesión/error');
+                    emitCustomEvent('loged', false);
                 });    
             }
         }

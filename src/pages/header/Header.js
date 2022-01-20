@@ -1,18 +1,16 @@
 import React, {  useState, useCallback, useEffect } from 'react';
 import { logout } from '../../services/firebase';
-//import logo from './byOO_1.svg';
 import logo from './logo_load.png';
 import Login from '../login/Login'
 import DehazeIcon from '@material-ui/icons/Dehaze';
 import { Button, Divider } from '@material-ui/core';
 import { Link, useHistory } from 'react-router-dom';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
-import Fade from '@material-ui/core/Fade';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
 import Badge from '@mui/material/Badge';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@material-ui/core/Typography';
-import ListItemIcon from '@mui/material/ListItemIcon';
 import LoginIcon from '@mui/icons-material/Login';
 import AppRegistrationIcon from '@mui/icons-material/AppRegistration';
 import HelpCenterIcon from '@mui/icons-material/HelpCenter';
@@ -20,7 +18,6 @@ import MessageIcon from '@mui/icons-material/Message';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import HomeRepairServiceIcon from '@mui/icons-material/HomeRepairService';
 import LogoutIcon from '@mui/icons-material/Logout';
 import './Header.css';
 import { getFirestore,
@@ -37,6 +34,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 import { getAuth } from "firebase/auth";
 import FaceIcon from '@mui/icons-material/Face';
+import SettingsIcon from '@mui/icons-material/Settings';
 //import { motion } from "framer-motion";
 
 const database = getFirestore();
@@ -92,11 +90,13 @@ function Header(details) {
             setPhotoURL(null);
             handleClose(null);
             emitCustomEvent('openLoadingPage', false);
+            emitCustomEvent('loged', false);
         })
         .catch((error)=>{
             setPhotoURL(null);
             handleClose(null);
             emitCustomEvent('openLoadingPage', false);
+            emitCustomEvent('loged', false);
         });
     } 
 
@@ -204,6 +204,7 @@ function Header(details) {
 //    },[details]);
 
 const handleUpdateProfile = useCallback(async () => {
+    console.log('agregar sesion');
     setLoadingAvatar(true);
     setOpenLogin(false);
     const auth = getAuth();
@@ -217,88 +218,28 @@ const handleUpdateProfile = useCallback(async () => {
             });
             if (filtered.length === 0){
                 await updateDoc(infoUser, { 
-                    
-                    
-
-//                    notifications:{
-//                        preferences:{
-//                            tips_news:{
-//                                tips_services:{
-//                                    email: false,
-//                                    textMessage: false,
-//                                    browser: false,
-//                                },
-//                                tips_budget:{
-//                                    email: false,
-//                                    textMessage: false,
-//                                    browser: false,
-//                                },
-//                                news:{
-//                                    email: false,
-//                                    textMessage: false,
-//                                    browser: false,
-//                                },
-//                                comments:{
-//                                    email: false,
-//                                    textMessage: false,
-//                                    browser: false,
-//                                },
-//                                normative:{
-//                                    email: false,
-//                                    textMessage: false,
-//                                    browser: false,
-//                                },
-//                            },
-//                            account:{
-//                                activity:{
-//                                    email: false,
-//                                    textMessage: false,
-//                                    browser: false,
-//                                },
-//                                policy:{
-//                                    email: false,
-//                                    textMessage: false,
-//                                    browser: false,
-//                                },
-//                                reminder:{
-//                                    email: false,
-//                                    textMessage: false,
-//                                    browser: false,
-//                                },
-//                                messages:{
-//                                    email: false,
-//                                    textMessage: false,
-//                                    browser: false,
-//                                },
-//                            },
-//                        },
-//                        messages:[],
-//                    },
-        
-
-
-                        sessions: arrayUnion(                
-                            {
-                                id: currentUser1.stsTokenManager.refreshToken,
-                                date: Timestamp.now().toMillis(),
-                                ip: details.user[0].ip, 
-                                browser: details.user[1].browser.name,
-                                os:{
-                                    name: details.user[1].os.name,
-                                    version: details.user[1].os.version,
-                                },
-                                location:{
-                                    city: details.user[0].city,//tigre
-                                    country: details.user[0].country_name, //argentina
-                                    region: details.user[0].region,
-                                    country_code: details.user[0].country_code,
-                                    currency_name: details.user[0].currency_name,
-                                    currency: details.user[0].currency,
-                                    lenguaje: details.user[0].languages.split(',')[0],
-                                    country_tld: details.user[0].country_tld,
-                                },
-                            }
-                        )
+                    sessions: arrayUnion(                
+                        {
+                            id: currentUser1.stsTokenManager.refreshToken,
+                            date: Timestamp.now().toMillis(),
+                            ip: details.user[0].ip, 
+                            browser: details.user[1].browser.name,
+                            os:{
+                                name: details.user[1].os.name,
+                                version: details.user[1].os.version,
+                            },
+                            location:{
+                                city: details.user[0].city,//tigre
+                                country: details.user[0].country_name, //argentina
+                                region: details.user[0].region,
+                                country_code: details.user[0].country_code,
+                                currency_name: details.user[0].currency_name,
+                                currency: details.user[0].currency,
+                                lenguaje: details.user[0].languages.split(',')[0],
+                                country_tld: details.user[0].country_tld,
+                            },
+                        }
+                    )
                     }
                 )
                 .then(()=>{
@@ -311,6 +252,7 @@ const handleUpdateProfile = useCallback(async () => {
                             }
                         }
                     }
+                    emitCustomEvent('loged', true);
                     setPhotoURL(docSnap.data().profilePhoto);
                 })
                 .catch(()=>{
@@ -319,6 +261,7 @@ const handleUpdateProfile = useCallback(async () => {
                     setLoadingAvatar(false);
                 });
             }else{
+                emitCustomEvent('loged', true);
                 setPhotoURL(docSnap.data().profilePhoto);
             }
         }else{
@@ -326,9 +269,11 @@ const handleUpdateProfile = useCallback(async () => {
             .then(()=>{
                 logout()
                 .then(()=>{
+                    emitCustomEvent('loged', false);
                     emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta, tenés que volver a registrarte/error');
                 })
                 .catch((error)=>{
+                    emitCustomEvent('loged', false);
                     emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta, tenés que volver a registrarte/error');
                 });
             })
@@ -346,6 +291,7 @@ const handleUpdateProfile = useCallback(async () => {
 
 
     const handleUpdateProfileBasic = useCallback(async () => {
+        console.log('perfil basico');
         setLoadingAvatar(true);
         setOpenLogin(false);
         const auth = getAuth();
@@ -449,19 +395,42 @@ const handleUpdateProfile = useCallback(async () => {
                     }
                 </Button>
                 { !currentUser &&
-                    <Menu
-                        anchorEl={anchorEl}
-                        keepMounted
-                        open={open}
-                        onClose={handleClose}
-                        TransitionComponent={Fade}
-                        PaperProps={{
-                            style: {
-                                borderRadius: 10,
-                                transform: 'translateX(-4.5vw) translateY(55px)',
-                            }
-                        }}
-                    > 
+                <Menu
+                    anchorEl={anchorEl}
+                    keepMounted
+                    id="account-menu"
+                    open={open}
+                    onClose={handleClose}
+                    PaperProps={{
+                        elevation: 0,
+                        sx: {
+                        overflow: 'visible',
+                        filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+                        mt: 1.5,
+                        '& .MuiAvatar-root': {
+                            width: 32,
+                            height: 32,
+                            ml: -0.5,
+                            mr: 1,
+                        },
+                        '&:before': {
+                            content: '""',
+                            display: 'block',
+                            position: 'absolute',
+                            top: 0,
+                            right: 14,
+                            width: 10,
+                            height: 10,
+                            bgcolor: 'background.paper',
+                            transform: 'translateY(-50%) rotate(45deg)',
+                            zIndex: 0,
+                        },
+                        },
+                    }}
+                    transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                    anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                >
+
                     <MenuItem onClick={handleRegistrate} className='login__menu__item'>
                         <ListItemIcon>
                             <AppRegistrationIcon fontSize="medium" />
@@ -481,23 +450,44 @@ const handleUpdateProfile = useCallback(async () => {
                         </ListItemIcon>
                         <Typography variant="inherit">Ayuda</Typography>
                     </MenuItem>
-                    </Menu>
+                </Menu>
                 }
                 { currentUser &&
-                    <Menu
-                        id="fade-menu"
-                        anchorEl={anchorEl}
-                        keepMounted
-                        open={open}
-                        onClose={handleClose}
-                        TransitionComponent={Fade}
-                        PaperProps={{
-                            style: {
-                                borderRadius: 10,
-                                transform: 'translateX(-5vw) translateY(55px)',
-                            }
-                        }}
-                    > 
+                <Menu
+                    anchorEl={anchorEl}
+                    keepMounted
+                    id="account-menu"
+                    open={open}
+                    onClose={handleClose}
+                    PaperProps={{
+                        elevation: 0,
+                        sx: {
+                        overflow: 'visible',
+                        filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+                        mt: 1.5,
+                        '& .MuiAvatar-root': {
+                            width: 32,
+                            height: 32,
+                            ml: -0.5,
+                            mr: 1,
+                        },
+                        '&:before': {
+                            content: '""',
+                            display: 'block',
+                            position: 'absolute',
+                            top: 0,
+                            right: 14,
+                            width: 10,
+                            height: 10,
+                            bgcolor: 'background.paper',
+                            transform: 'translateY(-50%) rotate(45deg)',
+                            zIndex: 0,
+                        },
+                        },
+                    }}
+                    transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                    anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                >
                     <MenuItem className='login__menu__item'>
                         <ListItemIcon>
                             {/*<Badge 
@@ -547,10 +537,10 @@ const handleUpdateProfile = useCallback(async () => {
                                     color='error'
                                     badgeContent="1" 
                                 >*/}
-                                <AccountCircleIcon fontSize="medium" />
+                                <SettingsIcon fontSize="medium" />
                             {/*</Badge>*/}
                         </ListItemIcon>
-                        <Typography variant="inherit">Cuenta</Typography>                
+                        <Typography variant="inherit">Ajustes de cuenta</Typography>                
                     </MenuItem>
                     <Divider />
                     <MenuItem onClick={handlePerfil} className='login__menu__item'>
@@ -572,7 +562,7 @@ const handleUpdateProfile = useCallback(async () => {
                         </ListItemIcon>
                         <Typography variant="inherit">Cerrar sesión</Typography>                
                     </MenuItem>
-                    </Menu>
+                </Menu>
                 }
                 <Login
                     userDetails={details}

@@ -71,10 +71,12 @@ function Account() {
                 logout()
                 .then(()=>{
                     emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/info');
+                    emitCustomEvent('loged', false);
                     console.log('error')
                 })
                 .catch((error)=>{
                     emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/info');
+                    emitCustomEvent('loged', false);
                     console.log('error')
                 });
             }
@@ -139,6 +141,7 @@ function Account() {
             logout()
             .then(()=>{
                 emitCustomEvent('openLoadingPage', false);
+                emitCustomEvent('loged', false);
                 if (userEmail !==null ){
                     emitCustomEvent('showMsg', 'Hemos eliminado la cuenta ' + userEmail + '/info');
                 }else{
@@ -147,6 +150,7 @@ function Account() {
             })
             .catch((error)=>{
                 emitCustomEvent('openLoadingPage', false);
+                emitCustomEvent('loged', false);
                 if (userEmail !==null ){
                     emitCustomEvent('showMsg', 'Hemos eliminado la cuenta ' + userEmail + '/info');
                 }else{

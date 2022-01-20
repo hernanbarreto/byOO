@@ -200,10 +200,12 @@ function LoginAndSecurity(details) {
                     logout()
                     .then(()=>{
                         emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
+                        emitCustomEvent('loged', false);
                         console.log('error')
                     })
                     .catch((error)=>{
                         emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
+                        emitCustomEvent('loged', false);
                         console.log('error')
                     });    
                 })
@@ -211,6 +213,7 @@ function LoginAndSecurity(details) {
                 logout()
                 .then(()=>{
                     emitCustomEvent('showMsg', 'Ha ocurrido un error al intentar acceder a los datos de tu cuenta/error');
+                    emitCustomEvent('loged', false);
                     console.log('error')
                 })
                 .catch((error)=>{
@@ -286,6 +289,7 @@ function LoginAndSecurity(details) {
             logout()
             .then(()=>{
                 emitCustomEvent('openLoadingPage', false);
+                emitCustomEvent('loged', false);
                 if (userEmail !==null ){
                     emitCustomEvent('showMsg', 'Hemos eliminado la cuenta ' + userEmail + '/info');
                 }else{
@@ -294,6 +298,7 @@ function LoginAndSecurity(details) {
             })
             .catch((error)=>{
                 emitCustomEvent('openLoadingPage', false);
+                emitCustomEvent('loged', false);
                 if (userEmail !==null ){
                     emitCustomEvent('showMsg', 'Hemos eliminado la cuenta ' + userEmail + '/info');
                 }else{
@@ -410,13 +415,16 @@ function LoginAndSecurity(details) {
                     handleUpdateProfile();    
                     logout()
                     .then(()=>{
+                        emitCustomEvent('loged', false);
                         emitCustomEvent('openLoadingPage', false);
                     })
                     .catch((error)=>{
+                        emitCustomEvent('loged', false);
                         emitCustomEvent('openLoadingPage', false);
                     });                    
                 }else{
                     emitCustomEvent('openLoadingPage', false);
+                    emitCustomEvent('loged', false);
                     clearStates();
                     handleUpdateProfile();    
                 }        
@@ -428,13 +436,16 @@ function LoginAndSecurity(details) {
                     handleUpdateProfile();    
                     logout()
                     .then(()=>{
+                        emitCustomEvent('loged', false);
                         emitCustomEvent('openLoadingPage', false);
                     })
                     .catch((error)=>{
+                        emitCustomEvent('loged', false);
                         emitCustomEvent('openLoadingPage', false);
                     });                    
                 }else{
                     emitCustomEvent('openLoadingPage', false);
+                    emitCustomEvent('loged', false);
                     clearStates();
                     handleUpdateProfile();    
                 }        
@@ -447,12 +458,15 @@ function LoginAndSecurity(details) {
                 logout()
                 .then(()=>{
                     emitCustomEvent('openLoadingPage', false);
+                    emitCustomEvent('loged', false);
                 })
                 .catch((error)=>{
                     emitCustomEvent('openLoadingPage', false);
+                    emitCustomEvent('loged', false);
                 });                    
             }else{
                 emitCustomEvent('openLoadingPage', false);
+                emitCustomEvent('loged', false);
                 clearStates();
                 handleUpdateProfile();    
             }    
@@ -461,9 +475,11 @@ function LoginAndSecurity(details) {
             logout()
             .then(()=>{
                 emitCustomEvent('openLoadingPage', false);
+                emitCustomEvent('loged', false);
             })
             .catch((error)=>{
                 emitCustomEvent('openLoadingPage', false);
+                emitCustomEvent('loged', false);
             });
         }
     },[currentUser, handleUpdateProfile, clearStates]);
@@ -612,9 +628,11 @@ function LoginAndSecurity(details) {
                                     logout()
                                     .then(()=>{
                                         emitCustomEvent('openLoadingPage', false);
+                                        emitCustomEvent('loged', false);
                                     })
                                     .catch((error)=>{
                                         emitCustomEvent('openLoadingPage', false);
+                                        emitCustomEvent('loged', false);
                                     });                                
                                 });
                         })
@@ -622,27 +640,33 @@ function LoginAndSecurity(details) {
                             logout()
                             .then(()=>{
                                 emitCustomEvent('openLoadingPage', false);
+                                emitCustomEvent('loged', false);
                             })
                             .catch((error)=>{
                                 emitCustomEvent('openLoadingPage', false);
+                                emitCustomEvent('loged', false);
                             });                        
                         });
                     }else{ 
                         logout()
                         .then(()=>{
                             emitCustomEvent('openLoadingPage', false);
+                            emitCustomEvent('loged', false);
                         })
                         .catch((error)=>{
                             emitCustomEvent('openLoadingPage', false);
+                            emitCustomEvent('loged', false);
                         });                    
                     }
                     }else{
                         logout()
                         .then(()=>{
                             emitCustomEvent('openLoadingPage', false);
+                            emitCustomEvent('loged', false);
                         })
                         .catch((error)=>{
                             emitCustomEvent('openLoadingPage', false);
+                            emitCustomEvent('loged', false);
                         });                    
                     }
                 }).catch((error) => {
@@ -783,9 +807,11 @@ function LoginAndSecurity(details) {
                                     logout()
                                     .then(()=>{
                                         emitCustomEvent('openLoadingPage', false);
+                                        emitCustomEvent('loged', false);
                                     })
                                     .catch((error)=>{
                                         emitCustomEvent('openLoadingPage', false);
+                                        emitCustomEvent('loged', false);
                                     });                                
                                 });
                         })
@@ -793,27 +819,33 @@ function LoginAndSecurity(details) {
                             logout()
                             .then(()=>{
                                 emitCustomEvent('openLoadingPage', false);
+                                emitCustomEvent('loged', false);
                             })
                             .catch((error)=>{
                                 emitCustomEvent('openLoadingPage', false);
+                                emitCustomEvent('loged', false);
                             });                        
                         });
                       }else{ 
                         logout()
                         .then(()=>{
                             emitCustomEvent('openLoadingPage', false);
+                            emitCustomEvent('loged', false);
                         })
                         .catch((error)=>{
                             emitCustomEvent('openLoadingPage', false);
+                            emitCustomEvent('loged', false);
                         });                    
                       }
                     }else{
                         logout()
                         .then(()=>{
                             emitCustomEvent('openLoadingPage', false);
+                            emitCustomEvent('loged', false);
                         })
                         .catch((error)=>{
                             emitCustomEvent('openLoadingPage', false);
+                            emitCustomEvent('loged', false);
                         });                    
                     }
                 }).catch((error) => {
@@ -1128,9 +1160,11 @@ function LoginAndSecurity(details) {
                         logout()
                         .then(()=>{
                             emitCustomEvent('openLoadingPage', false);
+                            emitCustomEvent('loged', false);
                         })
                         .catch((error)=>{
                             emitCustomEvent('openLoadingPage', false);
+                            emitCustomEvent('loged', false);
                         });                                
                     });
             })
@@ -1138,27 +1172,33 @@ function LoginAndSecurity(details) {
                 logout()
                 .then(()=>{
                     emitCustomEvent('openLoadingPage', false);
+                    emitCustomEvent('loged', false);
                 })
                 .catch((error)=>{
                     emitCustomEvent('openLoadingPage', false);
+                    emitCustomEvent('loged', false);
                 });                        
             });
           }else{ 
             logout()
             .then(()=>{
                 emitCustomEvent('openLoadingPage', false);
+                emitCustomEvent('loged', false);
             })
             .catch((error)=>{
                 emitCustomEvent('openLoadingPage', false);
+                emitCustomEvent('loged', false);
             });                    
           }
         }else{
             logout()
             .then(()=>{
                 emitCustomEvent('openLoadingPage', false);
+                emitCustomEvent('loged', false);
             })
             .catch((error)=>{
                 emitCustomEvent('openLoadingPage', false);
+                emitCustomEvent('loged', false);
             });                    
         }
     }
@@ -1323,9 +1363,11 @@ function LoginAndSecurity(details) {
                                                         logout()
                                                         .then(()=>{
                                                             emitCustomEvent('openLoadingPage', false);
+                                                            emitCustomEvent('loged', false);
                                                         })
                                                         .catch((error)=>{
                                                             emitCustomEvent('openLoadingPage', false);
+                                                            emitCustomEvent('loged', false);
                                                         });                                
                                                     });
                                             })
@@ -1333,27 +1375,33 @@ function LoginAndSecurity(details) {
                                                 logout()
                                                 .then(()=>{
                                                     emitCustomEvent('openLoadingPage', false);
+                                                    emitCustomEvent('loged', false);
                                                 })
                                                 .catch((error)=>{
                                                     emitCustomEvent('openLoadingPage', false);
+                                                    emitCustomEvent('loged', false);
                                                 });                        
                                             });
                                           }else{ 
                                             logout()
                                             .then(()=>{
                                                 emitCustomEvent('openLoadingPage', false);
+                                                emitCustomEvent('loged', false);
                                             })
                                             .catch((error)=>{
                                                 emitCustomEvent('openLoadingPage', false);
+                                                emitCustomEvent('loged', false);
                                             });                    
                                           }
                                         }else{
                                             logout()
                                             .then(()=>{
                                                 emitCustomEvent('openLoadingPage', false);
+                                                emitCustomEvent('loged', false);
                                             })
                                             .catch((error)=>{
                                                 emitCustomEvent('openLoadingPage', false);
+                                                emitCustomEvent('loged', false);
                                             });                    
                                         }
                                     }).catch((error) => {
@@ -1481,9 +1529,11 @@ function LoginAndSecurity(details) {
                                                             logout()
                                                             .then(()=>{
                                                                 emitCustomEvent('openLoadingPage', false);
+                                                                emitCustomEvent('loged', false);
                                                             })
                                                             .catch((error)=>{
                                                                 emitCustomEvent('openLoadingPage', false);
+                                                                emitCustomEvent('loged', false);
                                                             });                                
                                                         });
                                                 })
@@ -1491,27 +1541,33 @@ function LoginAndSecurity(details) {
                                                     logout()
                                                     .then(()=>{
                                                         emitCustomEvent('openLoadingPage', false);
+                                                        emitCustomEvent('loged', false);
                                                     })
                                                     .catch((error)=>{
                                                         emitCustomEvent('openLoadingPage', false);
+                                                        emitCustomEvent('loged', false);
                                                     });                        
                                                 });
                                               }else{ 
                                                 logout()
                                                 .then(()=>{
                                                     emitCustomEvent('openLoadingPage', false);
+                                                    emitCustomEvent('loged', false);
                                                 })
                                                 .catch((error)=>{
                                                     emitCustomEvent('openLoadingPage', false);
+                                                    emitCustomEvent('loged', false);
                                                 });                    
                                               }
                                             }else{
                                                 logout()
                                                 .then(()=>{
                                                     emitCustomEvent('openLoadingPage', false);
+                                                    emitCustomEvent('loged', false);
                                                 })
                                                 .catch((error)=>{
                                                     emitCustomEvent('openLoadingPage', false);
+                                                    emitCustomEvent('loged', false);
                                                 });                    
                                             }
                                         }).catch((error) => {
@@ -1817,9 +1873,11 @@ function LoginAndSecurity(details) {
                             logout()
                             .then(()=>{
                                 emitCustomEvent('openLoadingPage', false);
+                                emitCustomEvent('loged', false);
                             })
                             .catch((error)=>{
                                 emitCustomEvent('openLoadingPage', false);
+                                emitCustomEvent('loged', false);
                             });                                
                         });
                 })
@@ -1827,28 +1885,34 @@ function LoginAndSecurity(details) {
                     logout()
                     .then(()=>{
                         emitCustomEvent('openLoadingPage', false);
+                        emitCustomEvent('loged', false);
                     })
                     .catch((error)=>{
                         emitCustomEvent('openLoadingPage', false);
+                        emitCustomEvent('loged', false);
                     });                        
                 });
               }else{ 
                 logout()
                 .then(()=>{
                     emitCustomEvent('openLoadingPage', false);
+                    emitCustomEvent('loged', false);
                 })
                 .catch((error)=>{
                     emitCustomEvent('openLoadingPage', false);
+                    emitCustomEvent('loged', false);
                 });                    
               }
             }else{
                 logout()
                 .then(()=>{
                     emitCustomEvent('openLoadingPage', false);
+                    emitCustomEvent('loged', false);
                 })
                 .catch((error)=>{
                     console.log(error);
                     emitCustomEvent('openLoadingPage', false);
+                    emitCustomEvent('loged', false);
                 });                    
             }
         }).catch((error) => {
@@ -1931,9 +1995,11 @@ function LoginAndSecurity(details) {
                                         logout()
                                         .then(()=>{
                                             emitCustomEvent('openLoadingPage', false);
+                                            emitCustomEvent('loged', false);
                                         })
                                         .catch((error)=>{
                                             emitCustomEvent('openLoadingPage', false);
+                                            emitCustomEvent('loged', false);
                                         });                                
                                     });
                             })
@@ -1942,9 +2008,11 @@ function LoginAndSecurity(details) {
                                 logout()
                                 .then(()=>{
                                     emitCustomEvent('openLoadingPage', false);
+                                    emitCustomEvent('loged', false);
                                 })
                                 .catch((error)=>{
                                     emitCustomEvent('openLoadingPage', false);
+                                    emitCustomEvent('loged', false);
                                 });                        
                             });
                           }else{ 
@@ -1952,9 +2020,11 @@ function LoginAndSecurity(details) {
                             logout()
                             .then(()=>{
                                 emitCustomEvent('openLoadingPage', false);
+                                emitCustomEvent('loged', false);
                             })
                             .catch((error)=>{
                                 emitCustomEvent('openLoadingPage', false);
+                                emitCustomEvent('loged', false);
                             });                    
                           }
                         }else{
@@ -1962,9 +2032,11 @@ function LoginAndSecurity(details) {
                             logout()
                             .then(()=>{
                                 emitCustomEvent('openLoadingPage', false);
+                                emitCustomEvent('loged', false);
                             })
                             .catch((error)=>{
                                 emitCustomEvent('openLoadingPage', false);
+                                emitCustomEvent('loged', false);
                             });                    
                         }
                     }).catch((error) => {
