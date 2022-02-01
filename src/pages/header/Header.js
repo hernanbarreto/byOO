@@ -29,7 +29,7 @@ import { getFirestore,
         getDoc } from "firebase/firestore";
 import { useAuth } from '../../services/firebase';
 import { getFunctions, httpsCallable } from "firebase/functions";
-import { emitCustomEvent } from 'react-custom-events';
+import { emitCustomEvent, useCustomEventListener } from 'react-custom-events';
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 import { getAuth } from "firebase/auth";
@@ -83,19 +83,21 @@ function Header(details) {
         setAnchorEl(null);
     }
 
+    useCustomEventListener('loged', data => {
+        if (!data){
+            setPhotoURL(null);
+            handleClose(null);
+            emitCustomEvent('openLoadingPage', false);
+        }
+    });
+
     const handleLogout = async () => {
         emitCustomEvent('openLoadingPage', true);
         logout()
         .then(()=>{
-            setPhotoURL(null);
-            handleClose(null);
-            emitCustomEvent('openLoadingPage', false);
             emitCustomEvent('loged', false);
         })
         .catch((error)=>{
-            setPhotoURL(null);
-            handleClose(null);
-            emitCustomEvent('openLoadingPage', false);
             emitCustomEvent('loged', false);
         });
     } 
@@ -540,7 +542,7 @@ const handleUpdateProfile = useCallback(async () => {
                                 <SettingsIcon fontSize="medium" />
                             {/*</Badge>*/}
                         </ListItemIcon>
-                        <Typography variant="inherit">Ajustes de cuenta</Typography>                
+                        <Typography variant="inherit">Configuración de cuenta</Typography>                
                     </MenuItem>
                     <Divider />
                     <MenuItem onClick={handlePerfil} className='login__menu__item'>

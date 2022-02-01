@@ -21,7 +21,17 @@ import {
     } from "firebase/firestore";
 import Skeleton from '@mui/material/Skeleton';
 import Snackbar from '@mui/material/Snackbar';
-import Alert from '@mui/material/Alert';    
+import Alert from '@mui/material/Alert'; 
+import Tab from '@mui/material/Tab';
+import TabPanel from '@mui/lab/TabPanel';
+import Tabs from '@mui/material/Tabs';
+import TabContext from '@mui/lab/TabContext'; 
+import Box from '@mui/material/Box';
+import { styled } from '@mui/material/styles';
+import { getFunctions, httpsCallable } from "firebase/functions";
+
+const functions = getFunctions();
+const getUserBy = httpsCallable(functions, 'getUser');  
 
 const Transition = React.forwardRef(function Transition(props, ref) {
     return <Slide direction="up" ref={ref} {...props} />;
@@ -397,6 +407,186 @@ function FormEditIcons(props) {
     }
     /*Fin Linkedin Profile*/
 
+    /*whatsapp contact*/
+    const [whatsappContact, setWhatsappContact] = useState(false);
+
+    const handleVincularWhatsappContact = () => {
+        getUserBy(currentUser.uid)
+        .then(async (user)=>{
+            if (user.data.phoneNumber !== null){
+                const infoUser = doc(database, "users", currentUser.uid);
+                try{                                  
+                    await updateDoc(infoUser, {
+                        'profileIcons.whatsapp.show': true,
+                    })
+                    .then(()=>{
+                        setWhatsappContact(true);                                            
+                    })
+                    .catch(()=>{
+                        setMsg('Ha ocurrido un error al intentar actualizar tu información');
+                        setSeverityInfo('error');
+                        setOpenMsg(true); 
+                    });
+                }catch{
+                    setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
+                    setSeverityInfo('error');
+                    setOpenMsg(true);
+                }       
+            }else{
+                setMsg('No es posible que te contacten por Whatsapp porque no tenés configurado un número telefónico');
+                setSeverityInfo('error');
+                setOpenMsg(true);     
+            }
+        })
+        .catch((error)=>{
+            setMsg('Ha ocurrido un error al intentar actualizar tu información');
+            setSeverityInfo('error');
+            setOpenMsg(true); 
+        })
+    }
+
+    const handleDesvincularWhatsappContact = async() => {
+        const infoUser = doc(database, "users", currentUser.uid);
+        try{                                  
+            await updateDoc(infoUser, {
+                'profileIcons.whatsapp.show': false,
+            })
+            .then(()=>{
+                setWhatsappContact(false);                                            
+            })
+            .catch(()=>{
+                setMsg('Ha ocurrido un error al intentar actualizar tu información');
+                setSeverityInfo('error');
+                setOpenMsg(true); 
+            });
+        }catch{
+            setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
+            setSeverityInfo('error');
+            setOpenMsg(true);
+        } 
+    }
+    /*fin whatsapp contact*/   
+
+    /*telegram contact*/
+    const [telegramContact, setTelegramContact] = useState(false);
+
+    const handleVincularTelegramContact = () => {
+        getUserBy(currentUser.uid)
+        .then(async (user)=>{
+            if (user.data.phoneNumber !== null){
+                const infoUser = doc(database, "users", currentUser.uid);
+                try{                                  
+                    await updateDoc(infoUser, {
+                        'profileIcons.telegram.show': true,
+                    })
+                    .then(()=>{
+                        setTelegramContact(true);                                            
+                    })
+                    .catch(()=>{
+                        setMsg('Ha ocurrido un error al intentar actualizar tu información');
+                        setSeverityInfo('error');
+                        setOpenMsg(true); 
+                    });
+                }catch{
+                    setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
+                    setSeverityInfo('error');
+                    setOpenMsg(true);
+                }       
+            }else{
+                setMsg('No es posible que te contacten por Telegram porque no tenés configurado un número telefónico');
+                setSeverityInfo('error');
+                setOpenMsg(true);     
+            }
+        })
+        .catch((error)=>{
+            setMsg('Ha ocurrido un error al intentar actualizar tu información');
+            setSeverityInfo('error');
+            setOpenMsg(true); 
+        })
+    }
+
+    const handleDesvincularTelegramContact = async() => {
+        const infoUser = doc(database, "users", currentUser.uid);
+        try{                                  
+            await updateDoc(infoUser, {
+                'profileIcons.telegram.show': false,
+            })
+            .then(()=>{
+                setTelegramContact(false);                                            
+            })
+            .catch(()=>{
+                setMsg('Ha ocurrido un error al intentar actualizar tu información');
+                setSeverityInfo('error');
+                setOpenMsg(true); 
+            });
+        }catch{
+            setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
+            setSeverityInfo('error');
+            setOpenMsg(true);
+        } 
+    }
+    /*fin Telegram contact*/   
+
+    /*telegram contact*/
+    const [emailContact, setEmailContact] = useState(false);
+
+    const handleVincularEmailContact = () => {
+        getUserBy(currentUser.uid)
+        .then(async (user)=>{
+            if (user.data.email !== null){
+                const infoUser = doc(database, "users", currentUser.uid);
+                try{                                  
+                    await updateDoc(infoUser, {
+                        'profileIcons.email.show': true,
+                    })
+                    .then(()=>{
+                        setEmailContact(true);                                            
+                    })
+                    .catch(()=>{
+                        setMsg('Ha ocurrido un error al intentar actualizar tu información');
+                        setSeverityInfo('error');
+                        setOpenMsg(true); 
+                    });
+                }catch{
+                    setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
+                    setSeverityInfo('error');
+                    setOpenMsg(true);
+                }       
+            }else{
+                setMsg('No es posible que te contacten por correo electrónico porque no tenés configurado uno.');
+                setSeverityInfo('error');
+                setOpenMsg(true);     
+            }
+        })
+        .catch((error)=>{
+            setMsg('Ha ocurrido un error al intentar actualizar tu información');
+            setSeverityInfo('error');
+            setOpenMsg(true); 
+        })
+    }
+
+    const handleDesvincularEmailContact = async() => {
+        const infoUser = doc(database, "users", currentUser.uid);
+        try{                                  
+            await updateDoc(infoUser, {
+                'profileIcons.email.show': false,
+            })
+            .then(()=>{
+                setEmailContact(false);                                            
+            })
+            .catch(()=>{
+                setMsg('Ha ocurrido un error al intentar actualizar tu información');
+                setSeverityInfo('error');
+                setOpenMsg(true); 
+            });
+        }catch{
+            setMsg('Ha ocurrido un error al intentar acceder a los datos de tu cuenta');
+            setSeverityInfo('error');
+            setOpenMsg(true);
+        } 
+    }
+    /*fin Email contact*/   
+
     const getPreferences = useCallback(async() => {
         setLoadingPreferences(true);
         const infoUser = doc(database, "users", currentUser.uid);
@@ -410,6 +600,9 @@ function FormEditIcons(props) {
         setValueInputTwitterProfile(docSnap.data().profileIcons.twitter.url);
         setLinkedinProfile(docSnap.data().profileIcons.linkedin.show);
         setValueInputLinkedinProfile(docSnap.data().profileIcons.linkedin.url);
+        setWhatsappContact(docSnap.data().profileIcons.whatsapp.show);
+        setTelegramContact(docSnap.data().profileIcons.telegram.show);
+        setEmailContact(docSnap.data().profileIcons.email.show);
 
         setLoadingPreferences(false);
     },[]);
@@ -421,6 +614,36 @@ function FormEditIcons(props) {
         }
     }, [getPreferences]);
 
+
+    const StyledTabs = styled((props) => (
+        <Tabs
+          {...props}
+          TabIndicatorProps={{ children: <span className="MuiTabs-indicator" /> }}
+        />
+        ))({
+        '& .MuiTabs-indicator': {
+            backgroundColor: 'black',
+        },
+      
+    });
+      
+    const StyledTab = styled((props) => <Tab disableRipple {...props} />)(
+        ({ theme }) => ({
+          textTransform: 'none',
+          width: '50%',
+          '&.Mui-selected': {
+            color: '#000000',
+            fontWeight: 'bold',
+            backgroundColor: 'white',
+          },
+        }),
+      );
+
+    const [valueTab, setValueTab] = useState('social');
+
+    const handleChangeTab = (event, newValue) => {
+      setValueTab(newValue);
+    };
 
     return (
         <div>
@@ -442,229 +665,356 @@ function FormEditIcons(props) {
                 <strong>Edita tus preferencias</strong>
             </DialogTitle>
             <MuiDialogContent dividers>
-            {!loadingPreferences ?
-                <>
-                <CustomizedSwitch
-                    label='Perfil de Facebook'
-                    strong={true}
-                    checked={facebookProfile}
-                    onGetChange={e=>{
-                        if(e){
-                            handleVincularFacebookProfile();
-                        }else{
-                            handleDesvincularFacebookProfile();
+                <TabContext value={valueTab}>
+                    <Box sx={{ width: '100%', borderBottom: 1, borderColor: 'divider' }}>
+                        <StyledTabs
+                            value={valueTab} 
+                            onChange={handleChangeTab} 
+                            aria-label="select tabs notifications"
+                        >
+                            <StyledTab label="Mis redes sociales"  value='social' />
+                            <StyledTab label="Configuración de contacto"  value='contact' />
+                        </StyledTabs>
+                    </Box>
+                    <TabPanel value='social'>                
+                        {!loadingPreferences ?
+                        <>
+                        <CustomizedSwitch
+                            label='Perfil de Facebook'
+                            strong={true}
+                            checked={facebookProfile}
+                            onGetChange={e=>{
+                                if(e){
+                                    handleVincularFacebookProfile();
+                                }else{
+                                    handleDesvincularFacebookProfile();
+                                }
+                            }}
+                        />
+                        <Typography 
+                            fontSize={{
+                                lg: 15,
+                                md: 15,
+                                sm: 12,
+                                xs: 12,
+                            }}                                                                                
+                            display="block"
+                            gutterBottom
+                            style={{
+                                width: '100%',
+                                marginTop: 10,
+                            }}
+                        >
+                        Ingresa la URL de tu perfil de Facebook si querés que la comunidad byOO pueda verlo.
+                        </Typography>
+                        <TextField
+                            disabled={props.disabled} 
+                            error={stateErrorFacebookProfile}
+                            helperText={helperTextFacebook}
+                            value={valueInputFacebookProfile}
+                            onChange={handleChangeFacebookProfile} 
+                            label="URL de tu perfil de Facebook" 
+                            variant="outlined" 
+                            style={{
+                                width: '100%',
+                                marginTop: '10px',
+                                marginBottom: '20px',
+                            }}
+                            autoComplete="new-password"
+                            onKeyDown={e => handleKeyFacebookProfile(e) }
+                        />
+                        </>
+                        :
+                        <>
+                            <Skeleton variant="text" width="100%"/>
+                            <Skeleton variant="text" width="100%"/>
+                            <Skeleton variant="text" width="100%"/>
+                        </>
                         }
-                    }}
-                />
-                <Typography 
-                    fontSize={{
-                        lg: 15,
-                        md: 15,
-                        sm: 12,
-                        xs: 12,
-                    }}                                                                                
-                    display="block"
-                    gutterBottom
-                    style={{
-                        width: '100%',
-                        marginTop: 10,
-                    }}
-                >
-                   Ingresa la URL de tu perfil de Facebook si querés que la comunidad byOO pueda verlo.
-                </Typography>
-                <TextField
-                    disabled={props.disabled} 
-                    error={stateErrorFacebookProfile}
-                    helperText={helperTextFacebook}
-                    value={valueInputFacebookProfile}
-                    onChange={handleChangeFacebookProfile} 
-                    label="URL de tu perfil de Facebook" 
-                    variant="outlined" 
-                    style={{
-                        width: '100%',
-                        marginTop: '10px',
-                        marginBottom: '20px',
-                    }}
-                    autoComplete="new-password"
-                    onKeyDown={e => handleKeyFacebookProfile(e) }
-                />
-                </>
-                :
-                <>
-                    <Skeleton variant="text" width="100%"/>
-                    <Skeleton variant="text" width="100%"/>
-                    <Skeleton variant="text" width="100%"/>
-                </>
-                }
-                <Divider/> 
-                {!loadingPreferences ?
-                <>
-                <CustomizedSwitch
-                    label='Perfil de Instagram'
-                    strong={true}
-                    checked={instagramProfile}
-                    onGetChange={e=>{
-                        if(e){
-                            handleVincularInstagramProfile();
-                        }else{
-                            handleDesvincularInstagramProfile();
+                        <Divider/> 
+                        {!loadingPreferences ?
+                        <>
+                        <CustomizedSwitch
+                            label='Perfil de Instagram'
+                            strong={true}
+                            checked={instagramProfile}
+                            onGetChange={e=>{
+                                if(e){
+                                    handleVincularInstagramProfile();
+                                }else{
+                                    handleDesvincularInstagramProfile();
+                                }
+                            }}
+                        />
+                        <Typography 
+                            fontSize={{
+                                lg: 15,
+                                md: 15,
+                                sm: 12,
+                                xs: 12,
+                            }}                                                                                
+                            display="block"
+                            gutterBottom
+                            style={{
+                                width: '100%',
+                                marginTop: 10,
+                            }}
+                        >
+                        Ingresa la URL de tu perfil de Instagram si querés que la comunidad byOO pueda verlo.
+                        </Typography>
+                        <TextField
+                            disabled={props.disabled} 
+                            error={stateErrorInstagramProfile}
+                            helperText={helperTextInstagram}
+                            value={valueInputInstagramProfile}
+                            onChange={handleChangeInstagramProfile} 
+                            label="URL de tu perfil de Instagram" 
+                            variant="outlined" 
+                            style={{
+                                width: '100%',
+                                marginTop: '10px',
+                                marginBottom: '20px',
+                            }}
+                            autoComplete="new-password"
+                            onKeyDown={e => handleKeyInstagramProfile(e) }
+                        />
+                        </>
+                        :
+                        <>
+                            <Skeleton variant="text" width="100%"/>
+                            <Skeleton variant="text" width="100%"/>
+                            <Skeleton variant="text" width="100%"/>
+                        </>
                         }
-                    }}
-                />
-                <Typography 
-                    fontSize={{
-                        lg: 15,
-                        md: 15,
-                        sm: 12,
-                        xs: 12,
-                    }}                                                                                
-                    display="block"
-                    gutterBottom
-                    style={{
-                        width: '100%',
-                        marginTop: 10,
-                    }}
-                >
-                   Ingresa la URL de tu perfil de Instagram si querés que la comunidad byOO pueda verlo.
-                </Typography>
-                <TextField
-                    disabled={props.disabled} 
-                    error={stateErrorInstagramProfile}
-                    helperText={helperTextInstagram}
-                    value={valueInputInstagramProfile}
-                    onChange={handleChangeInstagramProfile} 
-                    label="URL de tu perfil de Instagram" 
-                    variant="outlined" 
-                    style={{
-                        width: '100%',
-                        marginTop: '10px',
-                        marginBottom: '20px',
-                    }}
-                    autoComplete="new-password"
-                    onKeyDown={e => handleKeyInstagramProfile(e) }
-                />
-                </>
-                :
-                <>
-                    <Skeleton variant="text" width="100%"/>
-                    <Skeleton variant="text" width="100%"/>
-                    <Skeleton variant="text" width="100%"/>
-                </>
-                }
-                <Divider/>               
-                {!loadingPreferences ?
-                <>
-                <CustomizedSwitch
-                    label='Perfil de Twitter'
-                    strong={true}
-                    checked={twitterProfile}
-                    onGetChange={e=>{
-                        if(e){
-                            handleVincularTwitterProfile();
-                        }else{
-                            handleDesvincularTwitterProfile();
+                        <Divider/>               
+                        {!loadingPreferences ?
+                        <>
+                        <CustomizedSwitch
+                            label='Perfil de Twitter'
+                            strong={true}
+                            checked={twitterProfile}
+                            onGetChange={e=>{
+                                if(e){
+                                    handleVincularTwitterProfile();
+                                }else{
+                                    handleDesvincularTwitterProfile();
+                                }
+                            }}
+                        />
+                        <Typography 
+                            fontSize={{
+                                lg: 15,
+                                md: 15,
+                                sm: 12,
+                                xs: 12,
+                            }}                                                                                
+                            display="block"
+                            gutterBottom
+                            style={{
+                                width: '100%',
+                                marginTop: 10,
+                            }}
+                        >
+                        Ingresa la URL de tu perfil de Twitter si querés que la comunidad byOO pueda verlo.
+                        </Typography>
+                        <TextField
+                            disabled={props.disabled} 
+                            error={stateErrorTwitterProfile}
+                            helperText={helperTextTwitter}
+                            value={valueInputTwitterProfile}
+                            onChange={handleChangeTwitterProfile} 
+                            label="URL de tu perfil de Twitter" 
+                            variant="outlined" 
+                            style={{
+                                width: '100%',
+                                marginTop: '10px',
+                                marginBottom: '20px',
+                            }}
+                            autoComplete="new-password"
+                            onKeyDown={e => handleKeyTwitterProfile(e) }
+                        />
+                        </>
+                        :
+                        <>
+                            <Skeleton variant="text" width="100%"/>
+                            <Skeleton variant="text" width="100%"/>
+                            <Skeleton variant="text" width="100%"/>
+                        </>
                         }
-                    }}
-                />
-                <Typography 
-                    fontSize={{
-                        lg: 15,
-                        md: 15,
-                        sm: 12,
-                        xs: 12,
-                    }}                                                                                
-                    display="block"
-                    gutterBottom
-                    style={{
-                        width: '100%',
-                        marginTop: 10,
-                    }}
-                >
-                   Ingresa la URL de tu perfil de Twitter si querés que la comunidad byOO pueda verlo.
-                </Typography>
-                <TextField
-                    disabled={props.disabled} 
-                    error={stateErrorTwitterProfile}
-                    helperText={helperTextTwitter}
-                    value={valueInputTwitterProfile}
-                    onChange={handleChangeTwitterProfile} 
-                    label="URL de tu perfil de Twitter" 
-                    variant="outlined" 
-                    style={{
-                        width: '100%',
-                        marginTop: '10px',
-                        marginBottom: '20px',
-                    }}
-                    autoComplete="new-password"
-                    onKeyDown={e => handleKeyTwitterProfile(e) }
-                />
-                </>
-                :
-                <>
-                    <Skeleton variant="text" width="100%"/>
-                    <Skeleton variant="text" width="100%"/>
-                    <Skeleton variant="text" width="100%"/>
-                </>
-                }
-                <Divider/>               
-                {!loadingPreferences ?
-                <>
-                <CustomizedSwitch
-                    label='Perfil de LinkedIn'
-                    strong={true}
-                    checked={linkedinProfile}
-                    onGetChange={e=>{
-                        if(e){
-                            handleVincularLinkedinProfile();
-                        }else{
-                            handleDesvincularLinkedinProfile();
+                        <Divider/>               
+                        {!loadingPreferences ?
+                        <>
+                        <CustomizedSwitch
+                            label='Perfil de LinkedIn'
+                            strong={true}
+                            checked={linkedinProfile}
+                            onGetChange={e=>{
+                                if(e){
+                                    handleVincularLinkedinProfile();
+                                }else{
+                                    handleDesvincularLinkedinProfile();
+                                }
+                            }}
+                        />
+                        <Typography 
+                            fontSize={{
+                                lg: 15,
+                                md: 15,
+                                sm: 12,
+                                xs: 12,
+                            }}                                                                                
+                            display="block"
+                            gutterBottom
+                            style={{
+                                width: '100%',
+                                marginTop: 10,
+                            }}
+                        >
+                        Ingresa la URL de tu perfil de LinkedIn si querés que la comunidad byOO pueda verlo.
+                        </Typography>
+                        <TextField
+                            disabled={props.disabled} 
+                            error={stateErrorLinkedinProfile}
+                            helperText={helperTextLinkedin}
+                            value={valueInputLinkedinProfile}
+                            onChange={handleChangeLinkedinProfile} 
+                            label="URL de tu perfil de LinkedIn" 
+                            variant="outlined" 
+                            style={{
+                                width: '100%',
+                                marginTop: '10px',
+                                marginBottom: '20px',
+                            }}
+                            autoComplete="new-password"
+                            onKeyDown={e => handleKeyLinkedinProfile(e) }
+                        />
+                        </>
+                        :
+                        <>
+                            <Skeleton variant="text" width="100%"/>
+                            <Skeleton variant="text" width="100%"/>
+                            <Skeleton variant="text" width="100%"/>
+                        </>
                         }
-                    }}
-                />
-                <Typography 
-                    fontSize={{
-                        lg: 15,
-                        md: 15,
-                        sm: 12,
-                        xs: 12,
-                    }}                                                                                
-                    display="block"
-                    gutterBottom
-                    style={{
-                        width: '100%',
-                        marginTop: 10,
-                    }}
-                >
-                   Ingresa la URL de tu perfil de LinkedIn si querés que la comunidad byOO pueda verlo.
-                </Typography>
-                <TextField
-                    disabled={props.disabled} 
-                    error={stateErrorLinkedinProfile}
-                    helperText={helperTextLinkedin}
-                    value={valueInputLinkedinProfile}
-                    onChange={handleChangeLinkedinProfile} 
-                    label="URL de tu perfil de LinkedIn" 
-                    variant="outlined" 
-                    style={{
-                        width: '100%',
-                        marginTop: '10px',
-                        marginBottom: '20px',
-                    }}
-                    autoComplete="new-password"
-                    onKeyDown={e => handleKeyLinkedinProfile(e) }
-                />
-                </>
-                :
-                <>
-                    <Skeleton variant="text" width="100%"/>
-                    <Skeleton variant="text" width="100%"/>
-                    <Skeleton variant="text" width="100%"/>
-                </>
-                }
-                <Divider/>               
-
-
-
+                        <Divider/> 
+                    </TabPanel>
+                    <TabPanel value='contact'>
+                    {!loadingPreferences ?
+                        <>
+                        <CustomizedSwitch
+                            label='Permiti que te contacten por Whatsapp'
+                            strong={true}
+                            checked={whatsappContact}
+                            onGetChange={e=>{
+                                if(e){
+                                    handleVincularWhatsappContact();
+                                }else{
+                                    handleDesvincularWhatsappContact();
+                                }
+                            }}
+                        />
+                        <Typography 
+                            fontSize={{
+                                lg: 15,
+                                md: 15,
+                                sm: 12,
+                                xs: 12,
+                            }}                                                                                
+                            display="block"
+                            gutterBottom
+                            style={{
+                                width: '100%',
+                                marginTop: 10,
+                            }}
+                        >
+                        Al habilitar esta opción, quienes vean tu perfil puede contactarte a través de Whatsapp.
+                        </Typography>
+                        </>
+                        :
+                        <>
+                            <Skeleton variant="text" width="100%"/>
+                            <Skeleton variant="text" width="100%"/>
+                        </>
+                        }
+                        <Divider/> 
+                        {!loadingPreferences ?
+                        <>
+                        <CustomizedSwitch
+                            label='Permiti que te contacten por Telegram'
+                            strong={true}
+                            checked={telegramContact}
+                            onGetChange={e=>{
+                                if(e){
+                                    handleVincularTelegramContact();
+                                }else{
+                                    handleDesvincularTelegramContact();
+                                }
+                            }}
+                        />
+                        <Typography 
+                            fontSize={{
+                                lg: 15,
+                                md: 15,
+                                sm: 12,
+                                xs: 12,
+                            }}                                                                                
+                            display="block"
+                            gutterBottom
+                            style={{
+                                width: '100%',
+                                marginTop: 10,
+                            }}
+                        >
+                        Al habilitar esta opción, quienes vean tu perfil puede contactarte a través de Telegram.
+                        </Typography>
+                        </>
+                        :
+                        <>
+                            <Skeleton variant="text" width="100%"/>
+                            <Skeleton variant="text" width="100%"/>
+                        </>
+                        }
+                        <Divider/> 
+                        {!loadingPreferences ?
+                        <>
+                        <CustomizedSwitch
+                            label='Permiti que te contacten por correo electrónico'
+                            strong={true}
+                            checked={emailContact}
+                            onGetChange={e=>{
+                                if(e){
+                                    handleVincularEmailContact();
+                                }else{
+                                    handleDesvincularEmailContact();
+                                }
+                            }}
+                        />
+                        <Typography 
+                            fontSize={{
+                                lg: 15,
+                                md: 15,
+                                sm: 12,
+                                xs: 12,
+                            }}                                                                                
+                            display="block"
+                            gutterBottom
+                            style={{
+                                width: '100%',
+                                marginTop: 10,
+                            }}
+                        >
+                        Al habilitar esta opción, quienes vean tu perfil puede contactarte a través de tu correo electrónico.
+                        </Typography>
+                        </>
+                        :
+                        <>
+                            <Skeleton variant="text" width="100%"/>
+                            <Skeleton variant="text" width="100%"/>
+                        </>
+                        }
+                        <Divider/>
+                    </TabPanel>
+                </TabContext>
             </MuiDialogContent>
             </Dialog> 
             <Snackbar open={openMsg} autoHideDuration={6000} onClose={handleCloseMsg} anchorOrigin={{ vertical: 'top', horizontal: 'center' }} sx={{width: '100%'}}>

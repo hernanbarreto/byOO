@@ -449,6 +449,15 @@ function Login(props) {
                     show: false,
                     url: '',
                 },
+                whatsapp:{
+                    show: false,
+                },
+                telegram:{
+                    show: false,
+                },
+                email:{
+                    show: false,
+                },
             },
         })
         .then(()=>{
