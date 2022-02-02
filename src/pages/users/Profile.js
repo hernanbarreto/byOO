@@ -35,8 +35,10 @@ import Button from '@mui/material/Button';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import FormEditIcons from './FormEditIcons';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-import ReportIcon from '@mui/icons-material/Report';
+import EmojiFlagsIcon from '@mui/icons-material/EmojiFlags';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import Rating from '@mui/material/Rating';
+import FavoriteIcon from '@mui/icons-material/Favorite';
 import {
     EmailShareButton,
     FacebookShareButton,
@@ -504,17 +506,21 @@ function Profile() {
     const actionMore = [
         { 
             icon: 
-                <ReportIcon
+                <EmojiFlagsIcon
                     variant="contained" 
                 />, 
-            name: 'Denunciar perfil', 
+            name: 'Denunciar este perfil', 
             show: !canEdit,
         },
         { 
             icon: 
-                <FavoriteBorderIcon 
-                    variant="contained" 
-                />, 
+                <Rating
+                    name="customized-10"
+                    defaultValue={0}
+                    max={1}
+                    icon={<FavoriteIcon fontSize="inherit" />}
+                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+                />,
             name: 'Agregar a favoritos', 
             show: !canEdit,
         },
